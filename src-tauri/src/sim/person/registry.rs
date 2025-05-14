@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use legion::world::Entity;
-use super::utils::PersonId;
+use super::components::PersonId;
 
 #[derive(Default)]
 pub struct PersonRegistry {

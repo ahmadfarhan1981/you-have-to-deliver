@@ -16,8 +16,7 @@ use tauri::State;
 
 use crate::integrations::ui::{get_tick, AppState};
 use std::sync::{atomic::{AtomicU64, Ordering}, Arc};
-use tauri::path::BaseDirectory;
-
+use tauri::Manager;
 
 
 
@@ -30,11 +29,13 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             let app_handle = app.handle();
+            let path = app.path().resolve("assets", tauri::path::BaseDirectory::Resource)?;
+            
+            println!("Path: {:?}", path);
             // let assets_path = resource_dir()
             //     .expect("Failed to get resource dir")
             //     .join("assets");
 
-            println!(BaseDirectory());
             // === Sim thread ===
             thread::spawn(move || {
                 let mut world = World::default();
@@ -44,7 +45,7 @@ fn main() {
 
                 // Insert Arc into resources so ECS systems can sync to it
                 resources.insert(tick_clone);
-                resources.insert(AssetBasePath(assets_path));
+                // resources.insert(AssetBasePath(*path.to_str().unwrap()));
 
 
 
