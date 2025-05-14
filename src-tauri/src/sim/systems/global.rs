@@ -1,5 +1,5 @@
 use legion::system;
-use crate::sim::{components::stats::Stats, person::components::Person, resources::global::TickCounter};
+use crate::sim::{person::stats::Stats, person::components::Person, resources::global::TickCounter};
 
 #[system]
 pub fn tick_counter(#[resource] mut counter: &mut TickCounter) {
@@ -15,6 +15,6 @@ pub fn tick_counter(#[resource] mut counter: &mut TickCounter) {
 // }
 #[system(for_each)]
 pub fn print_person(person: &Person, stats: &Stats) {
-    println!("Person: {:?}", person);
-    println!("Stats: {:?}", stats);
+    // println!("Person: {:?}", person);
+    // println!("Stats: {:?}", stats);
 }
