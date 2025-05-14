@@ -5,13 +5,14 @@ use rand::{thread_rng, Rng};
 use rand_distr::{Normal, Distribution};
 use serde::de::IntoDeserializer;
 use serde::{Deserialize, Serialize};
-use crate::sim::components::stats::Stats;
+
 use crate::sim::person;
 use crate::sim::person::components::{Gender, PersonId};
 use crate::sim::resources::global::AssetBasePath;
 use rand::seq::IteratorRandom;
 
 use super::components::Person;
+use super::stats::Stats;
 
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: u16, max: u16) -> u16 {
