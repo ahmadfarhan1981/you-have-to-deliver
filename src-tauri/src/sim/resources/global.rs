@@ -4,4 +4,4 @@ pub struct TickCounter {
 }
 
 #[derive(Debug, Default)]
-pub struct AssetBasePath(String);
+pub struct AssetBasePath(pub String);

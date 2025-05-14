@@ -16,7 +16,7 @@ use tauri::State;
 
 use crate::integrations::ui::{get_tick, AppState};
 use std::sync::{atomic::{AtomicU64, Ordering}, Arc};
-
+use tauri::path::BaseDirectory;
 
 
 
@@ -30,12 +30,11 @@ fn main() {
     tauri::Builder::default()
         .setup(|app| {
             let app_handle = app.handle();
-            let assets_path = app_handle
-                .path_resolver()
-                .resolve_resource("assets/")
-                .expect("Failed to resolve assets folder — check tauri.conf.json and file paths");
+            // let assets_path = resource_dir()
+            //     .expect("Failed to get resource dir")
+            //     .join("assets");
 
-
+            println!(BaseDirectory());
             // === Sim thread ===
             thread::spawn(move || {
                 let mut world = World::default();

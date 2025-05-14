@@ -1,6 +1,6 @@
 
 use serde::{Deserialize, Serialize};
-use super::utils::PersonId;
+
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Person {
     pub person_id: PersonId,
