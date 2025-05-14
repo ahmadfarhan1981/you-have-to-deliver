@@ -1,5 +1,6 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![allow(warnings)]
 mod integrations;
 mod sim;
 mod macros;
@@ -7,8 +8,10 @@ mod config;
 
 use crate::sim::systems::global::tick_counter_system;
 use crate::sim::resources::global::{AssetBasePath, TickCounter};
+use crate::sim::systems::global::print_person;
 
 use legion::{Schedule, World, Resources};
+use sim::systems::global::print_person_system;
 
 use std::thread;
 use std::time::Duration;
@@ -17,7 +20,7 @@ use tauri::State;
 use crate::integrations::ui::{get_tick, AppState};
 use std::sync::{atomic::{AtomicU64, Ordering}, Arc};
 use tauri::Manager;
-
+use crate::sim::person::systems::generate_employees_system;
 
 
 fn main() {
@@ -31,10 +34,7 @@ fn main() {
             let app_handle = app.handle();
             let path = app.path().resolve("assets", tauri::path::BaseDirectory::Resource)?;
             
-            println!("Path: {:?}", path);
-            // let assets_path = resource_dir()
-            //     .expect("Failed to get resource dir")
-            //     .join("assets");
+          
 
             // === Sim thread ===
             thread::spawn(move || {
@@ -45,18 +45,20 @@ fn main() {
 
                 // Insert Arc into resources so ECS systems can sync to it
                 resources.insert(tick_clone);
-                // resources.insert(AssetBasePath(*path.to_str().unwrap()));
+                resources.insert(AssetBasePath(path));
 
 
 
                 // Startup schedule, add run once systems here.
                 let mut startup = Schedule::builder()
                     //.add_system(load_employee_system())
+                    .add_system(generate_employees_system())
                     .build();
 
                 // Tick schedule, add systems that runs per frame here.
                 let mut schedule = Schedule::builder()
                     .add_system(tick_counter_system())
+                    .add_system(print_person_system())
                     .build();
 
                 startup.execute(&mut world, &mut resources);

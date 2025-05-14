@@ -10,7 +10,7 @@ pub struct Person {
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub struct PersonId(pub u32);
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Copy, Serialize, Deserialize)]
 pub enum Gender {
     Male,
     Female,
