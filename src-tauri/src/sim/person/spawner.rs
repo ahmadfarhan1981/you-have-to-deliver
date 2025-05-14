@@ -1,11 +1,13 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use rand::{thread_rng, Rng};
 use rand_distr::{Normal, Distribution};
 use serde::{Deserialize, Serialize};
 use crate::sim::person::components::Gender;
 use crate::sim::resources::global::AssetBasePath;
+use rand::seq::IteratorRandom;
+
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: f64, max: f64) -> u32 {
     let normal = Normal::new(mean, std_dev).unwrap();
@@ -47,38 +49,25 @@ impl TalentGrade {
 }
 
 
-fn get_random_line_from_file(asset_path: AssetBasePath) -> Option<String> {
-    println!("Asset path: {:?}", asset_path);
+pub fn get_random_line_from_file(asset_path: AssetBasePath) -> Option<String> {
+    // Build full path to names/first.txt
+    let base_path = Path::new(&asset_path.0);
+    let file_path = base_path.join("names").join("first.txt");
+    println!("Resolved file path: {:?}", file_path);
 
-    let name_dictionary_path = asset_path.0.join("dictionaries");//.join(filename);
-        //.ok_or("Failed to resolve file path")?;
-
-    let file = File::open(&name_dictionary_path).map_err(|e| format!("Failed to open file: {}", e))?;
+    // Attempt to open the file
+    let file = File::open(&file_path).ok()?;
     let reader = BufReader::new(file);
-    
-    let total_lines = reader.lines().count();
-    println!("Total lines: {}", total_lines);
 
-     
-    
-    if total_lines == 0 {
-        println!("File is empty!");
-        return None;
+    // Choose a random line using iterator sampling
+    let mut rng = thread_rng();
+    let line = reader.lines().filter_map(Result::ok).choose(&mut rng);
+
+    if line.is_none() {
+        println!("File is empty or unreadable!");
     }
 
-    let target = rand::thread_rng().gen_range(0..total_lines);
-    println!("Chosen line index: {}", target);
-    let result = reader.lines().nth(target).and_then(Result::ok);
-    // This second open may also fail silently
-    let file2 = File::open(name_dictionary_path).expect("Failed to reopen file");
-    let reader2 = BufReader::new(file2);
-    let result = reader2.lines().nth(target).and_then(Result::ok);
-
-    if result.is_none() {
-        println!("Failed to read the chosen line");
-    }
-
-    result
+    line
 }
 
 
