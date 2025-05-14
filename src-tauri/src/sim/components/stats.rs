@@ -3,20 +3,34 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Copy, Debug, Serialize, Deserialize)]
 pub struct Stats {
     // Cognition
-    pub judgement: f32,
-    pub creativity: f32,
+    pub judgement: u16,
+    pub judgement_raw: u32,
+    pub creativity: u16,
+    pub creativity_raw: u32,
+
     // Perception
-    pub systems: f32,
-    pub precision: f32,
+    pub systems: u16,
+    pub systems_raw: u32,
+    pub precision: u16,
+    pub precision_raw: u32,
+
     // Drive
-    pub focus: f32,
-    pub discipline: f32,
+    pub focus: u16,
+    pub focus_raw: u32,
+    pub discipline: u16,
+    pub discipline_raw: u32,
+
     // Social
-    pub empathy: f32,
-    pub communication: f32,
+    pub empathy: u16,
+    pub empathy_raw: u32,
+    pub communication: u16,
+    pub communication_raw: u32,
+
     // Defense
-    pub resilience: f32,
-    pub adaptability: f32,
+    pub resilience: u16,
+    pub resilience_raw: u32,
+    pub adaptability: u16,
+    pub adaptability_raw: u32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -30,23 +44,23 @@ pub enum StatGroup {
 
 impl Stats {
     pub fn average_cognition(&self) -> f32 {
-        (self.judgement + self.creativity) / 2.0
+        (self.judgement as f32 + self.creativity as f32) / 2.0
     }
 
     pub fn average_perception(&self) -> f32 {
-        (self.systems + self.precision) / 2.0
+        (self.systems as f32 + self.precision as f32) / 2.0
     }
 
     pub fn average_drive(&self) -> f32 {
-        (self.focus + self.discipline) / 2.0
+        (self.focus as f32 + self.discipline as f32) / 2.0
     }
 
     pub fn average_social(&self) -> f32 {
-        (self.empathy + self.communication) / 2.0
+        (self.empathy as f32 + self.communication as f32) / 2.0
     }
 
     pub fn average_defense(&self) -> f32 {
-        (self.resilience + self.adaptability) / 2.0
+        (self.resilience as f32 + self.adaptability as f32) / 2.0
     }
 
     pub fn group_average(&self, group: StatGroup) -> f32 {
@@ -77,4 +91,22 @@ impl Stats {
             .partial_cmp(&other.group_average(group))
             .unwrap_or(std::cmp::Ordering::Equal)
     }
+
+    pub fn sync_from_raw(&mut self) {
+        self.judgement = (self.judgement_raw / 1000) as u16;
+        self.creativity = (self.creativity_raw / 1000) as u16;
+
+        self.systems = (self.systems_raw / 1000) as u16;
+        self.precision = (self.precision_raw / 1000) as u16;
+
+        self.focus = (self.focus_raw / 1000) as u16;
+        self.discipline = (self.discipline_raw / 1000) as u16;
+
+        self.empathy = (self.empathy_raw / 1000) as u16;
+        self.communication = (self.communication_raw / 1000) as u16;
+
+        self.resilience = (self.resilience_raw / 1000) as u16;
+        self.adaptability = (self.adaptability_raw / 1000) as u16;
+    }
 }
+
