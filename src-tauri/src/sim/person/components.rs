@@ -1,6 +1,6 @@
 
 use serde::{Deserialize, Serialize};
-use super::utils::{Gender, PersonId};
+use super::utils::PersonId;
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Person {
     pub person_id: PersonId,
@@ -8,4 +8,10 @@ pub struct Person {
     pub gender: Gender,
 }
 
-
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq)]
+pub struct PersonId(pub u32);
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub enum Gender {
+    Male,
+    Female,
+}

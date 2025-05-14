@@ -2,3 +2,6 @@
 pub struct TickCounter {
     pub tick: u64,
 }
+
+#[derive(Debug, Default)]
+pub struct AssetBasePath(String);
