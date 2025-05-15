@@ -109,4 +109,3 @@ impl Stats {
         self.adaptability = (self.adaptability_raw / 1000) as u16;
     }
 }
-

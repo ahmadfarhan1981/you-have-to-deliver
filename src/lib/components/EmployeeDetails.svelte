@@ -1,26 +1,90 @@
 <script>
-import {AlertCircle} from "lucide-svelte";
+    import {AlertCircle, Image} from "lucide-svelte";
+    import EmployeePotrait from "$lib/components/EmployeePotrait.svelte";
 export let employee;
+
 </script>
 
 <div class="p-6">
     <div class="flex items-start justify-between mb-6">
-        <div class="flex items-center">
-            <div class="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white mr-4 text-lg">
-                {employee.initials}
-            </div>
-            <div>
-                <h2 class="text-2xl font-bold">{employee.name}</h2>
-                <p class="text-slate-600">{employee.role}</p>
+        <div class="flex-row">
+<!--            <div class="flex items-center">-->
+<!--                            <div class="border-2 w-20 h-20 rounded-full shadow bg-blue-500 flex items-center justify-center text-white mr-4 text-lg">-->
+<!--                                {employee.initials}-->
+<!--                            </div>-->
+<!--                <div>-->
+<!--                    <h2 class="text-2xl font-bold">{employee.name}</h2>-->
+<!--                    <p class="text-slate-600">{employee.role}</p>-->
+<!--                </div>-->
+<!--            </div>-->
+
+            <div class="">
+
+                <div class="flex items-start">
+
+
+                    <div class="pr-6">
+                        <EmployeePotrait/>
+                    </div>
+
+                    <div class=" grid grid-cols-1 gap-6">
+
+                        <div class="border border-slate-200 rounded-lg p-6 bg-white shadow-sm mb-6">
+                            <h3 class="text-lg font-bold mb-4">Overview</h3>
+
+                            <div class="grid grid-cols-2 gap-6">
+                                <div>
+                                    <h4 class="font-bold mb-2 text-slate-700">Contact Information</h4>
+                                    <div class="space-y-2 text-sm">
+                                        <p><span class="text-slate-500">Email:</span> {employee.details?.email || 'N/A'}</p>
+                                        <p><span class="text-slate-500">Phone:</span> {employee.details?.phone || 'N/A'}</p>
+                                        <p><span class="text-slate-500">Hire Date:</span> {employee.details?.hireDate || 'N/A'}</p>
+                                        <p><span class="text-slate-500">Salary:</span> {employee.details?.salary || 'N/A'}</p>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <h4 class="font-bold mb-2 text-slate-700">Current Assignment</h4>
+                                    <div class="space-y-2 text-sm">
+                                        <p><span class="text-slate-500">Task:</span> {employee.task}</p>
+                                        <p><span class="text-slate-500">Project:</span> {employee.project}</p>
+                                        <p><span class="text-slate-500">Status:</span> <span class="text-{employee.taskStatus}-600 font-medium">{employee.taskStatus === 'green' ? 'On Track' : employee.taskStatus === 'amber' ? 'At Risk' : employee.taskStatus === 'blue' ? 'In Progress' : 'Delayed'}</span></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {#if employee.details?.notes}
+                                <div class="mt-6 p-3 bg-{employee.warning ? 'amber' : 'blue'}-50 border border-{employee.warning ? 'amber' : 'blue'}-200 rounded">
+                                    <h4 class="font-bold mb-1 text-{employee.warning ? 'amber' : 'blue'}-800">Manager Notes</h4>
+                                    <p class="text-sm text-{employee.warning ? 'amber' : 'blue'}-800">{employee.details.notes}</p>
+                                </div>
+                            {/if}
+                            <div class="mt-6 p-3 bg-{employee.warning ? 'amber' : 'blue'}-50 border border-{employee.warning ? 'amber' : 'blue'}-200 rounded">
+                                <h4 class="font-bold mb-1 text-{employee.warning ? 'amber' : 'blue'}-800">Manager Notes</h4>
+                                <p class="text-sm text-{employee.warning ? 'amber' : 'blue'}-800">{employee.details.notes}</p>
+                            </div> <div class="mt-6 p-3 bg-{employee.warning ? 'amber' : 'blue'}-50 border border-{employee.warning ? 'amber' : 'blue'}-200 rounded">
+                            <h4 class="font-bold mb-1 text-{employee.warning ? 'amber' : 'blue'}-800">Manager Notes</h4>
+                            <p class="text-sm text-{employee.warning ? 'amber' : 'blue'}-800">{employee.details.notes}</p>
+                        </div>
+                        </div>
+                    </div>
+
+                </div>
+                {#if employee.warning}
+                    <div class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-medium flex items-center">
+                        <AlertCircle size={12} class="mr-1" />
+                        Requires Attention
+                    </div>
+                {/if}
             </div>
         </div>
-        {#if employee.warning}
-            <div class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-medium flex items-center">
-                <AlertCircle size={12} class="mr-1" />
-                Requires Attention
-            </div>
-        {/if}
+
+
     </div>
+    <div class="border-t border-gray-300 my-6"></div>
+
+
+
 
     <div class="grid grid-cols-3 gap-6">
         <div class="col-span-2">

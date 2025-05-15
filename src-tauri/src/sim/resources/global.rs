@@ -7,3 +7,6 @@ pub struct TickCounter {
 
 #[derive(Debug, Default)]
 pub struct AssetBasePath(pub PathBuf);
+
+#[derive(Debug, Default)]
+pub 

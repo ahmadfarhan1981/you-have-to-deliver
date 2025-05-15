@@ -1,27 +1,27 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(warnings)]
-mod integrations;
-mod sim;
-mod macros;
 mod config;
+mod integrations;
+mod macros;
+mod sim;
 
-use crate::sim::systems::global::tick_counter_system;
 use crate::sim::resources::global::{AssetBasePath, TickCounter};
-use crate::sim::systems::global::print_person;
+use crate::sim::systems::global::tick_counter_system;
 
-use legion::{Schedule, World, Resources};
+use legion::{Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
 use std::thread;
 use std::time::Duration;
-use tauri::State;
 
 use crate::integrations::ui::{get_tick, AppState};
-use std::sync::{atomic::{AtomicU64, Ordering}, Arc};
-use tauri::Manager;
 use crate::sim::person::systems::generate_employees_system;
-
+use std::sync::{
+    atomic::{AtomicU64, Ordering},
+    Arc,
+};
+use tauri::Manager;
 
 fn main() {
     let tick_shared = Arc::new(AtomicU64::new(0));
@@ -31,10 +31,11 @@ fn main() {
     // === Launch Tauri app ===
     tauri::Builder::default()
         .setup(|app| {
-            let app_handle = app.handle();
-            let path = app.path().resolve("assets", tauri::path::BaseDirectory::Resource)?;
             
-          
+            let app_handle = app.handle();
+            let path = app
+                .path()
+                .resolve("assets", tauri::path::BaseDirectory::Resource)?;
 
             // === Sim thread ===
             thread::spawn(move || {
@@ -46,8 +47,6 @@ fn main() {
                 // Insert Arc into resources so ECS systems can sync to it
                 resources.insert(tick_clone);
                 resources.insert(AssetBasePath(path));
-
-
 
                 // Startup schedule, add run once systems here.
                 let mut startup = Schedule::builder()
