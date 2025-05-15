@@ -1,10 +1,13 @@
+use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use legion::system;
+use crate::integrations::ui::AppState;
 use crate::sim::{person::stats::Stats, person::components::Person, resources::global::TickCounter};
 use crate::sim::person::components::ProfilePicture;
 
 #[system]
-pub fn tick_counter(#[resource] mut counter: &mut TickCounter) {
-    counter.tick += 1;
+pub fn tick_counter(#[resource] app_state: &Arc<AppState>) {
+    app_state.tick.fetch_add(1, Ordering::Relaxed);
     // println!("tick {}", counter.tick);
 }
 
