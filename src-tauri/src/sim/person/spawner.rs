@@ -1,19 +1,15 @@
+use rand::{thread_rng, Rng};
+use rand_distr::{Distribution, Normal};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
-use std::path::{Path, PathBuf};
-use rand::{thread_rng, Rng};
-use rand_distr::{Normal, Distribution};
-use serde::de::IntoDeserializer;
-use serde::{Deserialize, Serialize};
+use std::path::Path;
 
-use crate::sim::person;
 use crate::sim::person::components::{Gender, PersonId};
 use crate::sim::resources::global::AssetBasePath;
 use rand::seq::IteratorRandom;
 
 use super::components::Person;
 use super::stats::Stats;
-
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: u16, max: u16) -> u16 {
     let normal = Normal::new(mean, std_dev).unwrap();
@@ -28,7 +24,7 @@ pub fn bounded_normal(mean: f64, std_dev: f64, min: u16, max: u16) -> u16 {
 
     // Escape hatch: clamp after 10 failed tries
     let fallback = normal.sample(&mut rng).round();
-    return (fallback.clamp(min.into(), max.into()) as u16 );
+    return (fallback.clamp(min.into(), max.into()) as u16);
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -44,16 +40,15 @@ pub enum TalentGrade {
 impl TalentGrade {
     pub fn stat_distribution(self) -> (f64, f64) {
         match self {
-            TalentGrade::Basic       => (45.0, 20.0), // Lots of weak stats, occasional spikes
-            TalentGrade::Apt         => (55.0, 15.0),
-            TalentGrade::Sharp       => (65.0, 12.0),
-            TalentGrade::Gifted      => (75.0, 9.0),
-            TalentGrade::Brilliant   => (85.0, 6.0),
-            TalentGrade::Exceptional => (93.0, 4.0),  // Near-perfect, but not boringly maxed
+            TalentGrade::Basic => (45.0, 20.0), // Lots of weak stats, occasional spikes
+            TalentGrade::Apt => (55.0, 15.0),
+            TalentGrade::Sharp => (65.0, 12.0),
+            TalentGrade::Gifted => (75.0, 9.0),
+            TalentGrade::Brilliant => (85.0, 6.0),
+            TalentGrade::Exceptional => (93.0, 4.0), // Near-perfect, but not boringly maxed
         }
     }
 }
-
 
 pub fn get_random_line_from_file(asset_path: AssetBasePath) -> Option<String> {
     // Build full path to names/first.txt
@@ -82,8 +77,6 @@ enum NameParts {
     Last,
 }
 
-
-
 pub enum NameDictionary {
     Male,
     Female,
@@ -100,13 +93,16 @@ impl NameDictionary {
     }
 }
 
-
 pub fn generate_full_name(gender: &Gender, asset_path: &AssetBasePath) -> Option<String> {
     let first = generate_name_part(gender, &NameParts::First, &asset_path)?;
     let last = generate_name_part(gender, &NameParts::Last, &asset_path)?;
     Some(format!("{} {}", first, last))
 }
-pub fn generate_name_part(gender: &Gender, part: &NameParts, asset_path: &AssetBasePath) -> Option<String> {
+pub fn generate_name_part(
+    gender: &Gender,
+    part: &NameParts,
+    asset_path: &AssetBasePath,
+) -> Option<String> {
     let base_path = Path::new(&asset_path.0);
 
     let filename = if *part == NameParts::First {
@@ -121,9 +117,11 @@ pub fn generate_name_part(gender: &Gender, part: &NameParts, asset_path: &AssetB
     let file_path = base_path.join("dictionaries").join("names").join(filename);
     println!("Resolved file path: {:?}", file_path);
 
-    let file = File::open(&file_path).map_err(|e| {
-        eprintln!("Failed to open file {:?}: {}", file_path, e);
-    }).ok()?;
+    let file = File::open(&file_path)
+        .map_err(|e| {
+            eprintln!("Failed to open file {:?}: {}", file_path, e);
+        })
+        .ok()?;
 
     let reader = BufReader::new(file);
     let mut rng = thread_rng();
@@ -137,7 +135,6 @@ pub fn generate_name_part(gender: &Gender, part: &NameParts, asset_path: &AssetB
     line
 }
 
-
 pub fn random_gender() -> Gender {
     let mut rng = rand::thread_rng();
     if rng.gen_bool(0.5) {
@@ -146,7 +143,6 @@ pub fn random_gender() -> Gender {
         Gender::Female
     }
 }
-
 
 fn generate_stats(tier: TalentGrade) -> Stats {
     let (mean, std_dev) = tier.stat_distribution();
@@ -194,17 +190,14 @@ fn generate_stats(tier: TalentGrade) -> Stats {
     }
 }
 
-
-pub fn spawn_person(tier:TalentGrade, asset_path: &AssetBasePath) -> (Person, Stats) {
+pub fn spawn_person(tier: TalentGrade, asset_path: &AssetBasePath) -> (Person, Stats) {
     println!("Spawning person");
     let gender = random_gender();
-     let person = Person {
-         gender: gender,
-         name: generate_full_name(&gender, &asset_path).expect("Cannot generate full name"),
+    let person = Person {
+        gender: gender,
+        name: generate_full_name(&gender, &asset_path).expect("Cannot generate full name"),
         person_id: PersonId(1),
-     
     };
     let stats = generate_stats(tier);
     return (person, stats);
-    
 }
