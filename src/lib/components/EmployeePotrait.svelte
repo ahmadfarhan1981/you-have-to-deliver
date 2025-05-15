@@ -1,8 +1,8 @@
 <script>
     export let gender = "f";
-    export let category = 1;//1 index , yeah ..
-    export let batch = 2;
-    export let index = 8;// 0 index
+    export let category = 2;//1 index , yeah ..
+    export let batch = 1;
+    export let index = 7;// 0 index
 
     // Sanitize gender
     const safeGender = gender === "f" ? "f" : "m";

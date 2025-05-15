@@ -1,13 +1,14 @@
+use std::collections::HashMap;
 use rand::{thread_rng, Rng};
 use rand_distr::{Distribution, Normal};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-
-use crate::sim::person::components::{Gender, PersonId};
+use dashmap::DashSet;
+use crate::sim::person::components::{Gender, PersonId, ProfilePicture, ProfilePictureCategory};
 use crate::sim::resources::global::AssetBasePath;
 use rand::seq::IteratorRandom;
-
+use strum::IntoEnumIterator;
 use super::components::Person;
 use super::stats::Stats;
 
@@ -190,7 +191,47 @@ fn generate_stats(tier: TalentGrade) -> Stats {
     }
 }
 
-pub fn spawn_person(tier: TalentGrade, asset_path: &AssetBasePath) -> (Person, Stats) {
+fn generate_profile_picture(gender: Gender, used_picture_set: &DashSet<ProfilePicture>) -> ProfilePicture {
+    // HARDCODED DEBUG VALUES. This block should not be change. TODO Externalize these values.
+    let mut last_portrait = HashMap::new();
+    last_portrait.insert( (Gender::Female, ProfilePictureCategory::Office), 4);
+    last_portrait.insert((Gender::Female, ProfilePictureCategory::Social), 1);
+    last_portrait.insert((Gender::Male, ProfilePictureCategory::Office), 3);
+    last_portrait.insert(( Gender::Male, ProfilePictureCategory::Social), 1);
+    let MAX_ATTEMPTS = 10;
+
+
+
+    let mut rng = rand::thread_rng();
+    let mut profile_picture = ProfilePicture::default();
+    for _ in 0..MAX_ATTEMPTS {
+
+        let random_category = if rng.gen_range(0..100) < 70 {
+            ProfilePictureCategory::Office
+        } else {
+            ProfilePictureCategory::Social
+        };
+
+        let last_batch_key =(gender, random_category);
+        let last_batch_number = *last_portrait.get(&last_batch_key).unwrap();
+        let batch_id = rng.random_range(1..=last_batch_number);
+        let random_index = rng.random_range(0..=8);
+
+        profile_picture = ProfilePicture{
+            gender: gender,
+            category: random_category,
+            batch: batch_id,
+            index: random_index
+        };
+        if used_picture_set.insert(profile_picture){
+            return profile_picture;
+        }
+    }
+    profile_picture
+
+}
+
+pub fn spawn_person(tier: TalentGrade, asset_path: &AssetBasePath, used_portraits: &DashSet<ProfilePicture>) -> (Person, Stats, ProfilePicture) {
     println!("Spawning person");
     let gender = random_gender();
     let person = Person {
@@ -198,6 +239,9 @@ pub fn spawn_person(tier: TalentGrade, asset_path: &AssetBasePath) -> (Person, S
         name: generate_full_name(&gender, &asset_path).expect("Cannot generate full name"),
         person_id: PersonId(1),
     };
+
+
+    let profile_picture = generate_profile_picture(gender, used_portraits);
     let stats = generate_stats(tier);
-    return (person, stats);
+    return (person, stats, profile_picture);
 }

@@ -17,16 +17,22 @@ use std::time::Duration;
 
 use crate::integrations::ui::{get_tick, AppState};
 use crate::sim::person::systems::generate_employees_system;
+use crate::sim::person::components::ProfilePicture;
 use std::sync::{
     atomic::{AtomicU64, Ordering},
     Arc,
+
 };
+use dashmap::DashSet;
 use tauri::Manager;
 
 fn main() {
     let tick_shared = Arc::new(AtomicU64::new(0));
     // Clone for ECS thread
     let tick_clone = tick_shared.clone();
+    let used_portrait= DashSet::<ProfilePicture>::new();
+
+
 
     // === Launch Tauri app ===
     tauri::Builder::default()
@@ -47,6 +53,7 @@ fn main() {
                 // Insert Arc into resources so ECS systems can sync to it
                 resources.insert(tick_clone);
                 resources.insert(AssetBasePath(path));
+                resources.insert(used_portrait);
 
                 // Startup schedule, add run once systems here.
                 let mut startup = Schedule::builder()
