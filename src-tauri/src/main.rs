@@ -21,23 +21,24 @@ use crate::sim::person::components::ProfilePicture;
 use std::sync::{
     atomic::{AtomicU64, Ordering},
     Arc,
-
 };
 use dashmap::DashSet;
 use tauri::Manager;
+use crate::sim::person::registry::PersonRegistry;
 
 fn main() {
-    let tick_shared = Arc::new(AtomicU64::new(0));
+    // Create a properly shared AppState
+    let ui_app_state = Arc::new(AppState::default());
+
     // Clone for ECS thread
-    let tick_clone = tick_shared.clone();
-    let used_portrait= DashSet::<ProfilePicture>::new();
+    let sim_app_state = Arc::clone(&ui_app_state);
 
-
+    // Used by person generation to prevent duplicate profile picture
+    let used_portrait = DashSet::<ProfilePicture>::new();
 
     // === Launch Tauri app ===
     tauri::Builder::default()
         .setup(|app| {
-            
             let app_handle = app.handle();
             let path = app
                 .path()
@@ -51,13 +52,13 @@ fn main() {
                 resources.insert(TickCounter { tick: 0 });
 
                 // Insert Arc into resources so ECS systems can sync to it
-                resources.insert(tick_clone);
+                resources.insert(sim_app_state);  // Insert the cloned Arc
                 resources.insert(AssetBasePath(path));
                 resources.insert(used_portrait);
+                resources.insert(Arc::new(PersonRegistry::new()));
 
                 // Startup schedule, add run once systems here.
                 let mut startup = Schedule::builder()
-                    //.add_system(load_employee_system())
                     .add_system(generate_employees_system())
                     .build();
 
@@ -69,12 +70,12 @@ fn main() {
 
                 startup.execute(&mut world, &mut resources);
                 loop {
+                    // Execute tick
                     schedule.execute(&mut world, &mut resources);
 
                     let tick = resources.get::<TickCounter>().unwrap().tick;
 
                     // Extract and sync tick
-                    // let tick = resources.get::<TickCounter>().map(|t| t.tick).unwrap_or(0);
                     if let Some(arc) = resources.get::<Arc<AtomicU64>>() {
                         arc.store(tick, Ordering::Relaxed);
                     }
@@ -85,7 +86,7 @@ fn main() {
 
             Ok(())
         })
-        .manage(AppState { tick: tick_shared })
+        .manage(ui_app_state)  // Pass the original Arc
         .invoke_handler(tauri::generate_handler![get_tick])
         .run(tauri::generate_context!())
         .expect("error running tauri app");
