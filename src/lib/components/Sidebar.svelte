@@ -10,6 +10,7 @@
         SkipForward,
         Users
     } from "lucide-svelte";
+    import {tabs} from '$lib/stores/ui_states.js'
     let simulationSpeed = "1x";
     function changeSpeed(event) {
         simulationSpeed = event.target.value;
@@ -51,7 +52,9 @@
             <div class="space-y-1">
                 <button
                         class="flex items-center w-full px-3 py-2 rounded {activeView === 'Dashboard' ? 'bg-slate-700 text-slate-100' : 'hover:bg-slate-700 text-slate-300'}"
-                        on:click={() => navigateTo('Dashboard')}
+                        on:click={() =>{
+
+                        } }
                 >
                     <LayoutDashboard size={16} class="mr-2" />
                     <span>Dashboard</span>

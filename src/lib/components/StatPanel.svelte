@@ -1,12 +1,7 @@
 <script lang="ts">
     import type { StatsSnapshot } from '$lib/stores/employees';
     export let stats: StatsSnapshot;
-</script>
-
-<div class="border border-slate-200 rounded-lg p-6 bg-white shadow-sm mb-6">
-    <h3 class="text-lg font-bold mb-4">Skills & Attributes</h3>
-
-    {#each [
+    let stast_definition = [
         {
             group: 'Cognition',
             items: [
@@ -42,8 +37,14 @@
                 { label: 'Adaptability', key: 'adaptability', class: 'bg-indigo-500' }
             ]
         }
-    ] as group}
-        <div class="mb-4">
+    ];
+</script>
+
+<div class="border border-slate-200 rounded-lg p-6 bg-white shadow-sm mb-6">
+    <h3 class="text-lg font-bold mb-4">Skills & Attributes</h3>
+
+    {#each stast_definition as group}
+        <div class="mb-4 ">
             <h4 class="text-sm font-semibold text-slate-600 mb-2">{group.group}</h4>
             <div class="space-y-4">
                 {#each group.items as item}
