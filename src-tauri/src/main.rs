@@ -7,7 +7,7 @@ mod macros;
 mod sim;
 
 use crate::sim::resources::global::{AssetBasePath, TickCounter};
-use crate::sim::systems::global::{increase_sim_tick_system, push_tick_counter_to_integration_system};
+use crate::sim::systems::global::increase_sim_tick_system;
 
 use legion::{Resources, Schedule, World};
 use sim::systems::global::print_person_system;
@@ -15,16 +15,14 @@ use sim::systems::global::print_person_system;
 use std::thread;
 use std::time::Duration;
 
-use crate::integrations::ui::{get_tick, AppState};
-use crate::sim::person::systems::generate_employees_system;
+use crate::integrations::systems::{clear_person_list_system, print_person_list_system, push_persons_to_integration_system, push_tick_counter_to_integration_system};
+use crate::integrations::ui::{get_persons, get_tick, AppState};
 use crate::sim::person::components::ProfilePicture;
-use std::sync::{
-    atomic::{AtomicU64, Ordering},
-    Arc,
-};
-use dashmap::DashSet;
-use tauri::Manager;
 use crate::sim::person::registry::PersonRegistry;
+use crate::sim::person::systems::generate_employees_system;
+use dashmap::DashSet;
+use std::sync::Arc;
+use tauri::Manager;
 
 fn main() {
     // Create a properly shared AppState
@@ -32,10 +30,10 @@ fn main() {
     // Clone for ECS thread
     let sim_app_state = Arc::clone(&ui_app_state);
 
-    // Used by person generation to prevent duplicate profile picture
+    // Used by person generation to prevent duplicate profile picture. no arc, only used in sim
     let used_portrait = DashSet::<ProfilePicture>::new();
 
-    let tick_counter = Arc::new(TickCounter { tick: 0.into() });
+    let tick_counter = Arc::new(TickCounter::default() );
 
     // === Launch Tauri app ===
     tauri::Builder::default()
@@ -72,14 +70,24 @@ fn main() {
                     .add_system(print_person_system())
                     .build();
 
+                //integration
+                let mut pre_integration = Schedule::builder()
+                    .add_system(clear_person_list_system())
+                    .build();
                 let mut integration_loop = Schedule::builder()//Integration loop, add systems that updates the gui app state in this loop. this loop might run slower than the main loop
                     .add_system(push_tick_counter_to_integration_system())
+                    .add_system(push_persons_to_integration_system())
                     .build();
-
+                let mut post_integration = Schedule::builder()
+                    .add_system(print_person_list_system())
+                    .build();
                 startup.execute(&mut world, &mut resources);
                 loop {
                     sim_loop.execute(&mut world, &mut resources);// Execute main sim loop
+
+                    pre_integration.execute(&mut world, &mut resources);
                     integration_loop.execute(&mut world, &mut resources);//execute the integration loop that syncs to the integration state
+                    post_integration.execute(&mut world, &mut resources);
                     thread::sleep(Duration::from_millis(500));
                 }
             });
@@ -87,7 +95,7 @@ fn main() {
             Ok(())
         })
         .manage(ui_app_state)  // Pass the original Arc
-        .invoke_handler(tauri::generate_handler![get_tick])
+        .invoke_handler(tauri::generate_handler![get_tick,get_persons])
         .run(tauri::generate_context!())
         .expect("error running tauri app");
 }
