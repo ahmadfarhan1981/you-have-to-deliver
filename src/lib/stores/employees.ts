@@ -41,7 +41,7 @@ export type PersonSnapshot = {
 
 export const employees = writable<PersonSnapshot[]>([]);
 
-function pollEmployees() {
+async function pollEmployees() {
     async function fetch() {
         try {
             const result = await invoke<Record<number, PersonSnapshot>>("get_persons");
@@ -51,10 +51,10 @@ function pollEmployees() {
         }
     }
 
-    fetch(); // Initial call
+    await fetch(); // Initial call
     const interval = setInterval(fetch, 5000);
 
     return () => clearInterval(interval); // For manual teardown if needed
 }
 
-pollEmployees(); // Start polling immediately when the module is loaded
+await pollEmployees(); // Start polling immediately when the module is loaded

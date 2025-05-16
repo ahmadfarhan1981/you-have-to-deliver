@@ -1,61 +1,97 @@
 <script lang="ts">
-  import {tick} from '$lib/stores/tick';
+  import { tick } from '$lib/stores/tick';
 
-  import {onMount} from 'svelte';
-  import {ChevronDown, ChevronRight, Plus, Settings, X} from 'lucide-svelte';
+  import { onMount } from 'svelte';
+  import { 
+    Activity, AlertCircle, BarChart2, Bell, Calendar, 
+    ChevronDown, ChevronRight, Clock, Code, Coffee, 
+    CreditCard, HelpCircle, Info, LayoutDashboard, 
+    MessageSquare, Pause, Play, Plus, Settings, 
+    SkipForward, Smile, User, Users, X
+  } from 'lucide-svelte';
 
-  import {expandedTeams, activeView} from '$lib/stores/ui_states'
-  import { tabState,activeTab } from '$lib/stores/TabStore'
+  // State management
+  let tabs = [
+    { id: "overview", title: "Overview", type: "system" },
+    { id: "reports", title: "Reports", type: "system" }
+  ];
+  let activeTabId = "overview";
+  let expandedTeams = {
+    "Development Team": true,
+    "QA Team": false,
+    "Business Analyst Team": false,
+    "Management Team": false
+  };
+
+
+  let activeView = "Dashboard";
+  let nextTabId = 1;
+
   // Employee data
-  import {employees} from "$lib/mock/mock.js";
-  import {employees as emps} from '$lib/stores/employees';
-  import Sidebar from "$lib/components/Sidebar.svelte"
-  import StatusBar from "$lib/components/StatusBar.svelte";
-  import ReportDashboard from "$lib/components/ReportDashboard.svelte";
-  import EmployeeRow from "$lib/components/EmployeeRow.svelte";
-  import EmployeeDetails from "$lib/components/EmployeeDetails.svelte";
-  import TopBar from "$lib/components/TopBar.svelte";
-  import {get} from "svelte/store";
-
+  import {employees} from "$lib/mock/mock.js" ;
+  import { employees as emps }  from '$lib/stores/employees' ;
   let es = get(emps);
 
   // Tab management
+  function switchTab(tabId) {
+    activeTabId = tabId;
+  }
 
+  function closeTab(tabId) {
+    const index = tabs.findIndex(tab => tab.id === tabId);
+    if (index !== -1) {
+      tabs = tabs.filter(tab => tab.id !== tabId);
+      
+      // If we're closing the active tab, switch to another tab
+      if (activeTabId === tabId) {
+        // Try to activate the tab to the left, or the first tab if there's no tab to the left
+        if (index > 0) {
+          activeTabId = tabs[index - 1].id;
+        } else if (tabs.length > 0) {
+          activeTabId = tabs[0].id;
+        }
+      }
+    }
+  }
 
+  function addNewTab() {
+    const newTabId = `new-tab-${nextTabId++}`;
+    tabs = [...tabs, { id: newTabId, title: "New Tab", type: "system" }];
+    activeTabId = newTabId;
+  }
 
   // Team expansion toggle
   function toggleTeam(team) {
-    $expandedTeams[team] = !$expandedTeams[team];
+    expandedTeams[team] = !expandedTeams[team];
   }
 
   // Employee selection - opens in a new tab
   function openEmployeeTab(employee) {
-    tabState.openEmployeeTab()
-    // // Check if this employee already has an open tab
-    // const existingTab = $tabs.find(tab => tab.type === "employee" && tab.employeeId === employee.id);
-    //
-    // if (existingTab) {
-    //   // If tab already exists, just switch to it
-    //   $activeTabId = existingTab.id;
-    // } else {
-    //   // Create a new tab for this employee
-    //   const newTabId = `employee-${employee.id}`;
-    //   $tabs = [...$tabs, {
-    //     id: newTabId,
-    //     title: employee.name,
-    //     type: "employee",
-    //     employeeId: employee.id,
-    //     employee: employee
-    //   }];
-    //   $activeTabId = newTabId;
-    // }
+    // Check if this employee already has an open tab
+    const existingTab = tabs.find(tab => tab.type === "employee" && tab.employeeId === employee.id);
+
+    if (existingTab) {
+      // If tab already exists, just switch to it
+      activeTabId = existingTab.id;
+    } else {
+      // Create a new tab for this employee
+      const newTabId = `employee-${employee.id}`;
+      tabs = [...tabs, {
+        id: newTabId,
+        title: employee.name,
+        type: "employee",
+        employeeId: employee.id,
+        employee: employee
+      }];
+      activeTabId = newTabId;
+    }
   }
 
 
 
   // Navigation
   function navigateTo(view) {
-    $activeView = view;
+    activeView = view;
     // In a real app, this would change the content displayed
   }
 
@@ -81,8 +117,15 @@
     };
   });
 
-  $: console.log('Reactive activeTab:', $activeTab);
-  // openEmployeeTab(employees["Development Team"][1]);
+  import Sidebar from "$lib/components/Sidebar.svelte"
+  import StatusBar from "$lib/components/StatusBar.svelte";
+  import ReportDashboard from "$lib/components/ReportDashboard.svelte";
+  import EmployeeRow from "$lib/components/EmployeeRow.svelte";
+  import EmployeeDetails from "$lib/components/EmployeeDetails.svelte";
+  import TopBar from "$lib/components/TopBar.svelte";
+  import {get} from "svelte/store";
+
+   openEmployeeTab(employees["Development Team"][1]);
 </script>
 
 <div class="flex h-screen w-full bg-slate-100 font-mono text-sm">
@@ -95,31 +138,29 @@
     <TopBar />
 
     <!-- Tabs -->
-
     <div class="bg-slate-700 border-b border-slate-300 flex overflow-x-auto">
-      {#each $tabState.tabs as tab}
+      {#each tabs as tab}
         <div 
-          class="px-4 py-2 {tab.isActive ? 'bg-slate-900' : ''} border-r border-slate-300 font-medium flex items-center whitespace-nowrap"
-          on:click={() =>  tabState.setActiveTab(tab)}
+          class="px-4 py-2 {activeTabId === tab.id ? 'bg-slate-900' : ''} border-r border-slate-300 font-medium flex items-center whitespace-nowrap"
+          on:click={() => switchTab(tab.id)}
         >
           <span>{tab.title}</span>
           <button 
             class="ml-2 text-slate-400 hover:text-slate-600"
-            on:click|stopPropagation={() => tabState.removeTab(tab)}
+            on:click|stopPropagation={() => closeTab(tab.id)}
           >
             <X size={14} />
           </button>
         </div>
       {/each}
-      <button class="px-3 py-2 text-slate-600 hover:bg-slate-300" on:click={()=>tabState.addSystemTab("overview")}>
+      <button class="px-3 py-2 text-slate-600 hover:bg-slate-300" on:click={addNewTab}>
         <Plus size={16} />
       </button>
     </div>
-<!--    <h2>Test{JSON.stringify($tabState.tabs)}</h2>-->
-<!--    <h2>Test1{JSON.stringify(get(tabState.activeTabId))}</h2>-->
+
     <!-- Main Grid Area -->
     <div class="flex-1 overflow-auto bg-slate-400">
-      {#if $activeTab?.id === "overview"}
+      {#if activeTabId === "overview"}
         <!-- Team Sections -->
         {#each Object.keys(employees) as team}
           <div class="border-b border-slate-200">
@@ -127,7 +168,7 @@
               class="flex items-center p-2 bg-slate-600 cursor-pointer hover:bg-slate-900"
               on:click={() => toggleTeam(team)}
             >
-              {#if $expandedTeams[team]}
+              {#if expandedTeams[team]}
                 <ChevronDown size={16} class="mr-2 text-slate-500" />
               {:else}
                 <ChevronRight size={16} class="mr-2 text-slate-500" />
@@ -144,7 +185,7 @@
               </div>
             </div>
 
-            {#if $expandedTeams[team]}
+            {#if expandedTeams[team]}
               <!-- Table Header -->
               <div class="grid grid-cols-12 gap-1 px-2 py-1 bg-slate-200 text-xs font-bold text-slate-600 border-y border-slate-300">
                 <div class="col-span-2 flex items-center">Employee</div>
@@ -168,13 +209,13 @@
             {/if}
           </div>
         {/each}
-      {:else if $activeTab?.id === "reports"}
+      {:else if activeTabId === "reports"}
         <ReportDashboard />
       {:else}
         <!-- Employee Detail Tab -->
-        {#if $activeTab?.type === "person"}
-          {@const currentTab = $activeTab}
-          {@const employee = employees["Development Team"][0]}
+        {#if tabs.find(tab => tab.id === activeTabId)?.type === "employee"}
+          {@const currentTab = tabs.find(tab => tab.id === activeTabId)}
+          {@const employee = currentTab.employee}
           
           <EmployeeDetails employee={employee} />
         {:else}
