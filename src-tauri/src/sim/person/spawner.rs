@@ -119,7 +119,6 @@ pub fn generate_name_part(
     };
 
     let file_path = base_path.join("dictionaries").join("names").join(filename);
-    println!("Resolved file path: {:?}", file_path);
 
     let file = File::open(&file_path)
         .map_err(|e| {

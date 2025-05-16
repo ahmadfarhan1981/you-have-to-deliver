@@ -5321,6 +5321,7 @@ version = "0.1.0"
 dependencies = [
  "dashmap",
  "legion",
+ "parking_lot 0.12.3",
  "rand 0.9.1",
  "rand_distr",
  "serde",
