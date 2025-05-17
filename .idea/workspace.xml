@@ -20,11 +20,11 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Rust File" />
         <option value="StatPanel" />
         <option value="EmployeeList" />
         <option value="EmployeeDetail" />
         <option value="TypeScript File" />
+        <option value="Rust File" />
       </list>
     </option>
   </component>
@@ -55,7 +55,7 @@
     &quot;RunOnceActivity.rust.reset.selective.auto.import&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;develop&quot;,
     &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;D:/projects/you-have-to-deliver/src/lib/components/backup&quot;,
+    &quot;last_opened_file_path&quot;: &quot;D:/projects/you-have-to-deliver/src/routes&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -78,9 +78,12 @@
 }</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\projects\you-have-to-deliver\src\lib\components\backup" />
       <recent name="D:\projects\you-have-to-deliver\src\routes" />
+      <recent name="D:\projects\you-have-to-deliver\src\lib\components\backup" />
       <recent name="C:\Work\Project\you-have-to-deliver\src\lib\components" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="D:\projects\you-have-to-deliver\static\images\bg" />
     </key>
   </component>
   <component name="RsExternalLinterProjectSettings">
@@ -101,7 +104,9 @@
       <workItem from="1747356390678" duration="4809000" />
       <workItem from="1747386614308" duration="12468000" />
       <workItem from="1747404595052" duration="14525000" />
-      <workItem from="1747440693295" duration="7816000" />
+      <workItem from="1747440693295" duration="16502000" />
+      <workItem from="1747459989780" duration="5359000" />
+      <workItem from="1747473749493" duration="4394000" />
     </task>
     <servers />
   </component>
@@ -118,5 +123,16 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src-tauri/src/sim/person/spawner.rs</url>
+          <line>210</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

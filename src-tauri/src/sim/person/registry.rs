@@ -1,8 +1,7 @@
-use std::collections::HashMap;
-use std::sync::atomic::{AtomicU32, Ordering};
-use dashmap::DashMap;
 use super::components::PersonId;
+use dashmap::DashMap;
 use legion::world::Entity;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 #[derive(Default)]
 pub struct PersonRegistry {
