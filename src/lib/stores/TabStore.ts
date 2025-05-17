@@ -1,6 +1,5 @@
-import { writable, get, derived } from 'svelte/store';
-import type { PersonSnapshot } from '$lib/stores/employees';
-import {npm_config_node_gyp} from "$env/static/private";
+import {derived, get, writable} from 'svelte/store';
+import type {PersonSnapshot} from '$lib/stores/persons';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 

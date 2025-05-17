@@ -1,6 +1,5 @@
-
-import {derived, type Writable, writable} from 'svelte/store';
-import type { PersonSnapshot } from './employees';
+import {derived, writable} from 'svelte/store';
+import type {PersonSnapshot} from './persons';
 
 export const selectedEmployee = writable<PersonSnapshot | null>(null);
 export type TabType = 'system' | 'employee';

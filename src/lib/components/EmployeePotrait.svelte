@@ -1,32 +1,13 @@
-<script>
-    export let gender = "f";
-    export let category = 2;//1 index , yeah ..
-    export let batch = 1;
-    export let index = 7;// 0 index
-
-    // Sanitize gender
-    const safeGender = gender === "f" ? "f" : "m";
-
-    // Clamp and zero-pad category and batch
-    const pad = (num) => String(Math.min(99, Math.max(0, Math.floor(num)))).padStart(2, "0");
-    const catStr = pad(category);
-    const batchStr = pad(batch);
-
-    // Clamp index
-    const safeIndex = index >= 0 && index <= 8 ? index : 0;
-
-    // Build filename
-    const fileName = `${safeGender}${catStr}${batchStr}.png`;
-    const fullImagePath = `/images/${fileName}`;
-
-    // Compute position in grid
-    const getPosition = (i) => {
-        const col = i % 3;
-        const row = Math.floor(i / 3);
-        const x = col * 50;
-        const y = row * 50;
-        return `${x}% ${y}%`;
-    };
+<script lang="ts">
+    import {getProfileImageData, type PersonSnapshot} from "$lib/stores/persons";
+    export let person:PersonSnapshot
+    let fileName = "";
+    let position = "";
+    $: {
+        const result = getProfileImageData(person.profile_picture);
+        fileName = `/images/${result.fileName}`;
+        position = result.position;
+    }
 </script>
 
 <style>
@@ -53,8 +34,8 @@
             <div
                     class="portrait-tile"
                     style="
-                  background-image: url({fullImagePath});
-                  background-position: {getPosition(safeIndex)};
+                  background-image: url({fileName});
+                  background-position: {position};
         "
             ></div>
 
@@ -65,6 +46,6 @@
 
     <!-- Excellence badge -->
     <div class="absolute -top-2 -right-2 bg-gradient-to-r from-amber-500 to-yellow-400 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-        Excellence
+        {person.name}
     </div>
 </div>
