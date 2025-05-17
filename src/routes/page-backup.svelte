@@ -29,7 +29,7 @@
 
   // Employee data
   import {employees} from "$lib/mock/mock.js" ;
-  import { employees as emps }  from '$lib/stores/employees' ;
+  import { persons as emps }  from '$lib/stores/persons' ;
   let es = get(emps);
 
   // Tab management

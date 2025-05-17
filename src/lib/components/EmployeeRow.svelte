@@ -1,11 +1,11 @@
 <script lang="ts">
     import { AlertCircle, Coffee, Info, MessageSquare, Smile, Activity } from "lucide-svelte";
-    import type { PersonSnapshot } from "$lib/stores/employees";
+    import type { PersonSnapshot } from "$lib/stores/persons";
     import {tabState} from "$lib/stores/TabStore";
 
     export let person: PersonSnapshot;
     export let openEmployeeTab;
-    export let employee;
+
     // Compute group averages
     const avg = (a: number, b: number) => Math.round((a + b) / 2);
     const social = avg(person.stats.empathy, person.stats.communication);

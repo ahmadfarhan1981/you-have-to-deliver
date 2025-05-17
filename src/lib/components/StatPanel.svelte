@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { StatsSnapshot } from '$lib/stores/employees';
+    import type { StatsSnapshot } from '$lib/stores/persons';
     export let stats: StatsSnapshot;
     let stast_definition = [
         {

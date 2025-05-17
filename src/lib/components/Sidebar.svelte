@@ -1,7 +1,8 @@
 <script>
     import {
         BarChart2,
-        Code, CreditCard,
+        Code,
+        CreditCard,
         HelpCircle,
         LayoutDashboard,
         Pause,
@@ -10,7 +11,7 @@
         SkipForward,
         Users
     } from "lucide-svelte";
-    import {tabs} from '$lib/stores/ui_states.js'
+
     let simulationSpeed = "1x";
     function changeSpeed(event) {
         simulationSpeed = event.target.value;

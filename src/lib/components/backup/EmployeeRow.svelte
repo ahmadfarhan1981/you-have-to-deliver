@@ -1,7 +1,7 @@
 <script lang="ts">
     import {Activity, AlertCircle, Coffee, Info, MessageSquare, Smile} from "lucide-svelte";
     import {get} from "svelte/store";
-    import {employees, type PersonSnapshot} from "$lib/stores/employees.js";
+    import {persons, type PersonSnapshot} from "$lib/stores/persons.js";
     export let employee;
     export let openEmployeeTab;
 

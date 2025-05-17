@@ -8,7 +8,7 @@
   import { tabState,activeTab } from '$lib/stores/TabStore'
   // Employee data
   import {employees} from "$lib/mock/mock.js";
-  import {employees as emps} from '$lib/stores/employees';
+  import {personArray as emps} from '$lib/stores/persons';
   import Sidebar from "$lib/components/Sidebar.svelte"
   import StatusBar from "$lib/components/StatusBar.svelte";
   import ReportDashboard from "$lib/components/ReportDashboard.svelte";
@@ -16,10 +16,10 @@
   import EmployeeDetails from "$lib/components/EmployeeDetails.svelte";
   import TopBar from "$lib/components/TopBar.svelte";
   import {get} from "svelte/store";
+  import {teamManager, teams, personToTeam, teamToPersons, unassignedPersons, teamSizes} from '$lib/stores/teams'
 
   let es = get(emps);
 
-  // Tab management
 
 
 
@@ -30,6 +30,7 @@
 
   // Employee selection - opens in a new tab
   function openEmployeeTab(employee) {
+
     tabState.openEmployeeTab()
     // // Check if this employee already has an open tab
     // const existingTab = $tabs.find(tab => tab.type === "employee" && tab.employeeId === employee.id);
@@ -81,8 +82,7 @@
     };
   });
 
-  $: console.log('Reactive activeTab:', $activeTab);
-  // openEmployeeTab(employees["Development Team"][1]);
+
 </script>
 
 <div class="flex h-screen w-full bg-slate-100 font-mono text-sm">
@@ -121,19 +121,19 @@
     <div class="flex-1 overflow-auto bg-slate-400">
       {#if $activeTab?.id === "overview"}
         <!-- Team Sections -->
-        {#each Object.keys(employees) as team}
+        {#each $teams as team}
           <div class="border-b border-slate-200">
             <div
               class="flex items-center p-2 bg-slate-600 cursor-pointer hover:bg-slate-900"
-              on:click={() => toggleTeam(team)}
+              on:click={()=>teamManager.toggleTeamExpanded(team.id)}
             >
-              {#if $expandedTeams[team]}
+              {#if team.expanded }
                 <ChevronDown size={16} class="mr-2 text-slate-500" />
               {:else}
                 <ChevronRight size={16} class="mr-2 text-slate-500" />
               {/if}
-              <h2 class="font-bold">{team}</h2>
-              <span class="ml-2 text-xs text-slate-500">({employees[team].length} {employees[team].length === 1 ? 'member' : 'members'})</span>
+              <h2 class="font-bold">{team.name}</h2>
+              <span class="ml-2 text-xs text-slate-500">({ $teamSizes.get(team.id)} {$teamSizes.get(team.id) === 1 ? 'member' : 'members'})</span>
               <div class="ml-auto flex items-center space-x-2">
                 <button class="p-1 hover:bg-slate-500 rounded">
                   <Plus size={14} />
@@ -144,7 +144,7 @@
               </div>
             </div>
 
-            {#if $expandedTeams[team]}
+            {#if team.expanded}
               <!-- Table Header -->
               <div class="grid grid-cols-12 gap-1 px-2 py-1 bg-slate-200 text-xs font-bold text-slate-600 border-y border-slate-300">
                 <div class="col-span-2 flex items-center">Employee</div>
@@ -161,12 +161,15 @@
 
               <!-- Employee Rows -->
               <div class="divide-y divide-slate-100">
-                {#each employees[team] as employee}
-                  <EmployeeRow employee={employee} person={es[employee.id]} openEmployeeTab={openEmployeeTab}/>
+                {#each $teamToPersons as person}
+                  <EmployeeRow person={person}  openEmployeeTab={openEmployeeTab}/>
                 {/each}
               </div>
             {/if}
           </div>
+        {/each}
+        {#each $unassignedPersons as person}
+          <EmployeeRow person={person}  openEmployeeTab={openEmployeeTab}/>
         {/each}
       {:else if $activeTab?.id === "reports"}
         <ReportDashboard />
@@ -174,9 +177,9 @@
         <!-- Employee Detail Tab -->
         {#if $activeTab?.type === "person"}
           {@const currentTab = $activeTab}
-          {@const employee = employees["Development Team"][0]}
+          {@const person = $activeTab.context.person}
           
-          <EmployeeDetails employee={employee} />
+          <EmployeeDetails person= {person} />
         {:else}
           <!-- Empty tab or custom tab content -->
           <div class="p-6">
