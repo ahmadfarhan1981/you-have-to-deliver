@@ -10,7 +10,7 @@ export const tick = readable(0, (set) => {
         } catch (e) {
             console.error('Failed to fetch tick:', e);
         }
-    }, 500);
+    }, 50);
 
     return () => clearInterval(interval); // cleanup
 });

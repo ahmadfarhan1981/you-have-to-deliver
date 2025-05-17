@@ -7,7 +7,7 @@ use dashmap::DashSet;
 use legion::systems::CommandBuffer;
 use legion::Entity;
 use rand::seq::IteratorRandom;
-use rand::{thread_rng, Rng};
+use rand::{rng, Rng};
 use rand_distr::{Distribution, Normal};
 use std::collections::HashMap;
 use std::fs::File;
@@ -17,7 +17,7 @@ use std::sync::Arc;
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: u16, max: u16) -> u16 {
     let normal = Normal::new(mean, std_dev).unwrap();
-    let mut rng = thread_rng();
+    let mut rng = rng();
 
     for _ in 0..10 {
         let sample = normal.sample(&mut rng).round();
@@ -28,7 +28,7 @@ pub fn bounded_normal(mean: f64, std_dev: f64, min: u16, max: u16) -> u16 {
 
     // Escape hatch: clamp after 10 failed tries
     let fallback = normal.sample(&mut rng).round();
-    return (fallback.clamp(min.into(), max.into()) as u16);
+    return fallback.clamp(min.into(), max.into()) as u16;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -65,7 +65,7 @@ pub fn get_random_line_from_file(asset_path: AssetBasePath) -> Option<String> {
     let reader = BufReader::new(file);
 
     // Choose a random line using iterator sampling
-    let mut rng = thread_rng();
+    let mut rng = rng();
     let line = reader.lines().filter_map(Result::ok).choose(&mut rng);
 
     if line.is_none() {
@@ -102,7 +102,7 @@ pub fn generate_full_name(gender: &Gender, asset_path: &AssetBasePath) -> Option
     let last = generate_name_part(gender, &NameParts::Last, &asset_path)?;
     Some(format!("{} {}", first, last))
 }
-pub fn generate_name_part(
+fn generate_name_part(
     gender: &Gender,
     part: &NameParts,
     asset_path: &AssetBasePath,
@@ -127,7 +127,7 @@ pub fn generate_name_part(
         .ok()?;
 
     let reader = BufReader::new(file);
-    let mut rng = thread_rng();
+    let mut rng = rng();
 
     let line = reader.lines().filter_map(Result::ok).choose(&mut rng);
 
@@ -139,8 +139,8 @@ pub fn generate_name_part(
 }
 
 pub fn random_gender() -> Gender {
-    let mut rng = rand::thread_rng();
-    if rng.gen_bool(0.5) {
+    let mut rng = rand::rng();
+    if rng.random_bool(0.5) {
         Gender::Male
     } else {
         Gender::Female
@@ -149,7 +149,6 @@ pub fn random_gender() -> Gender {
 
 fn generate_stats(tier: TalentGrade) -> Stats {
     let (mean, std_dev) = tier.stat_distribution();
-    let mut rng = thread_rng();
 
     macro_rules! gen {
         () => {{
@@ -203,12 +202,13 @@ fn generate_profile_picture(
     last_portrait.insert((Gender::Female, ProfilePictureCategory::Social), 1);
     last_portrait.insert((Gender::Male, ProfilePictureCategory::Office), 3);
     last_portrait.insert((Gender::Male, ProfilePictureCategory::Social), 1);
-    let MAX_ATTEMPTS = 10;
 
-    let mut rng = rand::thread_rng();
+    const MAX_ATTEMPTS:usize = 10;
+
+    let mut rng = rand::rng();
     let mut profile_picture = ProfilePicture::default();
     for _ in 0..MAX_ATTEMPTS {
-        let random_category = if rng.gen_range(0..100) < 70 {
+        let random_category = if rng.random_range(0..100) < 70 {
             ProfilePictureCategory::Office
         } else {
             ProfilePictureCategory::Social

@@ -3,7 +3,6 @@ use crate::sim::{
     person::components::Person, person::stats::Stats, resources::global::TickCounter,
 };
 use legion::system;
-use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
 #[system]

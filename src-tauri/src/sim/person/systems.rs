@@ -1,10 +1,9 @@
-use std::collections::HashSet;
-use std::sync::Arc;
-use dashmap::DashSet;
-use legion::{system, systems::CommandBuffer, world, World};
 use crate::sim::person::components::ProfilePicture;
 use crate::sim::person::registry::PersonRegistry;
 use crate::sim::resources::global::AssetBasePath;
+use dashmap::DashSet;
+use legion::{system, systems::CommandBuffer};
+use std::sync::Arc;
 
 use super::spawner::{spawn_person, TalentGrade};
 

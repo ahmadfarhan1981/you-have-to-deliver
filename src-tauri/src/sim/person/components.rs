@@ -1,8 +1,8 @@
 use fmt::Display;
-use std::fmt;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 use strum::IntoEnumIterator;
-use strum_macros::{Display, EnumIter};
+use strum_macros::EnumIter;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Person {

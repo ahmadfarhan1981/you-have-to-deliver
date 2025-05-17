@@ -6,12 +6,14 @@ pub struct TickCounter {
     tick: AtomicU64,
 }
 impl TickCounter {
+    /// Increments the tick counter by 1. Thread-safe
     pub fn tick(&self) {
-        /// Increments the tick counter by 1. Thread-safe
+
         self.tick.fetch_add(1, Ordering::Relaxed);
     }
+
+    /// Returns the current tick value. Relexed ordering.
     pub fn value(&self) -> u64 {
-        /// Returns the current tick value. Relexed ordering.
         self.tick.load(Ordering::Relaxed)
     }
 }
