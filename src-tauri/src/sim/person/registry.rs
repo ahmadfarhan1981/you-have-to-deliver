@@ -1,13 +1,29 @@
+use std::fmt;
 use super::components::PersonId;
 use dashmap::DashMap;
 use legion::world::Entity;
 use std::sync::atomic::{AtomicU32, Ordering};
+use owo_colors::OwoColorize;
 
 #[derive(Default)]
 pub struct PersonRegistry {
     id_to_entity: DashMap<PersonId, Entity>,
     entity_to_id: DashMap<Entity, PersonId>,
     next_id: AtomicU32,
+}
+impl fmt::Debug for PersonRegistry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let count = self.id_to_entity.len();
+        let next = self.next_id.load(std::sync::atomic::Ordering::Relaxed);
+
+        write!(
+            f,
+            "{}[{}. next_id={}]",
+            "PersonRegistry".bold().bright_cyan(),
+            format!("{count} entries").green(),
+            format!("{next}").yellow().bold()
+        )
+    }
 }
 
 impl PersonRegistry {

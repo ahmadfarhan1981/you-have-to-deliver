@@ -106,8 +106,20 @@
       <workItem from="1747404595052" duration="14525000" />
       <workItem from="1747440693295" duration="16502000" />
       <workItem from="1747459989780" duration="5359000" />
-      <workItem from="1747473749493" duration="4394000" />
+      <workItem from="1747473749493" duration="6112000" />
+      <workItem from="1747488459463" duration="6472000" />
+      <workItem from="1747529856060" duration="27547000" />
+      <workItem from="1747571231312" duration="88000" />
     </task>
+    <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
+      <option name="closed" value="true" />
+      <created>1747478976311</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1747478976311</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -124,12 +136,19 @@
       </map>
     </option>
   </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
+    <option name="CHECK_NEW_TODO" value="false" />
+    <MESSAGE value="basic sim speed control, basic command pasing from ui." />
+    <option name="LAST_COMMIT_MESSAGE" value="basic sim speed control, basic command pasing from ui." />
+    <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
+  </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src-tauri/src/sim/person/spawner.rs</url>
-          <line>210</line>
+          <line>213</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>

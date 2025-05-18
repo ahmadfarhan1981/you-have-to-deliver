@@ -14,6 +14,8 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::sync::Arc;
+use tracing::{debug, error, trace};
+use crate::sim::systems::global::UsedProfilePictureRegistry;
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: u16, max: u16) -> u16 {
     let normal = Normal::new(mean, std_dev).unwrap();
@@ -58,7 +60,7 @@ pub fn get_random_line_from_file(asset_path: AssetBasePath) -> Option<String> {
     // Build full path to names/first.txt
     let base_path = Path::new(&asset_path.0);
     let file_path = base_path.join("names").join("first.txt");
-    println!("Resolved file path: {:?}", file_path);
+    trace!("Resolved file path: {:?}", file_path);
 
     // Attempt to open the file
     let file = File::open(&file_path).ok()?;
@@ -69,7 +71,7 @@ pub fn get_random_line_from_file(asset_path: AssetBasePath) -> Option<String> {
     let line = reader.lines().filter_map(Result::ok).choose(&mut rng);
 
     if line.is_none() {
-        println!("File is empty or unreadable!");
+        error!("File is empty or unreadable!");
     }
 
     line
@@ -194,8 +196,9 @@ fn generate_stats(tier: TalentGrade) -> Stats {
 
 fn generate_profile_picture(
     gender: Gender,
-    used_picture_set: &DashSet<ProfilePicture>,
+    used_picture_registry: &UsedProfilePictureRegistry,
 ) -> ProfilePicture {
+    let used_picture_set = &used_picture_registry.used_profile_pictures;
     // HARDCODED DEBUG VALUES. This block should not be change. TODO Externalize these values.
     let mut last_portrait = HashMap::new();
     last_portrait.insert((Gender::Female, ProfilePictureCategory::Office), 4);
@@ -232,14 +235,15 @@ fn generate_profile_picture(
     profile_picture
 }
 
+#[tracing::instrument(level = "debug", skip(cmd))]
 pub fn spawn_person(
     cmd: &mut CommandBuffer,
     tier: TalentGrade,
     asset_path: &AssetBasePath,
-    used_portraits: &DashSet<ProfilePicture>,
+    used_portraits: &UsedProfilePictureRegistry,
     person_registry: &Arc<PersonRegistry>,
 ) -> (PersonId, Entity) {
-    println!("Spawning person");
+    debug!("Spawning person");
     let id = person_registry.generate_id();
     // let peron_id = person_registry.generate_id();
     let gender = random_gender();
