@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use serde::{Deserialize, Serialize};
 
 #[derive(Default)]
 pub struct TickCounter {
@@ -16,6 +17,8 @@ impl TickCounter {
     pub fn value(&self) -> u64 {
         self.tick.load(Ordering::Relaxed)
     }
+
+    pub fn reset(&self){self.tick.store(0, Ordering::Relaxed);}
 }
 
 impl std::fmt::Debug for TickCounter {
@@ -27,4 +30,33 @@ impl std::fmt::Debug for TickCounter {
 }
 #[derive(Debug, Default)]
 pub struct AssetBasePath(pub PathBuf);
+
+#[derive(Default,Serialize, Deserialize, Debug)]
+pub struct SimManager {
+    running: AtomicBool,
+}
+impl SimManager {
+    pub fn resume_sim(&self) {
+        self.running.store(true, Ordering::SeqCst);
+    }
+    pub fn pause_sim(&self) {
+        self.running.store(false, Ordering::SeqCst);
+    }
+    pub fn is_running(&self) -> bool {
+        self.running.load(Ordering::Relaxed)
+    }
+
+    pub fn new_sim(&self)  {
+        self.pause_sim();
+
+
+    }
+
+    pub fn load_sim(&self){}
+    pub fn default() -> Self {
+        Self{
+            running: AtomicBool::new(false),
+        }
+    }
+}
 

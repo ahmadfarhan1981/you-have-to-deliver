@@ -90,11 +90,17 @@
             <div class="text-green-400 mt-1">$ _{#if showCursor}<span class="terminal-cursor"></span>{/if}</div>
             <div class="text-green-400 mt-1">{$tick}</div>
             <button
+                    class="px-3 py-2 border-2" on:click={async () => await invoke('start_sim')}
+            >Start</button>
+            <button
                     class="px-3 py-2 border-2" on:click={async () => await invoke('increase_speed')}
             >+</button>
             <button
                     class="px-3 py-2 border-2" on:click={async ()=>await invoke('decrease_speed')}
             >-</button>
+            <button
+                    class="px-3 py-2 border-2" on:click={async () => await invoke('stop_sim')}
+            >Stop</button>
           </div>
 
           <!-- Menu Options -->

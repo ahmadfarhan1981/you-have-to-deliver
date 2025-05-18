@@ -4,14 +4,14 @@ use crate::sim::resources::global::AssetBasePath;
 use dashmap::DashSet;
 use legion::{system, systems::CommandBuffer};
 use std::sync::Arc;
-
+use crate::sim::systems::global::UsedProfilePictureRegistry;
 use super::spawner::{spawn_person, TalentGrade};
 
 #[system]
 pub fn generate_employees(
     cmd: &mut CommandBuffer,
     #[resource] asset_base_path: &AssetBasePath,
-    #[resource] used_portrait: &DashSet<ProfilePicture>,
+    #[resource] used_portrait: &UsedProfilePictureRegistry,
     #[resource] person_registry: &Arc<PersonRegistry>,
 ) {
     use TalentGrade::*;
