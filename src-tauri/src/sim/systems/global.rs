@@ -8,6 +8,7 @@ use std::sync::Arc;
 use dashmap::DashSet;
 use legion::systems::CommandBuffer;
 use owo_colors::OwoColorize;
+use tracing::info;
 
 #[system]
 pub fn increase_sim_tick(#[resource] tick_counter: &Arc<TickCounter>) {
@@ -16,7 +17,7 @@ pub fn increase_sim_tick(#[resource] tick_counter: &Arc<TickCounter>) {
 
 #[system(for_each)]
 pub fn print_person(cmd: &mut CommandBuffer, e:&Entity, person: &Person, stats: &Stats, profile_picture: &ProfilePicture) {
-    println!("Person: {:?}", person);
+    info!("Person: {:?}", person);
     // println!("Stats: {:?}", stats);
     // println!("Profile picture: {:?}", profile_picture);
 }
@@ -24,7 +25,7 @@ pub fn print_person(cmd: &mut CommandBuffer, e:&Entity, person: &Person, stats: 
 
 #[derive(Default)]
 pub struct UsedProfilePictureRegistry{
-    pub used_profile_pictures: DashSet::<ProfilePicture>
+    pub used_profile_pictures: DashSet<ProfilePicture>
 }
 
 impl fmt::Debug for UsedProfilePictureRegistry {

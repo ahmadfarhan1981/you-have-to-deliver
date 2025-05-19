@@ -1,11 +1,9 @@
-use crate::sim::person::components::ProfilePicture;
+use super::spawner::{spawn_person, TalentGrade};
 use crate::sim::person::registry::PersonRegistry;
 use crate::sim::resources::global::AssetBasePath;
-use dashmap::DashSet;
+use crate::sim::systems::global::UsedProfilePictureRegistry;
 use legion::{system, systems::CommandBuffer};
 use std::sync::Arc;
-use crate::sim::systems::global::UsedProfilePictureRegistry;
-use super::spawner::{spawn_person, TalentGrade};
 
 #[system]
 pub fn generate_employees(

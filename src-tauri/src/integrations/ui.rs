@@ -26,13 +26,6 @@ pub fn get_persons(state: State<'_, Arc<SnapshotState>>) -> Vec<PersonSnapshot> 
     state.persons.iter().map(|e| e.value().clone()).collect()
 }
 
-
-#[tauri::command]
-pub fn new_game(state: State<'_, Arc<SnapshotState>>){
-    // reset_simulation(
-}
-
-
 #[tauri::command]
 pub fn start_sim(state: State<'_, Arc<SnapshotState>>){
     state.sim_manager_queue.push(SimManagerCommand::StartSim)

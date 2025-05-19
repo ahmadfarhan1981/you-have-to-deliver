@@ -117,7 +117,7 @@ fn main() {
 
                 resources.insert( reset_request );
                 resources.insert(Arc::clone(&sim_manager));
-                //queuess
+                //queues
                 resources.insert(queue_manager);
 
                 //tick counter
@@ -137,39 +137,39 @@ fn main() {
                     .build();
 
                 // processes the command dispatch queues,  dispatch then sends to the resource profile specific queues.
-                // sim manager runs outside of the suspended kill switch
+                // sim manager runs outside the suspended kill switch
                 let mut dispatcher_queue_schedule =
-                    Schedule::builder() // Command queue handler, process all incoming command, runs first in the loop. doesnt stop when simulation is pause.
+                    Schedule::builder() // Command queue handler, process all incoming command, runs first in the loop. doesn't stop when simulation is pause.
                         .add_system(handle_dispatch_queue_system())
                         .build();
 
                 let mut sim_manager_dispatch_schedule =
-                    Schedule::builder() // sim manager schedule, runs outside of the killswitch
+                    Schedule::builder() // sim manager schedule, runs outside the killswitch
                         .add_system(handle_sim_manager_dispatch_queue_system())
                         .build();
 
                 let mut sim_manager_schedule =
-                    Schedule::builder() // sim manager schedule, runs outside of the killswitch
+                    Schedule::builder() // sim manager schedule, runs outside the killswitch
                         .add_system(handle_sim_manager_queue_system())
                         .build();
 
                 let mut sim_manager_reset_schedule =
-                    Schedule::builder() // sim manager schedule, runs outside of the killswitch
+                    Schedule::builder() // sim manager schedule, runs outside the killswitch
                         .add_system(handle_new_game_manager_queue_system())
                         .build();
 
                 let mut sim_manager_delete_world_entity_schedule =
-                    Schedule::builder() // sim manager schedule, runs outside of the killswitch
+                    Schedule::builder() // sim manager schedule, runs outside the killswitch
                         .add_system(delete_all_entity_system())
                         .build();
 
                 let mut reset_state_schedule =
-                    Schedule::builder() // sim manager schedule, runs outside of the killswitch
+                    Schedule::builder() // sim manager schedule, runs outside the killswitch
                         .add_system(reset_state_system())
                         .build();
 
                 /// subsystem command system:
-                /// processes the commnad that was dispatched from the dispatcher queues. uses different resource profiles
+                /// processes the command that was dispatched from the dispatcher queues. uses different resource profiles
                 let mut subsystem_command_schedule = Schedule::builder()
                     .add_system(handle_game_speed_manager_queue_system())
                     .build();
