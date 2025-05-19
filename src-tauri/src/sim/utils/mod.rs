@@ -1,2 +1,2 @@
 pub mod logging;
-mod sim_reset;
+pub mod sim_reset;

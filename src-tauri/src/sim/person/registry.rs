@@ -56,4 +56,9 @@ impl PersonRegistry {
             self.entity_to_id.remove(&entity);
         }
     }
+    pub fn clear(&self){
+        self.id_to_entity.clear();
+        self.entity_to_id.clear();
+        self.next_id.store(0, Ordering::Relaxed);
+    }
 }

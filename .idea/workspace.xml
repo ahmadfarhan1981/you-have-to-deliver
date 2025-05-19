@@ -110,7 +110,7 @@
       <workItem from="1747488459463" duration="6472000" />
       <workItem from="1747529856060" duration="27547000" />
       <workItem from="1747571231312" duration="88000" />
-      <workItem from="1747617074712" duration="25372000" />
+      <workItem from="1747617074712" duration="48173000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />
@@ -136,7 +136,15 @@
       <option name="project" value="LOCAL" />
       <updated>1747642507652</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="sim command and normal command seems to be working.">
+      <option name="closed" value="true" />
+      <created>1747647853757</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1747647853757</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -159,7 +167,8 @@
     <MESSAGE value="basic sim speed control, basic command pasing from ui." />
     <MESSAGE value="command queue refactoring" />
     <MESSAGE value="basic command queue stuff" />
-    <option name="LAST_COMMIT_MESSAGE" value="basic command queue stuff" />
+    <MESSAGE value="sim command and normal command seems to be working." />
+    <option name="LAST_COMMIT_MESSAGE" value="sim command and normal command seems to be working." />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="XDebuggerManager">
