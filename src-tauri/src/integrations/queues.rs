@@ -60,7 +60,7 @@ impl QueueManager {
         }
     }
     pub fn print_summary(&self) {
-        println!("{}", self.get_summary_string());
+        info!("{}", self.get_summary_string());
     }
 
     pub fn get_summary_string(&self) -> String {
