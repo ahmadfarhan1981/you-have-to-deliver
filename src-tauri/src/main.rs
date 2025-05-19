@@ -10,42 +10,40 @@ mod macros;
 mod sim;
 
 
-
-
 use crate::sim::resources::global::{AssetBasePath, SimManager, TickCounter};
 use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRegistry};
+
 
 use legion::{Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
-use std::{fmt, thread};
 use std::time::{Duration, Instant};
+use std::{fmt, thread};
 
-use crate::integrations::events::{handle_commands_system, SimCommand};
+
 use crate::integrations::systems::{
-    clear_person_list_system, print_person_list_system, push_persons_to_integration_system,
+    clear_person_list_system, push_persons_to_integration_system,
     push_tick_counter_to_integration_system,
 };
-use crate::integrations::ui::{decrease_speed, get_persons, get_tick, increase_speed, set_game_speed, start_sim, stop_sim, SnapshotState};
+use crate::integrations::ui::{ get_persons, get_tick, start_sim, stop_sim, SnapshotState};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::ProfilePicture;
 use crate::sim::person::registry::PersonRegistry;
 use crate::sim::person::systems::generate_employees_system;
+use crate::sim::utils::logging::init_logging;
 use crossbeam::queue::SegQueue;
 use dashmap::DashSet;
 use spin_sleep::SpinSleeper;
-use std::sync::{Arc, RwLock};
 use std::sync::atomic::Ordering;
+use std::sync::{Arc, RwLock};
 use tauri::Manager;
 use tracing::{debug, info};
-use crate::sim::utils::logging::init_logging;
 
+use crate::integrations::queues::QueueManager;
+use crate::sim::systems::banner::print_banner;
 use owo_colors::OwoColorize;
 use parking_lot::Mutex;
-use crate::sim::systems::banner::print_banner;
-
-
-
+use crate::integrations::system_queues::game_speed_manager::{decrease_speed, increase_speed, set_game_speed};
 
 fn print_startup_banner() {
     print_banner();
@@ -81,8 +79,12 @@ fn main() {
     // Create a properly shared AppState
     let mut snapshot_state = SnapshotState::default();
 
-    let command_queue = Arc::new(SegQueue::<SimCommand>::new());
-    snapshot_state.command_queue = Arc::clone(&command_queue);
+    // let command_queue = Arc::new(SegQueue::<SimCommand>::new());
+    // snapshot_state.command_queue = Arc::clone(&command_queue);
+
+    let queue_manager = QueueManager::new();
+    snapshot_state.command_queue = queue_manager.dispatch();
+
 
     let ui_snapshot_state = Arc::new(snapshot_state);
     let sim_snapshot_state = Arc::clone(&ui_snapshot_state);// Clone for ECS thread
@@ -115,7 +117,7 @@ fn main() {
 
                 resources.insert(Arc::clone(&sim_manager));
                 //queues
-                resources.insert(Arc::clone(&command_queue));
+                resources.insert(queue_manager);
 
                 //tick counter
                 resources.insert(tick_counter.clone());
@@ -128,14 +130,22 @@ fn main() {
                 resources.insert(used_portrait);
                 resources.insert(Arc::new(PersonRegistry::new()));
 
+
+                let mut sim_manager_schedule = Schedule::builder() // sim manager schedule, runs outside of the killswitch
+                    // .add_system( handle_sim_manager_queue_system()) TODO
+                    .build();
+            
+
                 let mut startup = Schedule::builder() // Startup schedule, runs once on startup. add run once systems here.
                     .add_system(generate_employees_system())
                     .build();
 
-                // command queue loop. dispatch then run the resorce profile specific queues.
+                // command queue loop. dispatch then run the resource profile specific queues.
                 let mut command_queue_loop = Schedule::builder() // Command queue handler, process all incoming command, runs first in the loop. doesnt stop when simulation is pause.
-                    .add_system(handle_commands_system())
+                    //.add_system(handle_dispatcher_queue_system()) TODO
                     .build();
+
+                // subsystem command system
 
                 // main sim loop
                 let mut sim_loop = Schedule::builder() // Main game loop, add systems that runs per frame here.
@@ -153,7 +163,7 @@ fn main() {
                         .add_system(push_persons_to_integration_system())
                         .build();
                 let mut post_integration = Schedule::builder()
-                    .add_system(print_person_list_system())
+                    // .add_system()
                     .build();
                 let sleeper =
                     SpinSleeper::new(0).with_spin_strategy(spin_sleep::SpinStrategy::YieldThread); // prevents CPU burn
