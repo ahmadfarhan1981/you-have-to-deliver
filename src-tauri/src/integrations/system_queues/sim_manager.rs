@@ -12,10 +12,17 @@ pub enum SimManagerCommand {
     StartSim,
     StopSim,
     ResetSim,
+    ResumeSim,
 }
 
+
+pub struct SimManagerQueue{
+
+}
+
+
 #[system]
-pub fn handle_game_speed_manager_queue(
+pub fn handle_sim_manager_queue(
     #[resource] queue_manager: &QueueManager,
     #[resource] sim_manager: &Arc<SimManager>,
 ) {
@@ -25,9 +32,13 @@ pub fn handle_game_speed_manager_queue(
 
     timed_dispatch(queue, dispatch_time_limit, |cmd| match cmd {
         SimManagerCommand::StartSim=>{
-            // sim_manager
+
         }
         SimManagerCommand::StopSim => {}
         SimManagerCommand::ResetSim => {}
+
+        SimManagerCommand::ResumeSim => {
+            sim_manager.resume_sim()
+        }
     });
 }

@@ -4,13 +4,24 @@ use owo_colors::OwoColorize;
 use std::fmt;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use tracing::{debug, info, warn};
+use legion::system;
+use tracing::{debug, info, trace, warn};
 use crate::integrations::system_queues::game_speed_manager::GameSpeedManagerCommand;
 use crate::integrations::system_queues::sim_manager::SimManagerCommand;
 
 pub enum SimCommand {
     GameSpeed(GameSpeedManagerCommand),
     SimManager(SimManagerCommand),
+}
+
+
+impl fmt::Debug for SimCommand {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SimCommand::GameSpeed(_) => write!(f, "SimCommand::GameSpeed(...)"),
+            SimCommand::SimManager(_) => write!(f, "SimCommand::SimManager(...)"),
+        }
+    }
 }
 
 
@@ -93,6 +104,7 @@ impl QueueManager {
         while start.elapsed() < dispatch_time_limit {
             if let Some(command) = self.dispatch.queue.pop() {
                 count += 1;
+                trace!("Dispatch command: {:?}", command);
                 match command {
                     SimCommand::GameSpeed(cmd) => self.game_speed_manager.queue.push(cmd),
                     SimCommand::SimManager(cmd) => self.sim_manager.queue.push(cmd),
@@ -117,4 +129,11 @@ impl fmt::Debug for QueueManager {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.get_summary_string())
     }
+}
+
+#[system]
+pub fn handle_dispatch_queue(#[resource]queue_manager: &QueueManager ) {
+    info!("handle_dispatch_queue");
+    queue_manager.process_dispatch_queue();
+
 }

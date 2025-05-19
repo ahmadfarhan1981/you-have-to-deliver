@@ -39,11 +39,11 @@ use std::sync::{Arc, RwLock};
 use tauri::Manager;
 use tracing::{debug, info};
 
-use crate::integrations::queues::QueueManager;
+use crate::integrations::queues::{handle_dispatch_queue_system, QueueManager};
 use crate::sim::systems::banner::print_banner;
 use owo_colors::OwoColorize;
 use parking_lot::Mutex;
-use crate::integrations::system_queues::game_speed_manager::{decrease_speed, increase_speed, set_game_speed};
+use crate::integrations::system_queues::game_speed_manager::{decrease_speed, handle_game_speed_manager_queue_system, increase_speed, set_game_speed};
 
 fn print_startup_banner() {
     print_banner();
@@ -131,7 +131,7 @@ fn main() {
                 resources.insert(Arc::new(PersonRegistry::new()));
 
 
-                let mut sim_manager_schedule = Schedule::builder() // sim manager schedule, runs outside of the killswitch
+                let mut sim_manager_loop = Schedule::builder() // sim manager schedule, runs outside of the killswitch
                     // .add_system( handle_sim_manager_queue_system()) TODO
                     .build();
             
@@ -141,11 +141,14 @@ fn main() {
                     .build();
 
                 // command queue loop. dispatch then run the resource profile specific queues.
-                let mut command_queue_loop = Schedule::builder() // Command queue handler, process all incoming command, runs first in the loop. doesnt stop when simulation is pause.
-                    //.add_system(handle_dispatcher_queue_system()) TODO
+                let mut dispatcher_queue_loop = Schedule::builder() // Command queue handler, process all incoming command, runs first in the loop. doesnt stop when simulation is pause.
+                    .add_system(handle_dispatch_queue_system())
                     .build();
 
                 // subsystem command system
+                let mut subsystem_command_loop = Schedule::builder()
+                    .add_system(handle_game_speed_manager_queue_system())
+                    .build();
 
                 // main sim loop
                 let mut sim_loop = Schedule::builder() // Main game loop, add systems that runs per frame here.
@@ -173,11 +176,14 @@ fn main() {
                 //Tick the startup schedule
                 startup.execute(&mut world, &mut resources);
                 loop {
+                    sim_manager_loop.execute(&mut world, &mut resources);
                     if state.is_running() {
                         let tick_start = Instant::now();
 
                         // Process SimCommand queue
-                        command_queue_loop.execute(&mut world, &mut resources);
+                        dispatcher_queue_loop.execute(&mut world, &mut resources);
+
+                        subsystem_command_loop.execute(&mut world, &mut resources);
 
                         // Main sim tick only if not paused. paused will return a None current interval
                         let maybe_interval = game_speed.read().unwrap().current_interval();
@@ -194,6 +200,7 @@ fn main() {
 
                         match maybe_interval {
                             Some(tick_duration) => {
+                                info!("tick duration {}", tick_duration.as_millis());
                                 if elapsed < tick_duration {
                                     sleeper.sleep(tick_duration - elapsed);
                                 } else {
