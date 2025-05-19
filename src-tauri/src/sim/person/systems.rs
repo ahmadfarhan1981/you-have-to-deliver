@@ -14,6 +14,7 @@ pub fn generate_employees(
     #[resource] used_portrait: &UsedProfilePictureRegistry,
     #[resource] person_registry: &Arc<PersonRegistry>,
 ) {
+
     use TalentGrade::*;
 
     let per_grade = [

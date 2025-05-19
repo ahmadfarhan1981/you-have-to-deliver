@@ -22,9 +22,7 @@ use crate::integrations::systems::{
     clear_person_list_system, push_persons_to_integration_system,
     push_tick_counter_to_integration_system,
 };
-use crate::integrations::ui::{
-    get_persons, get_tick, resume_sim, start_sim, stop_sim, SnapshotState,
-};
+use crate::integrations::ui::{get_persons, get_tick, new_sim, resume_sim, start_sim, stop_sim, SnapshotState};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::ProfilePicture;
 use crate::sim::person::registry::PersonRegistry;
@@ -33,10 +31,10 @@ use crate::sim::utils::logging::init_logging;
 use crossbeam::queue::SegQueue;
 use dashmap::DashSet;
 use spin_sleep::SpinSleeper;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, RwLock};
 use tauri::Manager;
-use tracing::{debug, info};
+use tracing::{debug, info, trace};
 
 use crate::integrations::queues::{
     handle_dispatch_queue_system, handle_sim_manager_dispatch_queue_system, QueueManager,
@@ -44,10 +42,12 @@ use crate::integrations::queues::{
 use crate::integrations::system_queues::game_speed_manager::{
     decrease_speed, handle_game_speed_manager_queue_system, increase_speed, set_game_speed,
 };
-use crate::integrations::system_queues::sim_manager::handle_sim_manager_queue_system;
+use crate::integrations::system_queues::sim_manager;
 use crate::sim::systems::banner::print_banner;
 use owo_colors::OwoColorize;
 use parking_lot::Mutex;
+use crate::integrations::system_queues::sim_manager::{delete_all_entity_system, handle_new_game_manager_queue_system, handle_sim_manager_queue_system, reset_state_system};
+use crate::sim::utils::sim_reset::ResetRequest;
 
 fn print_startup_banner() {
     print_banner();
@@ -68,6 +68,8 @@ impl fmt::Debug for SimContext {
     }
 }
 
+
+
 fn main() {
     init_logging();
     print_startup_banner();
@@ -77,9 +79,6 @@ fn main() {
 
     // Create a properly shared AppState
     let mut snapshot_state = SnapshotState::default();
-
-    // let command_queue = Arc::new(SegQueue::<SimCommand>::new());
-    // snapshot_state.command_queue = Arc::clone(&command_queue);
 
     let queue_manager = QueueManager::new();
     snapshot_state.command_queue = queue_manager.dispatch();
@@ -99,6 +98,10 @@ fn main() {
     let sim_manager = Arc::new(SimManager::default());
     let ui_sim_manager = Arc::clone(&sim_manager);
 
+
+    let reset_request = Arc::new(ResetRequest{should_reset:AtomicBool::new(false)});
+    let reset = Arc::clone(&reset_request);
+
     // === Launch Tauri app ===
     tauri::Builder::default()
         .setup(|app| {
@@ -112,8 +115,9 @@ fn main() {
                 let mut world = World::default();
                 let mut resources = Resources::default();
 
+                resources.insert( reset_request );
                 resources.insert(Arc::clone(&sim_manager));
-                //queues
+                //queuess
                 resources.insert(queue_manager);
 
                 //tick counter
@@ -149,6 +153,21 @@ fn main() {
                         .add_system(handle_sim_manager_queue_system())
                         .build();
 
+                let mut sim_manager_reset_schedule =
+                    Schedule::builder() // sim manager schedule, runs outside of the killswitch
+                        .add_system(handle_new_game_manager_queue_system())
+                        .build();
+
+                let mut sim_manager_delete_world_entity_schedule =
+                    Schedule::builder() // sim manager schedule, runs outside of the killswitch
+                        .add_system(delete_all_entity_system())
+                        .build();
+
+                let mut reset_state_schedule =
+                    Schedule::builder() // sim manager schedule, runs outside of the killswitch
+                        .add_system(reset_state_system())
+                        .build();
+
                 /// subsystem command system:
                 /// processes the commnad that was dispatched from the dispatcher queues. uses different resource profiles
                 let mut subsystem_command_schedule = Schedule::builder()
@@ -158,7 +177,7 @@ fn main() {
                 // main sim
                 let mut sim_schedule = Schedule::builder() // Main game loop, add systems that runs per frame here.
                     .add_system(increase_sim_tick_system())
-                    .add_system(print_person_system())
+                    // .add_system(print_person_system())
                     .build();
 
                 //integration, handles generating snapshots
@@ -181,8 +200,23 @@ fn main() {
                 //Tick the startup schedule
                 startup.execute(&mut world, &mut resources);
                 loop {
+                    info!("loop");
                     sim_manager_dispatch_schedule.execute(&mut world, &mut resources);
+                    sim_manager_reset_schedule.execute(&mut world, &mut resources);
+                    if reset.should_reset.load(Ordering::Relaxed) {
+                        sim_manager_delete_world_entity_schedule.execute(&mut world, &mut resources);
+                        reset_state_schedule.execute(&mut world, &mut resources);
+                        startup.execute(&mut world, &mut resources);
+
+                        pre_integration.execute(&mut world, &mut resources);
+                        integration_schedule.execute(&mut world, &mut resources);
+                        post_integration.execute(&mut world, &mut resources);
+
+                    }
+
                     sim_manager_schedule.execute(&mut world, &mut resources);
+
+
                     if state.is_running() {
                         let tick_start = Instant::now();
 
@@ -206,7 +240,7 @@ fn main() {
 
                         match maybe_interval {
                             Some(tick_duration) => {
-                                info!("tick duration {}", tick_duration.as_millis());
+                                debug!("tick duration {}", tick_duration.as_millis());
                                 if elapsed < tick_duration {
                                     sleeper.sleep(tick_duration - elapsed);
                                 } else {
@@ -238,6 +272,7 @@ fn main() {
             start_sim,
             stop_sim,
             resume_sim,
+            new_sim,
         ])
         .run(tauri::generate_context!())
         .expect("error running tauri app");

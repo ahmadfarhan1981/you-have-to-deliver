@@ -8,6 +8,7 @@ use legion::system;
 use tracing::{debug, info, trace, warn};
 use crate::integrations::system_queues::game_speed_manager::GameSpeedManagerCommand;
 use crate::integrations::system_queues::sim_manager::SimManagerCommand;
+use crate::integrations::system_queues::sim_manager::SimManagerCommand::ResetSim;
 use crate::sim::resources::global::SimManager;
 
 pub enum SimCommand {
@@ -44,6 +45,8 @@ pub struct QueueManager {
     sim_manager_dispatch: ExposedQueue<SimManagerCommand>,
     pub sim_manager: SystemCommandQueue<SimManagerCommand>, // other queues are just a segqueue, will only ever access by the queue systems
     pub game_speed_manager: SystemCommandQueue<GameSpeedManagerCommand>,
+    pub new_game_manager: SystemCommandQueue<SimManagerCommand>,
+
 }
 
 impl QueueManager {
@@ -53,6 +56,7 @@ impl QueueManager {
             sim_manager_dispatch: ExposedQueue::<SimManagerCommand>::new(),
             sim_manager: SystemCommandQueue::<SimManagerCommand>::new(),
             game_speed_manager: SystemCommandQueue::<GameSpeedManagerCommand>::new(),
+            new_game_manager: SystemCommandQueue::<SimManagerCommand>::new(),
         }
     }
     pub fn print_summary(&self) {
@@ -113,8 +117,9 @@ impl QueueManager {
         while start.elapsed() < dispatch_time_limit {
             if let Some(command) = self.sim_manager_dispatch.queue.pop() {
                 count += 1;
-                trace!("Sim manager command: {:?}", command);
+                info!("Sim manager command: {:?}", command);
                 match command {
+                    SimManagerCommand::ResetSim=>{self.new_game_manager.queue.push(SimManagerCommand::ResetSim)},
                     _ => {self.sim_manager.queue.push(command);},
                 }
             } else {
@@ -148,14 +153,14 @@ impl fmt::Debug for QueueManager {
 
 #[system]
 pub fn handle_dispatch_queue(#[resource]queue_manager: &QueueManager ) {
-    info!("handle_dispatch_queue");
+    trace!("Dispatch queue");
     queue_manager.process_dispatch_queue();
 
 }
 
 #[system]
 pub fn handle_sim_manager_dispatch_queue(#[resource]queue_manager: &QueueManager ) {
-    info!("handle_dispatch_queue");
+    debug!("Sim manager dispatch queue");
     queue_manager.process_sim_manager_dispatch_queue();
 }
 
