@@ -11,6 +11,8 @@
         SkipForward,
         Users
     } from "lucide-svelte";
+    import {tabState, activeTab} from "$lib/stores/TabStore.js";
+    import {goto} from "$app/navigation";
 
     let simulationSpeed = "1x";
     function changeSpeed(event) {
@@ -61,8 +63,8 @@
                     <span>Dashboard</span>
                 </button>
                 <button
-                        class="flex items-center w-full px-3 py-2 rounded {activeView === 'Personnel' ? 'bg-slate-700 text-slate-100' : 'hover:bg-slate-700 text-slate-300'}"
-                        on:click={() => navigateTo('Personnel')}
+                        class="flex items-center w-full px-3 py-2 rounded {$activeTab?.id === 'overview' ? 'bg-slate-700 text-slate-100' : 'hover:bg-slate-700 text-slate-300'}"
+                        on:click={() => tabState.addSystemTab("overview")}
                 >
                     <Users size={16} class="mr-2" />
                     <span>Personnel</span>
@@ -76,7 +78,7 @@
                 </button>
                 <button
                         class="flex items-center w-full px-3 py-2 rounded {activeView === 'Finances' ? 'bg-slate-700 text-slate-100' : 'hover:bg-slate-700 text-slate-300'}"
-                        on:click={() => navigateTo('Finances')}
+                        on:click={() => goto("/company")}
                 >
                     <CreditCard size={16} class="mr-2" />
                     <span>Finances</span>
@@ -145,9 +147,11 @@
                         bind:value={simulationSpeed}
                         on:change={changeSpeed}
                 >
-                    <option>1x</option>
-                    <option>2x</option>
-                    <option>3x</option>
+                    <option>Stopped</option>
+                    <option>Slow</option>
+                    <option>Normal</option>
+                    <option>Fast</option>
+                    <option>Max</option>
                 </select>
             </div>
         </div>

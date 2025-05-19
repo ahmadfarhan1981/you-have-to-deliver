@@ -11,7 +11,7 @@ pub fn push_tick_counter_to_integration(
     #[resource] app_state: &Arc<SnapshotState>,
     #[resource] tick_counter: &Arc<TickCounter>,
 ) {
-    app_state.tick.set(tick_counter.value());
+    app_state.tick.set(&tick_counter)
 }
 
 #[system]
