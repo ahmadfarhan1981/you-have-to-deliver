@@ -19,7 +19,7 @@
         </div>
     </div>
     <div class="flex items-center space-x-4">
-        <div>Tick #{$tick}/4,230</div>
+        <div>Tick #{tick}/4,230</div>
         <div>v1.0.42</div>
     </div>
 </div>

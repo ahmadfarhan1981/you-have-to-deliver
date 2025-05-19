@@ -200,7 +200,6 @@ fn main() {
                 //Tick the startup schedule
                 startup.execute(&mut world, &mut resources);
                 loop {
-                    info!("loop");
                     sim_manager_dispatch_schedule.execute(&mut world, &mut resources);
                     sim_manager_reset_schedule.execute(&mut world, &mut resources);
                     if reset.should_reset.load(Ordering::Relaxed) {
