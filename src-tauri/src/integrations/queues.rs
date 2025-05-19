@@ -8,6 +8,7 @@ use legion::system;
 use tracing::{debug, info, trace, warn};
 use crate::integrations::system_queues::game_speed_manager::GameSpeedManagerCommand;
 use crate::integrations::system_queues::sim_manager::SimManagerCommand;
+use crate::sim::resources::global::SimManager;
 
 pub enum SimCommand {
     GameSpeed(GameSpeedManagerCommand),
@@ -38,34 +39,9 @@ impl<T> SystemCommandQueue<T> {
     }
 }
 
-// type DispatchQueue = DispatchQueue();
-
-#[derive(Default)]
-pub struct DispatchQueue {
-    queue: Arc<SegQueue<SimCommand>>,
-}
-impl DispatchQueue {
-    fn new() -> DispatchQueue {
-        Self {
-            queue: Arc::new(SegQueue::<SimCommand>::new()),
-        }
-    }
-
-    pub fn push(&self, command: SimCommand) {
-        self.queue.push(command);
-    }
-    pub fn len(&self) -> usize { self.queue.len() }
-    pub fn is_empty(&self) -> bool { self.queue.is_empty() }
-    pub fn clear(&self) { while self.queue.pop().is_some(){} }
-
-}
-impl fmt::Debug for DispatchQueue {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.queue.len())
-    }
-}
 pub struct QueueManager {
-    dispatch: DispatchQueue, // dispatch queue is an arc because it will be shared by the integration to to the frontend.
+    dispatch: ExposedQueue<SimCommand>, // dispatch queue is an arc because it will be shared by the integration to to the frontend.
+    sim_manager_dispatch: ExposedQueue<SimManagerCommand>,
     pub sim_manager: SystemCommandQueue<SimManagerCommand>, // other queues are just a segqueue, will only ever access by the queue systems
     pub game_speed_manager: SystemCommandQueue<GameSpeedManagerCommand>,
 }
@@ -73,7 +49,8 @@ pub struct QueueManager {
 impl QueueManager {
     pub fn new() -> Self {
         Self {
-            dispatch: DispatchQueue::new(),
+            dispatch: ExposedQueue::<SimCommand>::new(),
+            sim_manager_dispatch: ExposedQueue::<SimManagerCommand>::new(),
             sim_manager: SystemCommandQueue::<SimManagerCommand>::new(),
             game_speed_manager: SystemCommandQueue::<GameSpeedManagerCommand>::new(),
         }
@@ -119,9 +96,47 @@ impl QueueManager {
             count
         );
     }
-    pub fn dispatch(&self) -> DispatchQueue {
-        DispatchQueue {
+
+    ///some duplicate code with teh dispatch queue, and subsystems queue,
+    /// SimManagerQueue bypasses the main loop for lifecycle tasks like NewGame, and it must must run within ECS systems to access World/Resources.
+    /// So it gets its own dispatch queue that is outside of the suspended state killswitch.
+    pub fn process_sim_manager_dispatch_queue(&self) {
+        if self.sim_manager_dispatch.queue.is_empty(){
+            debug!("Empty sim manager dispatch queue, skipping processing... ");
+            return;
+        }
+        let dispatch_time_limit = Duration::from_millis(5);
+
+        let start = Instant::now();
+
+        let mut count = 0;
+        while start.elapsed() < dispatch_time_limit {
+            if let Some(command) = self.sim_manager_dispatch.queue.pop() {
+                count += 1;
+                trace!("Sim manager command: {:?}", command);
+                match command {
+                    _ => {self.sim_manager.queue.push(command);},
+                }
+            } else {
+                debug!("{} items dispatched", count);
+                return;
+            }
+        }
+        warn!(
+            "Time limit reached when dispatching.  {} items dispatched",
+            count
+        );
+    }
+
+    pub fn dispatch(&self) -> ExposedQueue<SimCommand> {
+        ExposedQueue::<SimCommand>{
             queue: Arc::clone(&self.dispatch.queue),
+
+        }
+    }
+    pub fn sim_manager_dispatch(&self) -> ExposedQueue<SimManagerCommand> {
+        ExposedQueue::<SimManagerCommand>{
+            queue: Arc::clone(&self.sim_manager_dispatch.queue),
         }
     }
 }
@@ -136,4 +151,56 @@ pub fn handle_dispatch_queue(#[resource]queue_manager: &QueueManager ) {
     info!("handle_dispatch_queue");
     queue_manager.process_dispatch_queue();
 
+}
+
+#[system]
+pub fn handle_sim_manager_dispatch_queue(#[resource]queue_manager: &QueueManager ) {
+    info!("handle_dispatch_queue");
+    queue_manager.process_sim_manager_dispatch_queue();
+}
+
+
+
+pub struct ExposedQueue<T> {
+    queue: Arc<SegQueue<T>>,
+}
+
+impl<T> ExposedQueue<T> {
+    pub fn new() -> Self {
+        Self {
+            queue: Arc::new(SegQueue::new()),
+        }
+    }
+
+    pub fn push(&self, item: T) {
+        self.queue.push(item);
+    }
+
+    pub fn len(&self) -> usize {
+        self.queue.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.queue.is_empty()
+    }
+
+    pub fn clear(&self) {
+        while self.queue.pop().is_some() {}
+    }
+
+    pub fn inner(&self) -> Arc<SegQueue<T>> {
+        Arc::clone(&self.queue)
+    }
+}
+
+// Optional Debug if T: Debug
+impl<T> fmt::Debug for ExposedQueue<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "ExposedQueue(len: {})", self.queue.len())
+    }
+}
+impl<T> Default for ExposedQueue<T> {
+    fn default() -> Self {
+        Self::new()
+    }
 }

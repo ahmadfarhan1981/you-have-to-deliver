@@ -9,10 +9,8 @@ mod integrations;
 mod macros;
 mod sim;
 
-
 use crate::sim::resources::global::{AssetBasePath, SimManager, TickCounter};
 use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRegistry};
-
 
 use legion::{Resources, Schedule, World};
 use sim::systems::global::print_person_system;
@@ -20,12 +18,13 @@ use sim::systems::global::print_person_system;
 use std::time::{Duration, Instant};
 use std::{fmt, thread};
 
-
 use crate::integrations::systems::{
     clear_person_list_system, push_persons_to_integration_system,
     push_tick_counter_to_integration_system,
 };
-use crate::integrations::ui::{ get_persons, get_tick, start_sim, stop_sim, SnapshotState};
+use crate::integrations::ui::{
+    get_persons, get_tick, resume_sim, start_sim, stop_sim, SnapshotState,
+};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::ProfilePicture;
 use crate::sim::person::registry::PersonRegistry;
@@ -39,18 +38,19 @@ use std::sync::{Arc, RwLock};
 use tauri::Manager;
 use tracing::{debug, info};
 
-use crate::integrations::queues::{handle_dispatch_queue_system, QueueManager};
+use crate::integrations::queues::{
+    handle_dispatch_queue_system, handle_sim_manager_dispatch_queue_system, QueueManager,
+};
+use crate::integrations::system_queues::game_speed_manager::{
+    decrease_speed, handle_game_speed_manager_queue_system, increase_speed, set_game_speed,
+};
+use crate::integrations::system_queues::sim_manager::handle_sim_manager_queue_system;
 use crate::sim::systems::banner::print_banner;
 use owo_colors::OwoColorize;
 use parking_lot::Mutex;
-use crate::integrations::system_queues::game_speed_manager::{decrease_speed, handle_game_speed_manager_queue_system, increase_speed, set_game_speed};
 
 fn print_startup_banner() {
     print_banner();
-
-
-
-
 }
 
 pub struct SimContext {
@@ -72,7 +72,6 @@ fn main() {
     init_logging();
     print_startup_banner();
 
-
     info!("Starting...");
     debug!("Debug log is {ENABLED}. Logs will be verbose. Use {log_settings} environment variable for normal operations.",ENABLED= "ENABLED".bold().red(), log_settings= "RUST_LOG=info".green().italic() );
 
@@ -84,12 +83,10 @@ fn main() {
 
     let queue_manager = QueueManager::new();
     snapshot_state.command_queue = queue_manager.dispatch();
-
+    snapshot_state.sim_manager_queue = queue_manager.sim_manager_dispatch();
 
     let ui_snapshot_state = Arc::new(snapshot_state);
-    let sim_snapshot_state = Arc::clone(&ui_snapshot_state);// Clone for ECS thread
-
-
+    let sim_snapshot_state = Arc::clone(&ui_snapshot_state); // Clone for ECS thread
 
     // Used by person generation to prevent duplicate profile picture. no arc, only used in sim
     let used_portrait = UsedProfilePictureRegistry::default();
@@ -130,37 +127,45 @@ fn main() {
                 resources.insert(used_portrait);
                 resources.insert(Arc::new(PersonRegistry::new()));
 
-
-                let mut sim_manager_loop = Schedule::builder() // sim manager schedule, runs outside of the killswitch
-                    // .add_system( handle_sim_manager_queue_system()) TODO
-                    .build();
-            
-
-                let mut startup = Schedule::builder() // Startup schedule, runs once on startup. add run once systems here.
+                // Startup schedule, runs once on startup. add run once systems here.
+                let mut startup = Schedule::builder()
                     .add_system(generate_employees_system())
                     .build();
 
-                // command queue loop. dispatch then run the resource profile specific queues.
-                let mut dispatcher_queue_loop = Schedule::builder() // Command queue handler, process all incoming command, runs first in the loop. doesnt stop when simulation is pause.
-                    .add_system(handle_dispatch_queue_system())
-                    .build();
+                // processes the command dispatch queues,  dispatch then sends to the resource profile specific queues.
+                // sim manager runs outside of the suspended kill switch
+                let mut dispatcher_queue_schedule =
+                    Schedule::builder() // Command queue handler, process all incoming command, runs first in the loop. doesnt stop when simulation is pause.
+                        .add_system(handle_dispatch_queue_system())
+                        .build();
 
-                // subsystem command system
-                let mut subsystem_command_loop = Schedule::builder()
+                let mut sim_manager_dispatch_schedule =
+                    Schedule::builder() // sim manager schedule, runs outside of the killswitch
+                        .add_system(handle_sim_manager_dispatch_queue_system())
+                        .build();
+
+                let mut sim_manager_schedule =
+                    Schedule::builder() // sim manager schedule, runs outside of the killswitch
+                        .add_system(handle_sim_manager_queue_system())
+                        .build();
+
+                /// subsystem command system:
+                /// processes the commnad that was dispatched from the dispatcher queues. uses different resource profiles
+                let mut subsystem_command_schedule = Schedule::builder()
                     .add_system(handle_game_speed_manager_queue_system())
                     .build();
 
-                // main sim loop
-                let mut sim_loop = Schedule::builder() // Main game loop, add systems that runs per frame here.
+                // main sim
+                let mut sim_schedule = Schedule::builder() // Main game loop, add systems that runs per frame here.
                     .add_system(increase_sim_tick_system())
                     .add_system(print_person_system())
                     .build();
 
-                //integration
+                //integration, handles generating snapshots
                 let mut pre_integration = Schedule::builder()
                     .add_system(clear_person_list_system())
                     .build();
-                let mut integration_loop =
+                let mut integration_schedule =
                     Schedule::builder() //Integration loop, add systems that updates the gui app state in this loop. this loop might run slower than the main loop
                         .add_system(push_tick_counter_to_integration_system())
                         .add_system(push_persons_to_integration_system())
@@ -168,32 +173,33 @@ fn main() {
                 let mut post_integration = Schedule::builder()
                     // .add_system()
                     .build();
+
                 let sleeper =
                     SpinSleeper::new(0).with_spin_strategy(spin_sleep::SpinStrategy::YieldThread); // prevents CPU burn
                 let state = Arc::clone(&sim_manager);
 
-
                 //Tick the startup schedule
                 startup.execute(&mut world, &mut resources);
                 loop {
-                    sim_manager_loop.execute(&mut world, &mut resources);
+                    sim_manager_dispatch_schedule.execute(&mut world, &mut resources);
+                    sim_manager_schedule.execute(&mut world, &mut resources);
                     if state.is_running() {
                         let tick_start = Instant::now();
 
                         // Process SimCommand queue
-                        dispatcher_queue_loop.execute(&mut world, &mut resources);
+                        dispatcher_queue_schedule.execute(&mut world, &mut resources);
 
-                        subsystem_command_loop.execute(&mut world, &mut resources);
+                        subsystem_command_schedule.execute(&mut world, &mut resources);
 
                         // Main sim tick only if not paused. paused will return a None current interval
                         let maybe_interval = game_speed.read().unwrap().current_interval();
                         if let Some(_) = maybe_interval {
-                            sim_loop.execute(&mut world, &mut resources);
+                            sim_schedule.execute(&mut world, &mut resources);
                         }
 
                         // Always run integration so UI sees updates
                         pre_integration.execute(&mut world, &mut resources);
-                        integration_loop.execute(&mut world, &mut resources);
+                        integration_schedule.execute(&mut world, &mut resources);
                         post_integration.execute(&mut world, &mut resources);
 
                         let elapsed = tick_start.elapsed();
@@ -213,7 +219,7 @@ fn main() {
                                 sleeper.sleep(GameSpeed::Normal.interval().unwrap());
                             }
                         }
-                    }else {
+                    } else {
                         sleeper.sleep(Duration::from_millis(100));
                     }
                 }
@@ -223,8 +229,16 @@ fn main() {
         })
         .manage(ui_snapshot_state)
         .manage(ui_sim_manager)
-
-        .invoke_handler(tauri::generate_handler![get_tick, get_persons,set_game_speed, increase_speed, decrease_speed, start_sim, stop_sim])
+        .invoke_handler(tauri::generate_handler![
+            get_tick,
+            get_persons,
+            set_game_speed,
+            increase_speed,
+            decrease_speed,
+            start_sim,
+            stop_sim,
+            resume_sim,
+        ])
         .run(tauri::generate_context!())
         .expect("error running tauri app");
 }
