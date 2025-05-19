@@ -9,7 +9,7 @@ use std::sync::{Arc, RwLock};
 use std::time::{Duration, Instant};
 use tauri::utils::assets::phf::Set;
 use tauri::State;
-use tracing::{debug, warn};
+use tracing::{debug, info, warn};
 use crate::integrations::system_queues::game_speed_manager::GameSpeedManagerCommand::{DecreaseGameSpeed, IncreaseGameSpeed, SetGameSpeed};
 
 pub enum GameSpeedManagerCommand {
@@ -42,12 +42,13 @@ pub fn handle_game_speed_manager_queue(
     #[resource] queue_manager: &QueueManager,
     #[resource] game_speed_manager: &Arc<RwLock<GameSpeedManager>>,
 ) {
-    debug!("Handling game speed manager queue");
+    info!("Handling game speed manager queue");
     let queue = &queue_manager.game_speed_manager;
     let dispatch_time_limit = Duration::from_millis(5);
 
     timed_dispatch(queue, dispatch_time_limit, |cmd| match cmd {
         GameSpeedManagerCommand::IncreaseGameSpeed => {
+            info!("Increase game speed");
             if let Ok(mut settings) = game_speed_manager.write() {
                 settings.increase();
             }

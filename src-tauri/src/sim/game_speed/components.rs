@@ -66,10 +66,8 @@ impl GameSpeedManager {
         self.game_speed.is_paused()
     }
 
-    pub fn increase(&self)->Self {
-        Self{
-            game_speed: self.game_speed.increase(),
-        }
+    pub fn increase(&mut self) {
+        self.game_speed = self.game_speed.increase();
     }
 
     pub fn decrease(&mut self) {
