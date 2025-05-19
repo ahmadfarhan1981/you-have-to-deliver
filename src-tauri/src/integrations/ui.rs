@@ -3,13 +3,16 @@ use crate::sim::resources::global::SimManager;
 use dashmap::DashMap;
 use std::sync::Arc;
 use tauri::State;
-use crate::integrations::queues::DispatchQueue;
+use tracing::info;
+use crate::integrations::queues::{ExposedQueue, SimCommand};
+use crate::integrations::system_queues::sim_manager::{SimManagerCommand};
 
 #[derive(Debug, Default)]
 pub struct SnapshotState {// this is tha main integration state
     pub tick: TickSnapshot,
     pub persons: DashMap<u32, PersonSnapshot>,
-    pub command_queue: DispatchQueue,
+    pub command_queue: ExposedQueue<SimCommand>,
+    pub sim_manager_queue: ExposedQueue<SimManagerCommand>
 }
 
 
@@ -31,11 +34,21 @@ pub fn new_game(state: State<'_, Arc<SnapshotState>>){
 
 
 #[tauri::command]
-pub fn start_sim(sim_state: State<'_, Arc<SimManager>>){
-    sim_state.resume_sim();
+pub fn start_sim(state: State<'_, Arc<SnapshotState>>){
+    state.sim_manager_queue.push(SimManagerCommand::StartSim)
 }
 #[tauri::command]
-pub fn stop_sim(sim_state: State<'_, Arc<SimManager>>){
-    sim_state.pause_sim();
+pub fn stop_sim(state: State<'_, Arc<SnapshotState>>){
+    state.sim_manager_queue.push(SimManagerCommand::StopSim)
+}
+#[tauri::command]
+pub fn resume_sim(state: State<'_, Arc<SnapshotState>>){
+    info!("resume_sim");
+    state.sim_manager_queue.push(SimManagerCommand::ResumeSim)
+}
+
+#[tauri::command]
+pub fn new_sim(state: State<'_, Arc<SnapshotState>>){
+    state.sim_manager_queue.push(SimManagerCommand::ResetSim)
 }
 
