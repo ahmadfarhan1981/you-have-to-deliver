@@ -26,7 +26,7 @@ pub fn reset_simulation(world: &mut World, resources: &mut Resources) {
     debug!("Clearing command queue...");
     {
         let snapshot_state = resources.get::<Arc<SnapshotState>>().expect("Cant get SnapshotState");
-        while !snapshot_state.command_queue.is_empty() { snapshot_state.command_queue.pop(); }
+        snapshot_state.command_queue.clear();
     }
     debug!("Resetting ticker counter...");
     {
