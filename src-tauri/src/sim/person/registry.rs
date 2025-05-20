@@ -3,7 +3,7 @@ use super::components::PersonId;
 use dashmap::DashMap;
 use legion::world::Entity;
 use std::sync::atomic::{AtomicU32, Ordering};
-use owo_colors::OwoColorize;
+use crate::sim::utils::term::{bold, cyan};
 
 #[derive(Default)]
 pub struct PersonRegistry {
@@ -14,14 +14,14 @@ pub struct PersonRegistry {
 impl fmt::Debug for PersonRegistry {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let count = self.id_to_entity.len();
-        let next = self.next_id.load(std::sync::atomic::Ordering::Relaxed);
+        let next = self.next_id.load(Ordering::Relaxed);
 
         write!(
             f,
             "{}[{}. next_id={}]",
-            "PersonRegistry".bold().bright_cyan(),
-            format!("{count} entries").green(),
-            format!("{next}").yellow().bold()
+            bold(&cyan("PersonRegistry")),
+            format!("{count} entries"),//todo try to add term formating
+            format!("{next}")//todo try to add term formating
         )
     }
 }

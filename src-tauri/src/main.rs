@@ -18,11 +18,8 @@ use sim::systems::global::print_person_system;
 use std::time::{Duration, Instant};
 use std::{fmt, thread};
 
-use crate::integrations::systems::{
-    clear_person_list_system, push_persons_to_integration_system,
-    push_tick_counter_to_integration_system,
-};
-use crate::integrations::ui::{get_persons, get_tick, new_sim, resume_sim, start_sim, stop_sim, SnapshotState};
+use crate::integrations::systems::{clear_person_list_system, push_game_speed_to_integration_system, push_persons_to_integration_system, push_tick_counter_to_integration_system};
+use crate::integrations::ui::{get_persons, get_tick, new_sim, resume_sim, start_sim, stop_sim};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::ProfilePicture;
 use crate::sim::person::registry::PersonRegistry;
@@ -44,10 +41,11 @@ use crate::integrations::system_queues::game_speed_manager::{
 };
 use crate::integrations::system_queues::sim_manager;
 use crate::sim::systems::banner::print_banner;
-use owo_colors::OwoColorize;
 use parking_lot::Mutex;
+use crate::integrations::snapshots::SnapshotState;
 use crate::integrations::system_queues::sim_manager::{delete_all_entity_system, handle_new_game_manager_queue_system, handle_sim_manager_queue_system, reset_state_system};
 use crate::sim::utils::sim_reset::ResetRequest;
+use crate::sim::utils::term::{bold, green, italic, red};
 
 fn print_startup_banner() {
     print_banner();
@@ -75,7 +73,8 @@ fn main() {
     print_startup_banner();
 
     info!("Starting...");
-    debug!("Debug log is {ENABLED}. Logs will be verbose. Use {log_settings} environment variable for normal operations.",ENABLED= "ENABLED".bold().red(), log_settings= "RUST_LOG=info".green().italic() );
+
+    debug!("Debug log is {ENABLED}. Logs will be verbose. Use {log_settings} environment variable for normal operations.",ENABLED= red(&bold("ENABLED")), log_settings= green(&italic("RUST_LOG=info")));
 
     // Create a properly shared AppState
     let mut snapshot_state = SnapshotState::default();
@@ -188,6 +187,7 @@ fn main() {
                     Schedule::builder() //Integration loop, add systems that updates the gui app state in this loop. this loop might run slower than the main loop
                         .add_system(push_tick_counter_to_integration_system())
                         .add_system(push_persons_to_integration_system())
+                        .add_system(push_game_speed_to_integration_system())
                         .build();
                 let mut post_integration = Schedule::builder()
                     // .add_system()

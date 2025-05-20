@@ -1,9 +1,29 @@
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
-use serde::{Deserialize, Serialize};
-use crate::sim::person::components::{Gender, PersonId, ProfilePictureCategory};
-use crate::sim::person::stats::Stats;
+use std::sync::{Arc, RwLock};
+use crate::integrations::queues::{ExposedQueue, SimCommand};
+use crate::integrations::system_queues::sim_manager::SimManagerCommand;
+use crate::sim::game_speed::components::GameSpeed;
+use crate::sim::person::stats::{Stat, Stats};
 use crate::sim::resources::global::TickCounter;
+use dashmap::DashMap;
+use serde::{Deserialize, Serialize};
+use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
+use arc_swap::ArcSwap;
+#[derive(Debug, Default)]
+pub struct SnapshotState {// this is tha main integration state
+    pub tick: TickSnapshot,
+    pub game_speed: ArcSwap<Arc<GameSpeedSnapshot>>,
+    pub persons: DashMap<u32, PersonSnapshot>,
+    pub command_queue: ExposedQueue<SimCommand>,
+    pub sim_manager_queue: ExposedQueue<SimManagerCommand>
+}
+
+
+#[derive(Debug, Default, Serialize, Deserialize)]
+pub struct GameSpeedSnapshot {
+    pub tick: TickSnapshot,
+    pub game_speed: GameSpeed,
+}
+
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct TickSnapshot{
@@ -90,16 +110,17 @@ pub struct StatsSnapshot {
 impl From<Stats> for StatsSnapshot {
     fn from(s: Stats) -> Self {
         Self {
-            judgement: s.judgement,
-            creativity: s.creativity,
-            systems: s.systems,
-            precision: s.precision,
-            focus: s.focus,
-            discipline: s.discipline,
-            empathy: s.empathy,
-            communication: s.communication,
-            resilience: s.resilience,
-            adaptability: s.adaptability,
+            judgement: s.get_stat(Stat::Judgement),
+            creativity: s.get_stat(Stat::Creativity),
+            systems: s.get_stat(Stat::Systems),
+            precision: s.get_stat(Stat::Precision),
+            focus: s.get_stat(Stat::Focus),
+            discipline: s.get_stat(Stat::Discipline),
+            empathy: s.get_stat(Stat::Empathy),
+            communication: s.get_stat(Stat::Communication),
+            resilience: s.get_stat(Stat::Resilience),
+            adaptability: s.get_stat(Stat::Adaptability),
         }
+
     }
 }

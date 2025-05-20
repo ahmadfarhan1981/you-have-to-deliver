@@ -1,6 +1,5 @@
 use crate::sim::game_speed::components::GameSpeed;
 use crossbeam::queue::SegQueue;
-use owo_colors::OwoColorize;
 use std::fmt;
 use std::sync::Arc;
 use std::time::{Duration, Instant};

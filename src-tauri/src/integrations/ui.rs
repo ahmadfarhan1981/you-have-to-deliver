@@ -1,4 +1,4 @@
-use crate::integrations::snapshots::{PersonSnapshot, TickSnapshot};
+use crate::integrations::snapshots::{GameSpeedSnapshot, PersonSnapshot, SnapshotState, TickSnapshot};
 use crate::sim::resources::global::SimManager;
 use dashmap::DashMap;
 use std::sync::Arc;
@@ -6,14 +6,8 @@ use tauri::State;
 use tracing::info;
 use crate::integrations::queues::{ExposedQueue, SimCommand};
 use crate::integrations::system_queues::sim_manager::{SimManagerCommand};
+use crate::sim::game_speed::components::GameSpeed;
 
-#[derive(Debug, Default)]
-pub struct SnapshotState {// this is tha main integration state
-    pub tick: TickSnapshot,
-    pub persons: DashMap<u32, PersonSnapshot>,
-    pub command_queue: ExposedQueue<SimCommand>,
-    pub sim_manager_queue: ExposedQueue<SimManagerCommand>
-}
 
 
 #[tauri::command]

@@ -27,8 +27,9 @@
         <option value="EmployeeList" />
         <option value="EmployeeDetail" />
         <option value="TypeScript File" />
-        <option value="Rust File" />
         <option value="Tabs" />
+        <option value="SimControl" />
+        <option value="Rust File" />
       </list>
     </option>
   </component>
@@ -70,7 +71,7 @@
     &quot;org.rust.first.attach.projects&quot;: &quot;true&quot;,
     &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;language.rust.cargo.check&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;D:\\projects\\you-have-to-deliver\\node_modules\\typescript\\lib&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Work\\Project\\you-have-to-deliver\\node_modules\\typescript\\lib&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
   &quot;keyToStringList&quot;: {
@@ -118,6 +119,8 @@
       <workItem from="1747571231312" duration="88000" />
       <workItem from="1747617074712" duration="50308000" />
       <workItem from="1747675786229" duration="3839000" />
+      <workItem from="1747732620652" duration="4606000" />
+      <workItem from="1747737896574" duration="7482000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />
@@ -201,13 +204,17 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src-tauri/src/sim/person/spawner.rs</url>
-          <line>213</line>
+          <line>207</line>
           <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src-tauri/src/integrations/snapshots.rs</url>
+          <line>84</line>
+          <option name="timeStamp" value="3" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/lib/components/StatusBar.svelte</url>
           <line>10</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="2" />
         </line-breakpoint>
       </breakpoints>

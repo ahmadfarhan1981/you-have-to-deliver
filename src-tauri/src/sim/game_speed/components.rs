@@ -1,10 +1,11 @@
 use std::time::Duration;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize,Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize,Deserialize, Default)]
 pub enum GameSpeed {
     Stopped,
     Slow,
+    #[default]
     Normal,
     Fast,
     Max,

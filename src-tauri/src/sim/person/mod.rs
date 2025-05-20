@@ -4,3 +4,5 @@ mod utils;
 pub mod registry;
 pub mod spawner;
 pub mod stats;
+
+pub mod skills;
