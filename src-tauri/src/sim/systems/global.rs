@@ -7,7 +7,6 @@ use legion::{system, Entity};
 use std::sync::Arc;
 use dashmap::DashSet;
 use legion::systems::CommandBuffer;
-use owo_colors::OwoColorize;
 use tracing::info;
 
 #[system]
@@ -30,7 +29,7 @@ pub struct UsedProfilePictureRegistry{
 
 impl fmt::Debug for UsedProfilePictureRegistry {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "UsedProfilePictureRegistry[{}]",  format!("{} entries", self.used_profile_pictures.len()).green())
+        write!(f, "UsedProfilePictureRegistry[{}]",  format!("{} entries", self.used_profile_pictures.len()))
         // write!(
         //     f,
         //     "{}[{}. next_id={}]",

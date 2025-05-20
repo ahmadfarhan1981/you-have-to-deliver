@@ -1,6 +1,6 @@
 use crate::integrations::queues::{ QueueManager, SimCommand};
 use crate::integrations::system_queues::shared::timed_dispatch;
-use crate::integrations::ui::SnapshotState;
+
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::resources::global::SimManager;
 use crossbeam::queue::SegQueue;
@@ -10,6 +10,7 @@ use std::time::{Duration, Instant};
 use tauri::utils::assets::phf::Set;
 use tauri::State;
 use tracing::{debug, info, trace, warn};
+use crate::integrations::snapshots::SnapshotState;
 use crate::integrations::system_queues::game_speed_manager::GameSpeedManagerCommand::{DecreaseGameSpeed, IncreaseGameSpeed, SetGameSpeed};
 
 pub enum GameSpeedManagerCommand {

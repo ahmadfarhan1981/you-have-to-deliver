@@ -1,5 +1,5 @@
 use super::components::Person;
-use super::stats::Stats;
+use super::stats::{Stats, StatsConfig};
 use crate::sim::person::components::{Gender, PersonId, ProfilePicture, ProfilePictureCategory};
 use crate::sim::person::registry::PersonRegistry;
 use crate::sim::resources::global::AssetBasePath;
@@ -170,28 +170,19 @@ fn generate_stats(tier: TalentGrade) -> Stats {
     let (resilience, resilience_raw) = gen!();
     let (adaptability, adaptability_raw) = gen!();
 
-    Stats {
+    let config =StatsConfig {
         judgement,
-        judgement_raw,
         creativity,
-        creativity_raw,
         systems,
-        systems_raw,
         precision,
-        precision_raw,
         focus,
-        focus_raw,
         discipline,
-        discipline_raw,
         empathy,
-        empathy_raw,
         communication,
-        communication_raw,
         resilience,
-        resilience_raw,
         adaptability,
-        adaptability_raw,
-    }
+    };
+    config.into()
 }
 
 fn generate_profile_picture(

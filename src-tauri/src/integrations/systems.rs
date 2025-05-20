@@ -1,10 +1,12 @@
-use crate::integrations::snapshots::{PersonSnapshot, ProfilePictureSnapshot, StatsSnapshot};
-use crate::integrations::ui::SnapshotState;
+use crate::integrations::snapshots::{GameSpeedSnapshot, PersonSnapshot, ProfilePictureSnapshot, SnapshotState, StatsSnapshot, TickSnapshot};
+use crate::sim::game_speed::components::GameSpeedManager;
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
 use crate::sim::person::stats::Stats;
 use crate::sim::resources::global::TickCounter;
 use legion::system;
 use std::sync::Arc;
+use crossbeam::channel::tick;
+use crate::integrations::snapshots;
 
 #[system]
 pub fn push_tick_counter_to_integration(
@@ -13,6 +15,23 @@ pub fn push_tick_counter_to_integration(
 ) {
     app_state.tick.set(&tick_counter)
 }
+
+#[system]
+pub fn push_game_speed_to_integration(
+    #[resource] app_state: &Arc<SnapshotState>,
+    #[resource] tick_counter: &Arc<TickCounter>,
+    #[resource] game_speed_manager: &Arc<GameSpeedManager>,
+) {
+
+    // TODO
+    app_state.tick.set(&tick_counter);
+    let tick = TickSnapshot::default();
+    tick.set(tick_counter);
+    let snapshot = Arc::new(GameSpeedSnapshot{ tick, game_speed: game_speed_manager.game_speed });
+    app_state.game_speed.store(Arc::new(snapshot));
+
+}
+
 
 #[system]
 pub fn clear_person_list(#[resource] app_state: &Arc<SnapshotState>) {

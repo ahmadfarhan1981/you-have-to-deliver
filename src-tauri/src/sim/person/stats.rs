@@ -1,36 +1,109 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
-pub struct Stats {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Stat {
+    Judgement,
+    Creativity,
+    Systems,
+    Precision,
+    Focus,
+    Discipline,
+    Empathy,
+    Communication,
+    Resilience,
+    Adaptability,
+}
+
+#[derive(Default)]
+pub struct StatsConfig {
     // Cognition
     pub judgement: u16,
-    pub judgement_raw: u32,
     pub creativity: u16,
-    pub creativity_raw: u32,
 
     // Perception
     pub systems: u16,
-    pub systems_raw: u32,
     pub precision: u16,
-    pub precision_raw: u32,
 
     // Drive
     pub focus: u16,
-    pub focus_raw: u32,
     pub discipline: u16,
-    pub discipline_raw: u32,
 
     // Social
     pub empathy: u16,
-    pub empathy_raw: u32,
     pub communication: u16,
-    pub communication_raw: u32,
 
     // Defense
     pub resilience: u16,
-    pub resilience_raw: u32,
     pub adaptability: u16,
-    pub adaptability_raw: u32,
+}
+
+#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+pub struct Stats {
+    // Cognition
+    judgement: u16,
+    judgement_raw: u32,
+    creativity: u16,
+    creativity_raw: u32,
+
+    // Perception
+    systems: u16,
+    systems_raw: u32,
+    precision: u16,
+    precision_raw: u32,
+
+    // Drive
+    focus: u16,
+    focus_raw: u32,
+    discipline: u16,
+    discipline_raw: u32,
+
+    // Social
+    empathy: u16,
+    empathy_raw: u32,
+    communication: u16,
+    communication_raw: u32,
+
+    // Defense
+    resilience: u16,
+    resilience_raw: u32,
+    adaptability: u16,
+    adaptability_raw: u32,
+}
+impl From<StatsConfig> for Stats{
+    fn from(config: StatsConfig) -> Self{
+        let mut stats = Self{
+            judgement: config.judgement,
+            judgement_raw: 0,
+            creativity: config.creativity,
+            creativity_raw: 0,
+
+            // Perception
+            systems: config.systems,
+            systems_raw: 0,
+            precision: config.precision,
+            precision_raw: 0,
+
+            // Drive
+            focus: config.focus,
+            focus_raw: 0,
+            discipline: config.discipline,
+            discipline_raw: 0,
+
+            // Social
+            empathy: config.empathy,
+            empathy_raw: 0,
+            communication: config.communication,
+            communication_raw: 0,
+
+            // Defense
+            resilience: config.resilience,
+            resilience_raw: 0,
+            adaptability: config.adaptability,
+            adaptability_raw: 0,
+        };
+        stats.sync_from_raw();
+        return stats;
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -43,6 +116,20 @@ pub enum StatGroup {
 }
 
 impl Stats {
+    pub fn get_stat(&self, stat: Stat) -> u16 {
+        match stat {
+            Stat::Judgement => self.judgement,
+            Stat::Creativity => self.creativity,
+            Stat::Systems => self.systems,
+            Stat::Precision => self.precision,
+            Stat::Focus => self.focus,
+            Stat::Discipline => self.discipline,
+            Stat::Empathy => self.empathy,
+            Stat::Communication => self.communication,
+            Stat::Resilience => self.resilience,
+            Stat::Adaptability => self.adaptability,
+        }
+    }
     pub fn average_cognition(&self) -> f32 {
         (self.judgement as f32 + self.creativity as f32) / 2.0
     }

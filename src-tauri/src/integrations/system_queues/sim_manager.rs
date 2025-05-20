@@ -1,6 +1,6 @@
 use crate::integrations::queues::QueueManager;
 use crate::integrations::system_queues::shared::timed_dispatch;
-use crate::integrations::ui::SnapshotState;
+
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{Person, ProfilePicture};
 use crate::sim::person::registry::PersonRegistry;
@@ -17,6 +17,7 @@ use std::sync::{Arc, RwLock};
 use std::time::Duration;
 use tracing::field::debug;
 use tracing::{debug, error, info, trace, warn};
+use crate::integrations::snapshots::SnapshotState;
 
 #[derive(Default)]
 pub enum SimManagerCommand {
