@@ -35,4 +35,5 @@ tracing-subscriber = { version = "0.3.19", features = ["env-filter", "chrono"] }
 tracing = "0.1.41"
 tracing-appender = "0.2.3"
 unicode-segmentation = "1.10"
-arc_swap = "1.7.1"
+arc-swap = "1.7.1"
+

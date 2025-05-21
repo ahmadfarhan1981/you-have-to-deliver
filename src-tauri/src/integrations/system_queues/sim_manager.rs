@@ -1,4 +1,4 @@
-use crate::integrations::queues::QueueManager;
+use crate::integrations::queues::{QueueManager, UICommandQueues};
 use crate::integrations::system_queues::shared::timed_dispatch;
 
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
@@ -103,11 +103,11 @@ pub fn handle_new_game_manager_queue(
     #[resource] queue_manager: &QueueManager,
     #[resource] sim_manager: &Arc<SimManager>,
     #[resource] tick_counter: &Arc<TickCounter>,
-    #[resource] snapshot: &Arc<SnapshotState>,
     #[resource] game_speed: &Arc<RwLock<GameSpeedManager>>,
     #[resource] used_profile_picture_registry: &UsedProfilePictureRegistry,
     #[resource] person_registry: &Arc<PersonRegistry>,
     #[resource] reset_request: &mut Arc<ResetRequest>,
+    #[resource] command_queues: &Arc<UICommandQueues>,
 ) {
     debug!("Handle new game manager queue");
 
@@ -134,8 +134,8 @@ pub fn handle_new_game_manager_queue(
 
             debug!("Clearing command queue...");
             //dispatch queues
-            snapshot.command_queue.clear();
-            snapshot.sim_manager_queue.clear();
+            command_queues.runtime.clear();
+            command_queues.control.clear();
 
             //subsystem queues
             while queue_manager.sim_manager.queue.pop().is_some() {}

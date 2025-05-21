@@ -1,4 +1,4 @@
-use crate::integrations::queues::{ QueueManager, SimCommand};
+use crate::integrations::queues::{QueueManager, SimCommand, UICommandQueues};
 use crate::integrations::system_queues::shared::timed_dispatch;
 
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
@@ -22,18 +22,18 @@ pub enum GameSpeedManagerCommand {
     ResumeGame,
 }
 #[tauri::command]
-pub fn set_game_speed(state: State<'_, Arc<SnapshotState>>, game_speed: GameSpeed){
-    state.command_queue.push(SimCommand::GameSpeed(SetGameSpeed(game_speed)));
+pub fn set_game_speed(queues: State<'_, Arc<UICommandQueues>>, game_speed: GameSpeed){
+    queues.runtime.push(SimCommand::GameSpeed(SetGameSpeed(game_speed)));
 
 }
 
 #[tauri::command]
-pub fn increase_speed(state: State<'_, Arc<SnapshotState>>){
-    state.command_queue.push(SimCommand::GameSpeed(IncreaseGameSpeed));
+pub fn increase_speed(queues: State<'_, Arc<UICommandQueues>>){
+    queues.runtime.push(SimCommand::GameSpeed(IncreaseGameSpeed));
 }
 #[tauri::command]
-pub fn decrease_speed(state: State<'_, Arc<SnapshotState>>){
-    state.command_queue.push(SimCommand::GameSpeed(DecreaseGameSpeed));
+pub fn decrease_speed(queues: State<'_, Arc<UICommandQueues>>){
+    queues.runtime.push(SimCommand::GameSpeed(DecreaseGameSpeed));
 }
 
 

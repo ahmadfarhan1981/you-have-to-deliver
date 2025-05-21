@@ -1,21 +1,22 @@
-use std::sync::{Arc, RwLock};
-use crate::integrations::queues::{ExposedQueue, SimCommand};
-use crate::integrations::system_queues::sim_manager::SimManagerCommand;
 use crate::sim::game_speed::components::GameSpeed;
 use crate::sim::person::stats::{Stat, Stats};
 use crate::sim::resources::global::TickCounter;
+use arc_swap::ArcSwap;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
-use arc_swap::ArcSwap;
+use std::sync::Arc;
 #[derive(Debug, Default)]
-pub struct SnapshotState {// this is tha main integration state
+pub struct SnapshotState {
+    // this is tha main integration state
     pub tick: TickSnapshot,
     pub game_speed: ArcSwap<Arc<GameSpeedSnapshot>>,
     pub persons: DashMap<u32, PersonSnapshot>,
-    pub command_queue: ExposedQueue<SimCommand>,
-    pub sim_manager_queue: ExposedQueue<SimManagerCommand>
+
 }
+
+
+
 
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -24,9 +25,8 @@ pub struct GameSpeedSnapshot {
     pub game_speed: GameSpeed,
 }
 
-
 #[derive(Debug, Default, Serialize, Deserialize)]
-pub struct TickSnapshot{
+pub struct TickSnapshot {
     tick: AtomicU64,
     year: AtomicU16,
     week: AtomicU8,
@@ -50,18 +50,16 @@ impl TickSnapshot {
     pub fn get(&self) -> u64 {
         self.tick.load(Ordering::Relaxed)
     }
-     pub fn get_date(&self) -> ( u16, u8, u8, u8, u64) {
-         (self.year.load(Ordering::Relaxed) ,
-          self.week.load(Ordering::Relaxed),
-          self.day.load(Ordering::Relaxed),
-          self.quarter_tick.load(Ordering::Relaxed),
-         self.tick.load(Ordering::Relaxed))
-     }
-
+    pub fn get_date(&self) -> (u16, u8, u8, u8, u64) {
+        (
+            self.year.load(Ordering::Relaxed),
+            self.week.load(Ordering::Relaxed),
+            self.day.load(Ordering::Relaxed),
+            self.quarter_tick.load(Ordering::Relaxed),
+            self.tick.load(Ordering::Relaxed),
+        )
+    }
 }
-
-
-
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct PersonSnapshot {
@@ -70,7 +68,6 @@ pub struct PersonSnapshot {
     pub(crate) person_id: u32,
     pub(crate) name: String,
     pub(crate) gender: String,
-
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -78,7 +75,7 @@ pub struct ProfilePictureSnapshot {
     pub gender: String,
     pub category: i8,
     pub batch: i8,
-    pub index: i8
+    pub index: i8,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -87,16 +84,13 @@ pub struct StatsSnapshot {
     pub judgement: u16,
     pub creativity: u16,
 
-
     // Perception
     pub systems: u16,
     pub precision: u16,
 
-
     // Drive
     pub focus: u16,
     pub discipline: u16,
-
 
     // Social
     pub empathy: u16,
@@ -121,6 +115,5 @@ impl From<Stats> for StatsSnapshot {
             resilience: s.get_stat(Stat::Resilience),
             adaptability: s.get_stat(Stat::Adaptability),
         }
-
     }
 }
