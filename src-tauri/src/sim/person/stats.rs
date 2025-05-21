@@ -14,7 +14,7 @@ pub enum Stat {
     Adaptability,
 }
 
-#[derive(Default)]
+#[derive(Default, Debug, Serialize, Deserialize)]
 pub struct StatsConfig {
     // Cognition
     pub judgement: u16,
@@ -71,38 +71,29 @@ pub struct Stats {
 }
 impl From<StatsConfig> for Stats{
     fn from(config: StatsConfig) -> Self{
-        let mut stats = Self{
+       Self {
             judgement: config.judgement,
-            judgement_raw: 0,
+            judgement_raw: config.judgement as u32 * 1000,
             creativity: config.creativity,
-            creativity_raw: 0,
-
-            // Perception
+            creativity_raw: config.creativity as u32 * 1000,
             systems: config.systems,
-            systems_raw: 0,
+            systems_raw: config.systems as u32 * 1000,
             precision: config.precision,
-            precision_raw: 0,
-
-            // Drive
+            precision_raw: config.precision as u32 * 1000,
             focus: config.focus,
-            focus_raw: 0,
+            focus_raw: config.focus as u32 * 1000,
             discipline: config.discipline,
-            discipline_raw: 0,
-
-            // Social
+            discipline_raw: config.discipline as u32 * 1000,
             empathy: config.empathy,
-            empathy_raw: 0,
+            empathy_raw: config.empathy as u32 * 1000,
             communication: config.communication,
-            communication_raw: 0,
-
-            // Defense
+            communication_raw: config.communication as u32 * 1000,
             resilience: config.resilience,
-            resilience_raw: 0,
+            resilience_raw: config.resilience as u32 * 1000,
             adaptability: config.adaptability,
-            adaptability_raw: 0,
-        };
-        stats.sync_from_raw();
-        return stats;
+            adaptability_raw: config.adaptability as u32 * 1000,
+       }
+
     }
 }
 

@@ -56,10 +56,9 @@
       clearInterval(cursorInterval);
     };
   });
-
-
 </script>
 
+<p>Listening for test_emit...</p>
 <div class="grid-bg min-h-screen flex flex-col">
   <div class="flex-1 flex items-center justify-center">
     <div class="max-w-4xl w-full mx-auto p-6">
