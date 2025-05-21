@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::fs;
 use std::io::Write;
 use std::path::Path;
-use std::sync::{Arc, RwLock};
+
 
 const SETTINGS_PATH: &str = "core_settings.ron";
 

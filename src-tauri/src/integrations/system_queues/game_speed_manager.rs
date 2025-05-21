@@ -1,18 +1,20 @@
+use std::ptr::write;
+use std::sync::Arc;
 use crate::integrations::queues::{QueueManager, SimCommand, UICommandQueues};
 use crate::integrations::system_queues::shared::timed_dispatch;
 
-use crate::integrations::snapshots::SnapshotState;
-use crate::integrations::system_queues::game_speed_manager::GameSpeedManagerCommand::{DecreaseGameSpeed, IncreaseGameSpeed, SetGameSpeed};
-
+use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::resources::global::SimManager;
 use crossbeam::queue::SegQueue;
 use legion::system;
-use std::sync::{Arc, RwLock};
+
 use std::time::{Duration, Instant};
+use parking_lot::RwLock;
 use tauri::utils::assets::phf::Set;
 use tauri::State;
 use tracing::{debug, info, trace, warn};
-use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
+use crate::integrations::snapshots::SnapshotState;
+use crate::integrations::system_queues::game_speed_manager::GameSpeedManagerCommand::{DecreaseGameSpeed, IncreaseGameSpeed, SetGameSpeed};
 
 pub enum GameSpeedManagerCommand {
     //Game speed settings related.
@@ -42,32 +44,29 @@ pub fn decrease_speed(queues: State<'_, Arc<UICommandQueues>>){
 #[system]
 pub fn handle_game_speed_manager_queue(
     #[resource] queue_manager: &QueueManager,
-    #[resource] game_speed_manager: &mut Arc<GameSpeedManager>,
+    #[resource] game_speed_manager: &Arc<RwLock<GameSpeedManager>>,
 ) {
-    let type_name = std::any::type_name::<&Arc<RwLock<GameSpeedManager>>>();
-    println!("System expects: {}", type_name);
-
     trace!("Handling game speed manager queue");
     let queue = &queue_manager.game_speed_manager;
     let dispatch_time_limit = Duration::from_millis(5);
 
     timed_dispatch(queue, dispatch_time_limit, |cmd| match cmd {
         GameSpeedManagerCommand::IncreaseGameSpeed => {
-            info!("Increase game speed");
-            game_speed_manager.increase();
+            game_speed_manager.write().increase();
         }
         GameSpeedManagerCommand::SetGameSpeed(speed) => {
-            game_speed_manager.set(speed);
+            game_speed_manager.write().set(speed);
         }
         GameSpeedManagerCommand::DecreaseGameSpeed => {
-            game_speed_manager.decrease();
+            game_speed_manager.write().decrease();
         }
         GameSpeedManagerCommand::PauseGame => {
-            game_speed_manager.set(GameSpeed::Stopped);
+            game_speed_manager.write().set(GameSpeed::Stopped);
         }
         GameSpeedManagerCommand::ResumeGame => {
-            game_speed_manager.set(GameSpeed::Normal);
+            game_speed_manager.write().set(GameSpeed::Normal);
 
         }
     })
+
 }
