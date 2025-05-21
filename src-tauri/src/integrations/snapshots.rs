@@ -8,38 +8,20 @@ use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
 use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
+use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotFieldEmitter;
 
 #[derive(Debug, Default)]
 pub struct SnapshotState {
     // this is tha main integration state
     pub tick: TickSnapshot,
     pub game_speed: ArcSwap<Arc<GameSpeedSnapshot>>,
+    pub game_speed2: SnapshotFieldEmitter<GameSpeedSnapshot>,
     pub persons: DashMap<u32, PersonSnapshot>,
 
 }
-
-
-pub struct SnapshotField<T: Serialize> {
+#[derive(Debug,Default)]
+pub struct SnapshotField<T> {
     pub value: ArcSwap<Arc<T>>,
-    pub frequency: ExportFrequency,
-    pub last_sent_tick: AtomicU64,
-    pub event_name: &'static str,
-}
-
-impl<T: Serialize> SnapshotEmitter for SnapshotField<T> {
-    fn maybe_emit(&self, tick: u64, app: &AppHandle) {
-        let should_emit = match self.frequency {
-            ExportFrequency::EveryTick => true,
-            ExportFrequency::EveryNTicks(n) => tick % n == 0,
-            ExportFrequency::ManualOnly => false,
-        };
-
-        if should_emit && self.last_sent_tick.load(Ordering::Relaxed) != tick {
-            self.last_sent_tick.store(tick, Ordering::Relaxed);
-            let data = self.value.load();
-            let _ = app.emit(self.event_name, &**data);
-        }
-    }
 }
 
 pub struct SnapshotCollection<K, V>
@@ -48,42 +30,7 @@ where
     V: Serialize + Clone,
 {
     pub map: DashMap<K, V>,
-    pub frequency: ExportFrequency,
-    pub last_sent_tick: AtomicU64,
-    pub event_name: &'static str,
 }
-
-impl<K, V> SnapshotEmitter for SnapshotCollection<K, V>
-where
-    K: Eq + Hash + Clone,
-    V: Serialize + Clone,
-{
-    fn maybe_emit(&self, tick: u64, app: &AppHandle) {
-        let should_emit = match self.frequency {
-            ExportFrequency::EveryTick => true,
-            ExportFrequency::EveryNTicks(n) => tick % n == 0,
-            ExportFrequency::ManualOnly => false,
-        };
-
-        if should_emit && self.last_sent_tick.load(Ordering::Relaxed) != tick {
-            self.last_sent_tick.store(tick, Ordering::Relaxed);
-
-            let all: Vec<V> = self.map.iter().map(|entry| entry.value().clone()).collect();
-            let _ = app.emit( self.event_name, &all);
-        }
-    }
-}
-
-
-enum ExportFrequency {
-    EveryTick,
-    EveryNTicks(u64),
-    ManualOnly,
-}
-trait SnapshotEmitter {
-    fn maybe_emit(&self, tick: u64, app: &AppHandle);
-}
-
 
 
 #[derive(Debug, Default, Serialize, Deserialize)]
