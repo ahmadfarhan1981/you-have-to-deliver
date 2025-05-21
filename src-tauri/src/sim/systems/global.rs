@@ -7,16 +7,28 @@ use legion::{system, Entity};
 use std::sync::Arc;
 use dashmap::DashSet;
 use legion::systems::CommandBuffer;
-use tracing::info;
+use tauri::Emitter;
+use tracing::{error, info};
+use crate::integrations::ui::AppContext;
 
 #[system]
 pub fn increase_sim_tick(#[resource] tick_counter: &Arc<TickCounter>) {
     tick_counter.tick()
 }
 
-#[system(for_each)]
-pub fn print_person(cmd: &mut CommandBuffer, e:&Entity, person: &Person, stats: &Stats, profile_picture: &ProfilePicture) {
-    info!("Person: {:?}", person);
+#[system]
+pub fn print_person( #[resource] app_context: &Arc<AppContext>,) {
+// pub fn print_person(cmd: &mut CommandBuffer, e:&Entity, person: &Person, stats: &Stats, profile_picture: &ProfilePicture, #[resource] app_context: &Arc<AppContext>,) {
+    info!("Printing person...");
+    let result = app_context
+        .app_handle
+        .emit("test_emit", "hello frontend");
+
+    if let Err(err) = result {
+        error!("Failed to emit game_speed_update: {:?}", err);
+    }
+    //info!("Person: {:?}", person);
+
     // println!("Stats: {:?}", stats);
     // println!("Profile picture: {:?}", profile_picture);
 }

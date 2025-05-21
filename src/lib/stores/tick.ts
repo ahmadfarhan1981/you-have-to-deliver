@@ -1,6 +1,12 @@
 import { readable } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
 
+import { listen } from '@tauri-apps/api/event';
+
+listen('test_emit', (event) => {
+    console.log("Got test_emit:", event.payload);
+});
+
 // Poll every 50ms (matches sim rate)
 export const tick = readable(
     { year: 0, week: 0, day: 0, quarter: 0, tick: 0 },

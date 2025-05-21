@@ -2,12 +2,16 @@ use crate::integrations::snapshots::{GameSpeedSnapshot, PersonSnapshot, Snapshot
 use crate::sim::resources::global::SimManager;
 use dashmap::DashMap;
 use std::sync::Arc;
-use tauri::State;
+use tauri::{AppHandle, State};
 use tracing::info;
 use crate::integrations::queues::{ExposedQueue, SimCommand, UICommandQueues};
 use crate::integrations::system_queues::sim_manager::{SimManagerCommand};
 use crate::sim::game_speed::components::GameSpeed;
 
+#[derive(Clone)]
+pub struct AppContext {
+    pub app_handle: AppHandle,
+}
 
 
 #[tauri::command]
