@@ -4,4 +4,5 @@ pub mod snapshots;
 pub mod events;
 pub mod queues;
 pub mod system_queues;
+pub mod snapshots_emitter;
 
