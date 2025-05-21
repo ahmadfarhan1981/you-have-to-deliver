@@ -8,6 +8,7 @@ use crate::sim::person::stats::Stats;
 use crate::sim::resources::global::TickCounter;
 use legion::system;
 use std::sync::Arc;
+use parking_lot::RwLock;
 
 #[system]
 pub fn push_tick_counter_to_integration(
@@ -21,7 +22,7 @@ pub fn push_tick_counter_to_integration(
 pub fn push_game_speed_to_integration(
     #[resource] app_state: &Arc<SnapshotState>,
     #[resource] tick_counter: &Arc<TickCounter>,
-    #[resource] game_speed_manager: &Arc<GameSpeedManager>,
+    #[resource] game_speed_manager: &Arc<RwLock<GameSpeedManager>>,
 ) {
     // TODO
     app_state.tick.set(&tick_counter);
@@ -29,7 +30,7 @@ pub fn push_game_speed_to_integration(
     tick.set(tick_counter);
     let snapshot = Arc::new(GameSpeedSnapshot {
         tick,
-        game_speed: game_speed_manager.game_speed,
+        game_speed: game_speed_manager.read().game_speed,
     });
     app_state.game_speed.store(Arc::new(snapshot));
 }

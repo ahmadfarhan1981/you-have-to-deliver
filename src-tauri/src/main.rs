@@ -17,7 +17,7 @@ use sim::systems::global::print_person_system;
 
 use std::time::{Duration, Instant};
 use std::{fmt, thread};
-
+use std::sync::Arc;
 use crate::integrations::systems::{clear_person_list_system, push_game_speed_to_integration_system, push_persons_to_integration_system, push_tick_counter_to_integration_system};
 use crate::integrations::ui::{get_persons, get_tick, new_sim, resume_sim, start_sim, stop_sim, AppContext};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
@@ -29,7 +29,7 @@ use crossbeam::queue::SegQueue;
 use dashmap::DashSet;
 use spin_sleep::SpinSleeper;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, RwLock};
+
 use tauri::{Emitter, Manager};
 use tracing::{debug, info, trace};
 
@@ -43,7 +43,7 @@ use crate::integrations::system_queues::sim_manager::{delete_all_entity_system, 
 use crate::sim::systems::banner::print_banner;
 use crate::sim::utils::sim_reset::ResetRequest;
 use crate::sim::utils::term::{bold, green, italic, red};
-use parking_lot::Mutex;
+use parking_lot::{Mutex, RwLock};
 
 fn print_startup_banner() {
     print_banner();
@@ -95,7 +95,7 @@ fn main() {
     let gsm =GameSpeedManager {
         game_speed: GameSpeed::Normal,
     };
-    let game_speed = Arc::new(gsm);
+    let game_speed = Arc::new(RwLock::new(gsm));
 
 
     let sim_manager = Arc::new(SimManager::default());
@@ -174,14 +174,6 @@ fn main() {
                         .add_system(reset_state_system())
                         .build();
 
-                if resources.contains::<Arc<RwLock<GameSpeedManager>>>() {
-                    println!("✓ GameSpeedManager resource found.!!");
-                } else {
-                    println!("✗ GameSpeedManager resource NOT found.!!");
-                }
-                let type_name = std::any::type_name::<Arc<RwLock<GameSpeedManager>>>();
-                println!("Inserted type: {}", type_name);
-
 
                 /// subsystem command system:
                 /// processes the command that was dispatched from the dispatcher queues. uses different resource profiles
@@ -247,13 +239,8 @@ fn main() {
                         subsystem_command_schedule.execute(&mut world, &mut resources);
 
                         // Main sim tick only if not paused. paused will return a None current interval
-                        let maybe_interval = game_speed.game_speed.interval();
+                        let maybe_interval = game_speed.read().current_interval();
                         if let Some(_) = maybe_interval {
-                            if resources.contains::<Arc<RwLock<GameSpeedManager>>>() {
-                                println!("✓ GameSpeedManager resource found.");
-                            } else {
-                                println!("✗ GameSpeedManager resource NOT found.");
-                            }
                             sim_schedule.execute(&mut world, &mut resources);
                         }
 
