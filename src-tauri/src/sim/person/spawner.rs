@@ -14,7 +14,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::sync::Arc;
-use tracing::{debug, error, trace};
+use tracing::{debug, error, info, trace};
 use crate::sim::systems::global::UsedProfilePictureRegistry;
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: u16, max: u16) -> u16 {

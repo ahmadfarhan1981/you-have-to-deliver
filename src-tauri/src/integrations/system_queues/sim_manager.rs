@@ -12,9 +12,11 @@ use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
 use legion::{system, Entity, IntoQuery, Query, Resources, World};
 use std::fmt;
+use std::sync::Arc;
 use std::sync::atomic::Ordering;
-use std::sync::{Arc, RwLock};
+
 use std::time::Duration;
+use parking_lot::RwLock;
 use tracing::field::debug;
 use tracing::{debug, error, info, trace, warn};
 use crate::integrations::snapshots::SnapshotState;
@@ -122,9 +124,7 @@ pub fn handle_new_game_manager_queue(
             if sim_manager.is_running() {
                 sim_manager.pause_sim()
             }
-            if let Ok(mut settings) = game_speed.write() {
-                settings.set(GameSpeed::Normal);
-            }
+            game_speed.write().set(GameSpeed::Normal);
 
             // debug!("Clearing entities...");
             //

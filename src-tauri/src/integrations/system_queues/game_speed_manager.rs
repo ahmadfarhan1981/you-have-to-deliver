@@ -1,3 +1,5 @@
+use std::ptr::write;
+use std::sync::Arc;
 use crate::integrations::queues::{QueueManager, SimCommand, UICommandQueues};
 use crate::integrations::system_queues::shared::timed_dispatch;
 
@@ -5,8 +7,9 @@ use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::resources::global::SimManager;
 use crossbeam::queue::SegQueue;
 use legion::system;
-use std::sync::{Arc, RwLock};
+
 use std::time::{Duration, Instant};
+use parking_lot::RwLock;
 use tauri::utils::assets::phf::Set;
 use tauri::State;
 use tracing::{debug, info, trace, warn};
@@ -49,30 +52,21 @@ pub fn handle_game_speed_manager_queue(
 
     timed_dispatch(queue, dispatch_time_limit, |cmd| match cmd {
         GameSpeedManagerCommand::IncreaseGameSpeed => {
-            info!("Increase game speed");
-            if let Ok(mut settings) = game_speed_manager.write() {
-                settings.increase();
-            }
+            game_speed_manager.write().increase();
         }
         GameSpeedManagerCommand::SetGameSpeed(speed) => {
-            if let Ok(mut settings) = game_speed_manager.write() {
-                settings.set(speed);
-            }
+            game_speed_manager.write().set(speed);
         }
         GameSpeedManagerCommand::DecreaseGameSpeed => {
-            if let Ok(mut settings) = game_speed_manager.write() {
-                settings.decrease();
-            }
+            game_speed_manager.write().decrease();
         }
         GameSpeedManagerCommand::PauseGame => {
-            if let Ok(mut settings) = game_speed_manager.write() {
-                settings.set(GameSpeed::Stopped);
-            }
+            game_speed_manager.write().set(GameSpeed::Stopped);
         }
         GameSpeedManagerCommand::ResumeGame => {
-            if let Ok(mut settings) = game_speed_manager.write() {
-                settings.set(GameSpeed::Normal);
-            }
+            game_speed_manager.write().set(GameSpeed::Normal);
+
         }
     })
+
 }

@@ -1,3 +1,4 @@
+use std::hash::Hash;
 use crate::sim::game_speed::components::GameSpeed;
 use crate::sim::person::stats::{Stat, Stats};
 use crate::sim::resources::global::TickCounter;
@@ -6,17 +7,30 @@ use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
 use std::sync::Arc;
+use tauri::{AppHandle, Emitter};
+use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotFieldEmitter;
+
 #[derive(Debug, Default)]
 pub struct SnapshotState {
     // this is tha main integration state
     pub tick: TickSnapshot,
     pub game_speed: ArcSwap<Arc<GameSpeedSnapshot>>,
+    pub game_speed2: SnapshotFieldEmitter<GameSpeedSnapshot>,
     pub persons: DashMap<u32, PersonSnapshot>,
 
 }
+#[derive(Debug,Default)]
+pub struct SnapshotField<T> {
+    pub value: ArcSwap<Arc<T>>,
+}
 
-
-
+pub struct SnapshotCollection<K, V>
+where
+    K: Eq + Hash + Clone,
+    V: Serialize + Clone,
+{
+    pub map: DashMap<K, V>,
+}
 
 
 #[derive(Debug, Default, Serialize, Deserialize)]
