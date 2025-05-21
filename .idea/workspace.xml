@@ -121,7 +121,7 @@
       <workItem from="1747675786229" duration="3839000" />
       <workItem from="1747732620652" duration="4606000" />
       <workItem from="1747737896574" duration="8026000" />
-      <workItem from="1747816260022" duration="5224000" />
+      <workItem from="1747816260022" duration="12794000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />
@@ -210,8 +210,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src-tauri/src/integrations/snapshots.rs</url>
-          <line>81</line>
+          <line>148</line>
           <option name="timeStamp" value="3" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src-tauri/src/sim/game_speed/components.rs</url>
+          <line>4</line>
+          <option name="timeStamp" value="4" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/lib/components/StatusBar.svelte</url>

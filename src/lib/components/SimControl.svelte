@@ -1,6 +1,6 @@
 <script>
     import {Pause, Play, SkipForward} from "lucide-svelte";
-    import { tick } from "\$lib/stores/tick";}
+    import { tick } from "\$lib/stores/tick";
 </script>
 
 <div class="p-3 border-t border-slate-700 bg-slate-900">
@@ -12,13 +12,12 @@
         <div class="flex space-x-1">
             <button
                     class="p-1.5 { true ? 'bg-green-700 hover:bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} rounded"
-                    on:click={toggleSimulation}
             >
                 <Pause size={14} />
             </button>
             <button
-                    class="p-1.5 {isPlaying ? 'bg-green-700 hover:bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} rounded"
-                    on:click={toggleSimulation}
+                    class="p-1.5 {true ? 'bg-green-700 hover:bg-green-600' : 'bg-slate-800 hover:bg-slate-700'} rounded"
+
             >
                 <Play size={14} />
             </button>
@@ -31,8 +30,7 @@
 
             <select
                     class="bg-slate-800 border border-slate-700 rounded text-xs p-1"
-                    bind:value={simulationSpeed}
-                    on:change={changeSpeed}
+
             >
                 <option>Stopped</option>
                 <option>Slow</option>
