@@ -19,14 +19,7 @@ pub fn increase_sim_tick(#[resource] tick_counter: &Arc<TickCounter>) {
 #[system]
 pub fn print_person( #[resource] app_context: &Arc<AppContext>,) {
 // pub fn print_person(cmd: &mut CommandBuffer, e:&Entity, person: &Person, stats: &Stats, profile_picture: &ProfilePicture, #[resource] app_context: &Arc<AppContext>,) {
-    info!("Printing person...");
-    let result = app_context
-        .app_handle
-        .emit("test_emit", "hello frontend");
-
-    if let Err(err) = result {
-        error!("Failed to emit game_speed_update: {:?}", err);
-    }
+//     info!("Printing person...");
     //info!("Person: {:?}", person);
 
     // println!("Stats: {:?}", stats);

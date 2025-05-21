@@ -184,7 +184,7 @@ fn main() {
                 // main sim
                 let mut sim_schedule = Schedule::builder() // Main game loop, add systems that runs per frame here.
                     .add_system(increase_sim_tick_system())
-                    // .add_system(print_person_system())
+                    .add_system(print_person_system())
                     .build();
 
                 //integration, handles generating snapshots
@@ -208,11 +208,6 @@ fn main() {
                 //Tick the startup schedule
                 startup.execute(&mut world, &mut resources);
 
-                if resources.contains::<Arc<RwLock<GameSpeedManager>>>() {
-                    println!("✓ GameSpeedManager resource found.");
-                } else {
-                    println!("✗ GameSpeedManager resource NOT found.");
-                }
                 loop {
                     sim_manager_dispatch_schedule.execute(&mut world, &mut resources);
                     sim_manager_reset_schedule.execute(&mut world, &mut resources);
