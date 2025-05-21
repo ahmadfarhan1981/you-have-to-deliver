@@ -10,6 +10,13 @@ use crate::integrations::system_queues::sim_manager::SimManagerCommand;
 use crate::integrations::system_queues::sim_manager::SimManagerCommand::ResetSim;
 use crate::sim::resources::global::SimManager;
 
+#[derive(Debug, Default)]
+pub struct UICommandQueues {
+    pub runtime: ExposedQueue<SimCommand>,
+    pub control: ExposedQueue<SimManagerCommand>,
+}
+
+
 pub enum SimCommand {
     GameSpeed(GameSpeedManagerCommand),
     SimManager(SimManagerCommand),

@@ -4,7 +4,7 @@ use dashmap::DashMap;
 use std::sync::Arc;
 use tauri::State;
 use tracing::info;
-use crate::integrations::queues::{ExposedQueue, SimCommand};
+use crate::integrations::queues::{ExposedQueue, SimCommand, UICommandQueues};
 use crate::integrations::system_queues::sim_manager::{SimManagerCommand};
 use crate::sim::game_speed::components::GameSpeed;
 
@@ -22,21 +22,21 @@ pub fn get_persons(state: State<'_, Arc<SnapshotState>>) -> Vec<PersonSnapshot> 
 }
 
 #[tauri::command]
-pub fn start_sim(state: State<'_, Arc<SnapshotState>>){
-    state.sim_manager_queue.push(SimManagerCommand::StartSim)
+pub fn start_sim(queues: State<'_, Arc<UICommandQueues>>){
+    queues.control.push(SimManagerCommand::StartSim)
 }
 #[tauri::command]
-pub fn stop_sim(state: State<'_, Arc<SnapshotState>>){
-    state.sim_manager_queue.push(SimManagerCommand::StopSim)
+pub fn stop_sim(queues: State<'_, Arc<UICommandQueues>>){
+    queues.control.push(SimManagerCommand::StopSim)
 }
 #[tauri::command]
-pub fn resume_sim(state: State<'_, Arc<SnapshotState>>){
+pub fn resume_sim(queues: State<'_, Arc<UICommandQueues>>){
     info!("resume_sim");
-    state.sim_manager_queue.push(SimManagerCommand::ResumeSim)
+    queues.control.push(SimManagerCommand::ResumeSim)
 }
 
 #[tauri::command]
-pub fn new_sim(state: State<'_, Arc<SnapshotState>>){
-    state.sim_manager_queue.push(SimManagerCommand::ResetSim)
+pub fn new_sim(queues: State<'_, Arc<UICommandQueues>>){
+    queues.control.push(SimManagerCommand::ResetSim)
 }
 

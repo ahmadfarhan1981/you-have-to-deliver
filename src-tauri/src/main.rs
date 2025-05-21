@@ -33,9 +33,7 @@ use std::sync::{Arc, RwLock};
 use tauri::Manager;
 use tracing::{debug, info, trace};
 
-use crate::integrations::queues::{
-    handle_dispatch_queue_system, handle_sim_manager_dispatch_queue_system, QueueManager,
-};
+use crate::integrations::queues::{handle_dispatch_queue_system, handle_sim_manager_dispatch_queue_system, QueueManager, UICommandQueues};
 use crate::integrations::system_queues::game_speed_manager::{
     decrease_speed, handle_game_speed_manager_queue_system, increase_speed, set_game_speed,
 };
@@ -77,14 +75,19 @@ fn main() {
     debug!("Debug log is {ENABLED}. Logs will be verbose. Use {log_settings} environment variable for normal operations.",ENABLED= red(&bold("ENABLED")), log_settings= green(&italic("RUST_LOG=info")));
 
     // Create a properly shared AppState
-    let mut snapshot_state = SnapshotState::default();
+    let snapshot_state = SnapshotState::default();
+    let mut command_queues = UICommandQueues::default();
 
     let queue_manager = QueueManager::new();
-    snapshot_state.command_queue = queue_manager.dispatch();
-    snapshot_state.sim_manager_queue = queue_manager.sim_manager_dispatch();
+    command_queues.runtime = queue_manager.dispatch();
+    command_queues.control = queue_manager.sim_manager_dispatch();
 
     let ui_snapshot_state = Arc::new(snapshot_state);
     let sim_snapshot_state = Arc::clone(&ui_snapshot_state); // Clone for ECS thread
+
+    let ui_command_queues = Arc::new(command_queues);
+    let sim_command_queues = Arc::clone(&ui_command_queues); // Clone for ECS thread
+
 
     // Used by person generation to prevent duplicate profile picture. no arc, only used in sim
     let used_portrait = UsedProfilePictureRegistry::default();
@@ -125,6 +128,7 @@ fn main() {
 
                 // Insert Arc into resources so ECS systems can sync to it
                 resources.insert(sim_snapshot_state); // Insert the cloned Arc
+                resources.insert(sim_command_queues);
 
                 resources.insert(AssetBasePath(path));
                 resources.insert(used_portrait);
@@ -261,6 +265,7 @@ fn main() {
             Ok(())
         })
         .manage(ui_snapshot_state)
+        .manage(ui_command_queues)
         .manage(ui_sim_manager)
         .invoke_handler(tauri::generate_handler![
             get_tick,
