@@ -26,6 +26,16 @@ impl<T> From<T> for SnapshotField<T> {
     }
 }
 
+impl<T> Clone for SnapshotField<T> {
+    fn clone(&self) -> Self {
+        Self {
+            value: ArcSwap::from(self.value.load_full()),
+        }
+    }
+}
+
+
+
 pub struct SnapshotCollection<K, V>
 where
     K: Eq + Hash + Clone,
@@ -48,7 +58,14 @@ pub struct GameSpeedSnapshot {
     pub tick: TickSnapshot,
     pub game_speed: AtomicU8,
 }
-
+impl Clone for GameSpeedSnapshot {
+    fn clone(&self) -> Self {
+        Self {
+            tick: self.tick.clone(),
+            game_speed: AtomicU8::new(self.game_speed.load(Ordering::Relaxed)),
+        }
+    }
+}
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct TickSnapshot {
     tick: AtomicU64,
@@ -57,7 +74,17 @@ pub struct TickSnapshot {
     day: AtomicU8,
     quarter_tick: AtomicU8,
 }
-
+impl Clone for TickSnapshot {
+    fn clone(&self) -> Self {
+        Self {
+            tick: AtomicU64::new(self.tick.load(Ordering::Relaxed)),
+            year: AtomicU16::new(self.year.load(Ordering::Relaxed)),
+            week: AtomicU8::new(self.week.load(Ordering::Relaxed)),
+            day: AtomicU8::new(self.day.load(Ordering::Relaxed)),
+            quarter_tick: AtomicU8::new(self.quarter_tick.load(Ordering::Relaxed)),
+        }
+    }
+}
 impl From<TickCounter> for TickSnapshot {
     fn from(value: TickCounter) -> Self {
         let (year, week, day, quarter_tick) = value.current_date();

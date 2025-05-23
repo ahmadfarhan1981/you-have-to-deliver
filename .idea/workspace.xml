@@ -26,10 +26,10 @@
         <option value="StatPanel" />
         <option value="EmployeeList" />
         <option value="EmployeeDetail" />
-        <option value="TypeScript File" />
         <option value="Tabs" />
         <option value="SimControl" />
         <option value="Rust File" />
+        <option value="TypeScript File" />
       </list>
     </option>
   </component>
@@ -71,7 +71,7 @@
     "org.rust.first.attach.projects": "true",
     "run.code.analysis.last.selected.profile": "pProject Default",
     "settings.editor.selected.configurable": "terminal",
-    "ts.external.directory.path": "C:\\Work\\Project\\you-have-to-deliver\\node_modules\\typescript\\lib",
+    "ts.external.directory.path": "D:\\projects\\you-have-to-deliver\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   },
   "keyToStringList": {
@@ -123,6 +123,7 @@
       <workItem from="1747737896574" duration="8026000" />
       <workItem from="1747816260022" duration="12794000" />
       <workItem from="1747910625478" duration="8394000" />
+      <workItem from="1747962506743" duration="4469000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />

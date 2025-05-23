@@ -13,15 +13,6 @@ use crate::sim::game_speed::components::GameSpeed;
 pub struct AppContext {
     pub app_handle: AppHandle,
 }
-
-
-#[tauri::command]
-pub fn get_tick(state: State<'_, Arc<SnapshotState>>) -> (u16,u8,u8,u8,u64) {
-    state.tick.get_date()
-    //state.tick.get()
-
-}
-
 #[tauri::command]
 pub fn get_persons(state: State<'_, Arc<SnapshotState>>) -> Vec<PersonSnapshot> {
     state.persons.iter().map(|e| e.value().clone()).collect()
