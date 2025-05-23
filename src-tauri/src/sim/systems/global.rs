@@ -9,6 +9,8 @@ use dashmap::DashSet;
 use legion::systems::CommandBuffer;
 use tauri::Emitter;
 use tracing::{error, info};
+use crate::integrations::snapshots::SnapshotState;
+use crate::integrations::snapshots_emitter::snapshots_emitter::{SnapshotEmitRegistry, SnapshotFieldEmitter};
 use crate::integrations::ui::AppContext;
 
 #[system]
@@ -44,4 +46,15 @@ impl fmt::Debug for UsedProfilePictureRegistry {
         // )
 
     }
+}
+
+pub fn test () {
+    let mut  snapshot_registry = SnapshotEmitRegistry::new();
+    let snapshot_state = SnapshotState::default();
+    let g = snapshot_state.game_speed;
+
+    let x  = SnapshotFieldEmitter{ field: Arc::new(g), config: Default::default() };
+    snapshot_registry.register(x);
+
+
 }

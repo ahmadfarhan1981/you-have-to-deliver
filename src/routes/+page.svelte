@@ -93,7 +93,7 @@
                     class="px-3 py-2 border-2" on:click={async () => await invoke('new_sim')}
             >Reset</button>
             <button
-                    class="px-3 py-2 border-2" on:click={async () => {await invoke('resume_sim');goto("/game");} }
+                    class="px-3 py-2 border-2" on:click={async () => {await invoke('resume_sim');} }
             >Start</button>
             <button
                     class="px-3 py-2 border-2" on:click={async () => await invoke('increase_speed')}

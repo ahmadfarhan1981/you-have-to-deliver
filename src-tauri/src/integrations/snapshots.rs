@@ -1,27 +1,29 @@
-use std::hash::Hash;
-use crate::sim::game_speed::components::GameSpeed;
 use crate::sim::person::stats::{Stat, Stats};
 use crate::sim::resources::global::TickCounter;
 use arc_swap::ArcSwap;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
+use std::hash::Hash;
 use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
 use std::sync::Arc;
-use tauri::{AppHandle, Emitter};
-use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotFieldEmitter;
 
 #[derive(Debug, Default)]
 pub struct SnapshotState {
     // this is tha main integration state
     pub tick: TickSnapshot,
-    pub game_speed: ArcSwap<Arc<GameSpeedSnapshot>>,
-    pub game_speed2: SnapshotFieldEmitter<GameSpeedSnapshot>,
+    pub game_speed: SnapshotField<GameSpeedSnapshot>,
     pub persons: DashMap<u32, PersonSnapshot>,
-
 }
-#[derive(Debug,Default)]
+#[derive(Debug, Default)]
 pub struct SnapshotField<T> {
     pub value: ArcSwap<Arc<T>>,
+}
+impl<T> From<T> for SnapshotField<T> {
+    fn from(value: T) -> Self {
+        Self {
+            value: ArcSwap::from_pointee(value.into()),
+        }
+    }
 }
 
 pub struct SnapshotCollection<K, V>
@@ -31,12 +33,20 @@ where
 {
     pub map: DashMap<K, V>,
 }
+impl<K, V> From<DashMap<K, V>> for SnapshotCollection<K, V>
+where
+    K: Eq + Hash + Clone,
+    V: Serialize + Clone,
+{
+    fn from(map: DashMap<K, V>) -> Self {
+        Self { map }
+    }
+}
 
-
-#[derive(Debug, Default, Serialize, Deserialize)]
+#[derive(Debug, Default, Serialize)]
 pub struct GameSpeedSnapshot {
     pub tick: TickSnapshot,
-    pub game_speed: GameSpeed,
+    pub game_speed: AtomicU8,
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -48,16 +58,37 @@ pub struct TickSnapshot {
     quarter_tick: AtomicU8,
 }
 
+impl From<TickCounter> for TickSnapshot {
+    fn from(value: TickCounter) -> Self {
+        let (year, week, day, quarter_tick) = value.current_date();
+        Self {
+            tick: value.value().into(),
+            year: year.into(),
+            week: week.into(),
+            day: day.into(),
+            quarter_tick: quarter_tick.into(),
+        }
+    }
+}
+
 impl TickSnapshot {
     /// Updates the snapshot to match the given value
     pub fn set(&self, val: &TickCounter) {
         self.tick.store(val.value(), Ordering::Relaxed);
 
         let (year, week, day, quarter_tick) = val.current_date();
-        self.quarter_tick.store(quarter_tick, Ordering::Relaxed);
-        self.day.store(day, Ordering::Relaxed);
-        self.week.store(week, Ordering::Relaxed);
-        self.year.store(year, Ordering::Relaxed);
+        if self.year.load(Ordering::Relaxed) != year {
+            self.year.store(year, Ordering::Relaxed);
+        }
+        if self.week.load(Ordering::Relaxed) != week {
+            self.week.store(week, Ordering::Relaxed);
+        }
+        if self.day.load(Ordering::Relaxed) != day {
+            self.day.store(day, Ordering::Relaxed);
+        }
+        if self.quarter_tick.load(Ordering::Relaxed) != quarter_tick {
+            self.quarter_tick.store(quarter_tick, Ordering::Relaxed);
+        }
     }
 
     /// Reads the current snapshot value
