@@ -1,17 +1,14 @@
-use std::hash::Hash;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::thread::sleep;
-use std::time::Duration;
+use crate::integrations::snapshots::SnapshotField;
+use crate::integrations::ui::AppContext;
+use crate::sim::resources::global::TickCounter;
 use dashmap::DashMap;
 use legion::system;
 use serde::Serialize;
+use std::hash::Hash;
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
 use tracing::{info, instrument};
-use crate::integrations::snapshots::{GameSpeedSnapshot, SnapshotField, SnapshotState};
-use crate::integrations::ui::AppContext;
-use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
-use crate::sim::resources::global::TickCounter;
 
 trait SnapshotEmitter {
     fn maybe_emit(&self, tick: u64, app: &AppHandle)->bool;
@@ -101,7 +98,7 @@ where
     K: Eq + Hash + Clone,
     V: Serialize + Clone,
 {
-    pub map: DashMap<K, V>,
+    pub map: Arc<DashMap<K, V>>,
     pub config: SnapshotEmitterConfig,
 }
 
@@ -111,6 +108,7 @@ where
     V: Serialize + Clone,
 {
     fn maybe_emit(&self, tick: u64, app: &AppHandle) -> bool {
+
         let should_emit = match self.config.frequency {
             ExportFrequency::EveryTick => true,
             ExportFrequency::EveryNTicks(n) => tick % n == 0,
@@ -121,8 +119,10 @@ where
             self.config.last_sent_tick.store(tick, Ordering::Relaxed);
 
             let all: Vec<V> = self.map.iter().map(|entry| entry.value().clone()).collect();
+            info!("{:?}", all.len());
             let _ = app.emit( self.config.event_name, &all);
         }
+        info!("Maybe emit {} {}", should_emit, self.config.event_name);
         should_emit
     }
 }

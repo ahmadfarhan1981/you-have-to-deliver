@@ -58,3 +58,39 @@ pub fn test () {
 
 
 }
+
+pub trait ReplaceIfChanged {
+    fn replace_if_changed(&mut self, new: Self) -> bool;
+}
+
+// impl<T> ReplaceIfChanged for T
+// where
+//     T: PartialEq + Sized,
+// {
+//     fn replace_if_changed(&mut self, new: Self) -> bool {
+//         if *self != new {
+//             *self = new;
+//             true
+//         } else {
+//             false
+//         }
+//     }
+// }
+//
+// pub trait ReplaceIfChangedFromRef {
+//     fn replace_if_changed_ref(&mut self, new: &Self) -> bool;
+// }
+//
+// impl<T> ReplaceIfChangedFromRef for T
+// where
+//     T: PartialEq + Clone,
+// {
+//     fn replace_if_changed_ref(&mut self, new: &Self) -> bool {
+//         if self != new {
+//             *self = new.clone();
+//             true
+//         } else {
+//             false
+//         }
+//     }
+// }

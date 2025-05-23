@@ -1,20 +1,20 @@
-use std::cmp::PartialEq;
+use crate::sim::person::components::{Person, ProfilePicture};
 use crate::sim::person::stats::{Stat, Stats};
-use crate::sim::resources::global::TickCounter;
+use crate::sim::resources::global::{SimDate, TickCounter};
 use arc_swap::ArcSwap;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
+use std::cmp::PartialEq;
 use std::hash::Hash;
 use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
 use std::sync::Arc;
-use crate::sim::person::components::{Person, ProfilePicture};
 
+/// this is tha main integration state
 #[derive(Debug, Default)]
 pub struct SnapshotState {
-    // this is tha main integration state
     pub tick: TickSnapshot,
     pub game_speed: SnapshotField<GameSpeedSnapshot>,
-    pub persons: DashMap<u32, PersonSnapshot>,
+    pub persons: Arc<DashMap<u32, PersonSnapshot>>,
 }
 #[derive(Debug, Default)]
 pub struct SnapshotField<T> {
@@ -35,8 +35,6 @@ impl<T> Clone for SnapshotField<T> {
         }
     }
 }
-
-
 
 pub struct SnapshotCollection<K, V>
 where
@@ -89,13 +87,13 @@ impl Clone for TickSnapshot {
 }
 impl From<TickCounter> for TickSnapshot {
     fn from(value: TickCounter) -> Self {
-        let (year, week, day, quarter_tick) = value.current_date();
+        let date = value.current_date();
         Self {
             tick: value.value().into(),
-            year: year.into(),
-            week: week.into(),
-            day: day.into(),
-            quarter_tick: quarter_tick.into(),
+            year: date.year.into(),
+            week: date.week.into(),
+            day: date.day.into(),
+            quarter_tick: date.quarter_tick.into(),
         }
     }
 }
@@ -105,7 +103,7 @@ impl TickSnapshot {
     pub fn set(&self, val: &TickCounter) {
         self.tick.store(val.value(), Ordering::Relaxed);
 
-        let (year, week, day, quarter_tick) = val.current_date();
+        let SimDate{year, week, day, quarter_tick} = val.current_date();
         if self.year.load(Ordering::Relaxed) != year {
             self.year.store(year, Ordering::Relaxed);
         }
@@ -142,17 +140,19 @@ pub struct PersonSnapshot {
     pub(crate) person_id: u32,
     pub(crate) name: String,
     pub(crate) gender: String,
+    /// The tick number this snapshot was last updated
+    pub updated: u64,
 }
-impl From<(Person, ProfilePicture, Stats)> for PersonSnapshot {
-fn from((person, picture, stats): (Person, ProfilePicture, Stats)) -> Self {
-        Self{
+impl From<(Person, ProfilePicture, Stats, u64)> for PersonSnapshot {
+    fn from((person, picture, stats, current_tick): (Person, ProfilePicture, Stats, u64)) -> Self {
+        Self {
             stats: StatsSnapshot::from(stats),
             profile_picture: ProfilePictureSnapshot::from(picture),
             person_id: person.person_id.0,
             name: person.name,
             gender: person.gender.to_string(),
+            updated: current_tick,
         }
-
     }
 }
 
@@ -163,20 +163,17 @@ pub struct ProfilePictureSnapshot {
     pub batch: i8,
     pub index: i8,
 }
-
-impl ProfilePictureSnapshot {
-    fn update_from(&mut self, new: ProfilePictureSnapshot) -> bool {
-        if *self != new {
-            *self= new;
-            return true;
-        }
-        false
+impl PartialEq<ProfilePicture> for ProfilePictureSnapshot {
+    fn eq(&self, other: &ProfilePicture) -> bool {
+        return self.gender == other.gender.to_string()
+            && self.category == other.category.as_file_category_number()
+            && self.batch == other.batch
+            && self.index == other.index;
     }
-
 }
 impl From<ProfilePicture> for ProfilePictureSnapshot {
     fn from(picture: ProfilePicture) -> Self {
-        Self{
+        Self {
             gender: picture.gender.to_string(),
             category: picture.category.as_file_category_number(),
             batch: picture.batch,
@@ -222,5 +219,20 @@ impl From<Stats> for StatsSnapshot {
             resilience: s.get_stat(Stat::Resilience),
             adaptability: s.get_stat(Stat::Adaptability),
         }
+    }
+}
+
+impl PartialEq<Stats> for StatsSnapshot {
+    fn eq(&self, other: &Stats) -> bool {
+        return self.judgement == other.get_stat(Stat::Judgement)
+            && self.creativity == other.get_stat(Stat::Creativity)
+            && self.systems == other.get_stat(Stat::Systems)
+            && self.precision == other.get_stat(Stat::Precision)
+            && self.focus == other.get_stat(Stat::Focus)
+            && self.discipline == other.get_stat(Stat::Discipline)
+            && self.empathy == other.get_stat(Stat::Empathy)
+            && self.communication == other.get_stat(Stat::Communication)
+            && self.resilience == other.get_stat(Stat::Resilience)
+            && self.adaptability == other.get_stat(Stat::Adaptability);
     }
 }

@@ -2,13 +2,16 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU16, AtomicU64, AtomicU8, Ordering};
 
+
 #[derive(Default)]
 pub struct TickCounter {
+    /// Absolute tick. This is the running tick counter that never resets
     tick: AtomicU64,
     year: AtomicU16,
     week: AtomicU8,
     day: AtomicU8,
-    quarter_tick: AtomicU8, // each tick = 15min, 96 ticks/day
+    /// This is the day tick. It resets to 0 each day. Each tick = 15min, 96 ticks/day
+    quarter_tick: AtomicU8,
 }
 
 impl TickCounter {
@@ -36,6 +39,7 @@ impl TickCounter {
         self.year.fetch_add(1, Ordering::Relaxed);
     }
 
+    /// Gets the current tick.
     pub fn value(&self) -> u64 {
         self.tick.load(Ordering::Relaxed)
     }
@@ -48,13 +52,13 @@ impl TickCounter {
         self.year.store(0, Ordering::Relaxed);
     }
 
-    pub fn current_date(&self) -> (u16, u8, u8, u8) {
-        (
-            self.year.load(Ordering::Relaxed),
-            self.week.load(Ordering::Relaxed),
-            self.day.load(Ordering::Relaxed),
-            self.quarter_tick.load(Ordering::Relaxed),
-        )
+    pub fn current_date(&self) -> SimDate {
+        SimDate {
+            year: self.year.load(Ordering::Relaxed),
+            week: self.week.load(Ordering::Relaxed),
+            day: self.day.load(Ordering::Relaxed),
+            quarter_tick: self.quarter_tick.load(Ordering::Relaxed),
+        }
     }
 }
 
@@ -68,6 +72,14 @@ impl std::fmt::Debug for TickCounter {
             .field("quarter_tick", &self.quarter_tick.load(Ordering::Relaxed))
             .finish()
     }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SimDate {
+    pub year: u16,
+    pub week: u8,
+    pub day: u8,
+    pub quarter_tick: u8,
 }
 
 #[derive(Debug, Default)]

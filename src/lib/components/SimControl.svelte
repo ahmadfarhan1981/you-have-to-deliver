@@ -1,6 +1,6 @@
 <script>
     import {Pause, Play, SkipForward} from "lucide-svelte";
-    import { tick } from "\$lib/stores/tick";
+    // import { tick } from "\$lib/stores/tick";
 </script>
 
 <div class="p-3 border-t border-slate-700 bg-slate-900">
