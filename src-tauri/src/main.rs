@@ -34,7 +34,7 @@ use tauri::{Emitter, Manager};
 use tracing::{debug, info, trace};
 
 use crate::integrations::queues::{handle_dispatch_queue_system, handle_sim_manager_dispatch_queue_system, QueueManager, UICommandQueues};
-use crate::integrations::snapshots::SnapshotState;
+use crate::integrations::snapshots::{SnapshotField, SnapshotState};
 use crate::integrations::system_queues::game_speed_manager::{
     decrease_speed, handle_game_speed_manager_queue_system, increase_speed, set_game_speed,
 };
@@ -44,7 +44,7 @@ use crate::sim::systems::banner::print_banner;
 use crate::sim::utils::sim_reset::ResetRequest;
 use crate::sim::utils::term::{bold, green, italic, red};
 use parking_lot::{Mutex, RwLock};
-
+use crate::integrations::snapshots_emitter::snapshots_emitter::{SnapshotEmitRegistry, SnapshotFieldEmitter};
 fn print_startup_banner() {
     print_banner();
 }
@@ -73,16 +73,35 @@ fn main() {
 
     debug!("Debug log is {ENABLED}. Logs will be verbose. Use {log_settings} environment variable for normal operations.",ENABLED= red(&bold("ENABLED")), log_settings= green(&italic("RUST_LOG=info")));
 
-    // Create a properly shared AppState
+    //Snapshot registry
+    let snapshot_registry = SnapshotEmitRegistry::new();
+    let sim_reg = Arc::new(snapshot_registry);
+    let reg = Arc::clone(&sim_reg);
     let snapshot_state = SnapshotState::default();
+
+    let ui_snapshot_state = Arc::new(snapshot_state);
+    let sim_snapshot_state = Arc::clone(&ui_snapshot_state); // Clone for ECS thread
+    let main_snapshot_state = Arc::clone(&ui_snapshot_state); // Clone for ECS thread
+
+    let g = &main_snapshot_state.game_speed;
+
+    let x  = SnapshotFieldEmitter{ field: Arc::new(g.into()), config: Default::default() };
+    //snapshot_registry.register(x);
+
+
+    let gsm =GameSpeedManager {
+        game_speed: GameSpeed::Normal,
+    };
+    let game_speed = Arc::new(RwLock::new(gsm));
+
     let mut command_queues = UICommandQueues::default();
 
     let queue_manager = QueueManager::new();
     command_queues.runtime = queue_manager.dispatch();
     command_queues.control = queue_manager.sim_manager_dispatch();
 
-    let ui_snapshot_state = Arc::new(snapshot_state);
-    let sim_snapshot_state = Arc::clone(&ui_snapshot_state); // Clone for ECS thread
+    // let ui_snapshot_state = Arc::new(snapshot_state);
+    // let sim_snapshot_state = Arc::clone(&ui_snapshot_state); // Clone for ECS thread
 
     let ui_command_queues = Arc::new(command_queues);
     let sim_command_queues = Arc::clone(&ui_command_queues); // Clone for ECS thread
@@ -92,10 +111,6 @@ fn main() {
     let used_portrait = UsedProfilePictureRegistry::default();
 
     let tick_counter = Arc::new(TickCounter::default());
-    let gsm =GameSpeedManager {
-        game_speed: GameSpeed::Normal,
-    };
-    let game_speed = Arc::new(RwLock::new(gsm));
 
 
     let sim_manager = Arc::new(SimManager::default());
@@ -119,6 +134,7 @@ fn main() {
                 let mut world = World::default();
                 let mut resources = Resources::default();
 
+                resources.insert(reg);
                 resources.insert(Arc::new(AppContext { app_handle }));
 
                 resources.insert( reset_request );

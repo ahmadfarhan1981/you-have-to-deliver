@@ -4,7 +4,8 @@ use std::sync::atomic::{AtomicU64, Ordering};
 use dashmap::DashMap;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
-use crate::integrations::snapshots::SnapshotField;
+use crate::integrations::snapshots::{GameSpeedSnapshot, SnapshotField, SnapshotState};
+use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 
 trait SnapshotEmitter {
     fn maybe_emit(&self, tick: u64, app: &AppHandle);
@@ -106,4 +107,14 @@ where
             let _ = app.emit( self.config.event_name, &all);
         }
     }
+}
+
+
+pub fn test(){
+    let gm = GameSpeedManager {
+        game_speed: GameSpeed::Normal,
+    };
+    let mut snapshot_state = SnapshotState::default();
+
+    snapshot_state.game_speed= GameSpeedSnapshot::default().into();
 }

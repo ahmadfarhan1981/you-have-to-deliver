@@ -19,6 +19,7 @@ pub struct AppContext {
 pub fn get_tick(state: State<'_, Arc<SnapshotState>>) -> (u16,u8,u8,u8,u64) {
     state.tick.get_date()
     //state.tick.get()
+
 }
 
 #[tauri::command]

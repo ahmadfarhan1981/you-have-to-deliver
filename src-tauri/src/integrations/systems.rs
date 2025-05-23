@@ -8,6 +8,7 @@ use crate::sim::person::stats::Stats;
 use crate::sim::resources::global::TickCounter;
 use legion::system;
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use parking_lot::RwLock;
 
 #[system]
@@ -26,13 +27,11 @@ pub fn push_game_speed_to_integration(
 ) {
     // TODO
     app_state.tick.set(&tick_counter);
-    let tick = TickSnapshot::default();
-    tick.set(tick_counter);
-    let snapshot = Arc::new(GameSpeedSnapshot {
-        tick,
-        game_speed: game_speed_manager.read().game_speed,
-    });
-    app_state.game_speed.store(Arc::new(snapshot));
+
+    app_state.game_speed.value.load().tick.set(tick_counter);
+    let atomicu_speed : u8 = game_speed_manager.read().game_speed.into();
+    if app_state.game_speed.value.load().game_speed.load(Ordering::Relaxed) != atomicu_speed { app_state.game_speed.value.load().game_speed.store(atomicu_speed, Ordering::Relaxed); }
+
 }
 
 #[system]
