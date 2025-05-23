@@ -15,10 +15,10 @@ use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRe
 use legion::{Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
-use std::time::{Duration, Instant};
-use std::{fmt, thread};
-use std::sync::Arc;
-use crate::integrations::systems::{clear_person_list_system, push_game_speed_to_integration_system, push_persons_to_integration_system, push_tick_counter_to_integration_system};
+use crate::integrations::systems::{
+    clear_person_list_system, push_game_speed_to_integration_system,
+    push_persons_to_integration_system, push_tick_counter_to_integration_system,
+};
 use crate::integrations::ui::{get_persons, new_sim, resume_sim, start_sim, stop_sim, AppContext};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::ProfilePicture;
@@ -29,22 +29,34 @@ use crossbeam::queue::SegQueue;
 use dashmap::DashSet;
 use spin_sleep::SpinSleeper;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use std::{fmt, thread};
 
 use tauri::{Emitter, Manager};
 use tracing::{debug, info, trace};
 
-use crate::integrations::queues::{handle_dispatch_queue_system, handle_sim_manager_dispatch_queue_system, QueueManager, UICommandQueues};
+use crate::integrations::queues::{
+    handle_dispatch_queue_system, handle_sim_manager_dispatch_queue_system, QueueManager,
+    UICommandQueues,
+};
 use crate::integrations::snapshots::{SnapshotField, SnapshotState};
+use crate::integrations::snapshots_emitter::snapshots_emitter::{
+    run_snapshot_emitters_system, ExportFrequency, SnapshotEmitRegistry, SnapshotEmitterConfig,
+    SnapshotFieldEmitter,
+};
 use crate::integrations::system_queues::game_speed_manager::{
     decrease_speed, handle_game_speed_manager_queue_system, increase_speed, set_game_speed,
 };
 use crate::integrations::system_queues::sim_manager;
-use crate::integrations::system_queues::sim_manager::{delete_all_entity_system, handle_new_game_manager_queue_system, handle_sim_manager_queue_system, reset_state_system};
+use crate::integrations::system_queues::sim_manager::{
+    delete_all_entity_system, handle_new_game_manager_queue_system,
+    handle_sim_manager_queue_system, reset_state_system,
+};
 use crate::sim::systems::banner::print_banner;
 use crate::sim::utils::sim_reset::ResetRequest;
 use crate::sim::utils::term::{bold, green, italic, red};
 use parking_lot::{Mutex, RwLock};
-use crate::integrations::snapshots_emitter::snapshots_emitter::{run_snapshot_emitters_system, ExportFrequency, SnapshotEmitRegistry, SnapshotEmitterConfig, SnapshotFieldEmitter};
 fn print_startup_banner() {
     print_banner();
 }
@@ -64,8 +76,6 @@ impl fmt::Debug for SimContext {
     }
 }
 
-
-
 fn main() {
     init_logging();
     print_startup_banner();
@@ -79,19 +89,17 @@ fn main() {
 
     //Snapshot registry
     let mut snapshot_registry = SnapshotEmitRegistry::new();
-    let game_speed_snapshot_emitter  = SnapshotFieldEmitter{ field: Arc::new(main_snapshot_state.game_speed.clone()), config: SnapshotEmitterConfig{
-        frequency: ExportFrequency::EveryTick,
-        event_name: "game_speed_snapshot",
-        last_sent_tick: Default::default(),
-    } };
+    let game_speed_snapshot_emitter = SnapshotFieldEmitter {
+        field: Arc::new(main_snapshot_state.game_speed.clone()),
+        config: SnapshotEmitterConfig {
+            frequency: ExportFrequency::EveryTick,
+            event_name: "game_speed_snapshot",
+            last_sent_tick: Default::default(),
+        },
+    };
     snapshot_registry.register(game_speed_snapshot_emitter);
 
-
-
-
-
-
-    let gsm =GameSpeedManager {
+    let gsm = GameSpeedManager {
         game_speed: GameSpeed::Normal,
     };
     let game_speed = Arc::new(RwLock::new(gsm));
@@ -108,18 +116,17 @@ fn main() {
     let ui_command_queues = Arc::new(command_queues);
     let sim_command_queues = Arc::clone(&ui_command_queues); // Clone for ECS thread
 
-
     // Used by person generation to prevent duplicate profile picture. no arc, only used in sim
     let used_portrait = UsedProfilePictureRegistry::default();
 
     let tick_counter = Arc::new(TickCounter::default());
 
-
     let sim_manager = Arc::new(SimManager::default());
     let ui_sim_manager = Arc::clone(&sim_manager);
 
-
-    let reset_request = Arc::new(ResetRequest{should_reset:AtomicBool::new(false)});
+    let reset_request = Arc::new(ResetRequest {
+        should_reset: AtomicBool::new(false),
+    });
     let reset = Arc::clone(&reset_request);
 
     // === Launch Tauri app ===
@@ -139,7 +146,7 @@ fn main() {
                 resources.insert(snapshot_registry);
                 resources.insert(Arc::new(AppContext { app_handle }));
 
-                resources.insert( reset_request );
+                resources.insert(reset_request);
                 resources.insert(Arc::clone(&sim_manager));
                 //queues
                 resources.insert(queue_manager);
@@ -192,7 +199,6 @@ fn main() {
                         .add_system(reset_state_system())
                         .build();
 
-
                 /// subsystem command system:
                 /// processes the command that was dispatched from the dispatcher queues. uses different resource profiles
                 let mut subsystem_command_schedule = Schedule::builder()
@@ -230,18 +236,17 @@ fn main() {
                     sim_manager_dispatch_schedule.execute(&mut world, &mut resources);
                     sim_manager_reset_schedule.execute(&mut world, &mut resources);
                     if reset.should_reset.load(Ordering::Relaxed) {
-                        sim_manager_delete_world_entity_schedule.execute(&mut world, &mut resources);
+                        sim_manager_delete_world_entity_schedule
+                            .execute(&mut world, &mut resources);
                         reset_state_schedule.execute(&mut world, &mut resources);
                         startup.execute(&mut world, &mut resources);
 
                         pre_integration.execute(&mut world, &mut resources);
                         integration_schedule.execute(&mut world, &mut resources);
                         post_integration.execute(&mut world, &mut resources);
-
                     }
 
                     sim_manager_schedule.execute(&mut world, &mut resources);
-
 
                     if state.is_running() {
                         let tick_start = Instant::now();

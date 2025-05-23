@@ -2,7 +2,7 @@ use super::components::Person;
 use super::stats::{Stats, StatsConfig};
 use crate::sim::person::components::{Gender, PersonId, ProfilePicture, ProfilePictureCategory};
 use crate::sim::person::registry::PersonRegistry;
-use crate::sim::resources::global::AssetBasePath;
+use crate::sim::resources::global::{AssetBasePath, Dirty};
 use dashmap::DashSet;
 use legion::systems::CommandBuffer;
 use legion::Entity;
@@ -14,7 +14,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::sync::Arc;
-use tracing::{debug, error, info, trace};
+use tracing::{debug, error, info, instrument, trace};
 use crate::sim::systems::global::UsedProfilePictureRegistry;
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: u16, max: u16) -> u16 {
@@ -99,6 +99,7 @@ impl NameDictionary {
     }
 }
 
+#[instrument(skip_all)]
 pub fn generate_full_name(gender: &Gender, asset_path: &AssetBasePath) -> Option<String> {
     let first = generate_name_part(gender, &NameParts::First, &asset_path)?;
     let last = generate_name_part(gender, &NameParts::Last, &asset_path)?;
@@ -226,7 +227,7 @@ fn generate_profile_picture(
     profile_picture
 }
 
-#[tracing::instrument(level = "debug", skip(cmd))]
+#[tracing::instrument(level = "debug", skip(cmd, asset_path) )]
 pub fn spawn_person(
     cmd: &mut CommandBuffer,
     tier: TalentGrade,
@@ -246,7 +247,7 @@ pub fn spawn_person(
 
     let profile_picture = generate_profile_picture(gender, used_portraits);
     let stats = generate_stats(tier);
-    let entity = cmd.push((person, stats, profile_picture));
+    let entity = cmd.push((person, stats, profile_picture, Dirty));
     person_registry.insert(id, entity);
     (id, entity)
 }

@@ -1,3 +1,4 @@
+use std::cmp::PartialEq;
 use crate::sim::person::stats::{Stat, Stats};
 use crate::sim::resources::global::TickCounter;
 use arc_swap::ArcSwap;
@@ -6,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::hash::Hash;
 use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
 use std::sync::Arc;
+use crate::sim::person::components::{Person, ProfilePicture};
 
 #[derive(Debug, Default)]
 pub struct SnapshotState {
@@ -141,13 +143,46 @@ pub struct PersonSnapshot {
     pub(crate) name: String,
     pub(crate) gender: String,
 }
+impl From<(Person, ProfilePicture, Stats)> for PersonSnapshot {
+fn from((person, picture, stats): (Person, ProfilePicture, Stats)) -> Self {
+        Self{
+            stats: StatsSnapshot::from(stats),
+            profile_picture: ProfilePictureSnapshot::from(picture),
+            person_id: person.person_id.0,
+            name: person.name,
+            gender: person.gender.to_string(),
+        }
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ProfilePictureSnapshot {
     pub gender: String,
     pub category: i8,
     pub batch: i8,
     pub index: i8,
+}
+
+impl ProfilePictureSnapshot {
+    fn update_from(&mut self, new: ProfilePictureSnapshot) -> bool {
+        if *self != new {
+            *self= new;
+            return true;
+        }
+        false
+    }
+
+}
+impl From<ProfilePicture> for ProfilePictureSnapshot {
+    fn from(picture: ProfilePicture) -> Self {
+        Self{
+            gender: picture.gender.to_string(),
+            category: picture.category.as_file_category_number(),
+            batch: picture.batch,
+            index: picture.index,
+        }
+    }
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
