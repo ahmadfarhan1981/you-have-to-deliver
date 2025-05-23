@@ -14,11 +14,6 @@ pub struct AppContext {
     pub app_handle: AppHandle,
 }
 #[tauri::command]
-pub fn get_persons(state: State<'_, Arc<SnapshotState>>) -> Vec<PersonSnapshot> {
-    state.persons.iter().map(|e| e.value().clone()).collect()
-}
-
-#[tauri::command]
 pub fn start_sim(queues: State<'_, Arc<UICommandQueues>>){
     queues.control.push(SimManagerCommand::StartSim)
 }

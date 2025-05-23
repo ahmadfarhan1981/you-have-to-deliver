@@ -16,10 +16,10 @@ use legion::{Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
 use crate::integrations::systems::{
-    clear_person_list_system, push_game_speed_to_integration_system,
-    push_persons_to_integration_system, push_tick_counter_to_integration_system,
+    push_game_speed_snapshots_system, push_persons_to_integration2_system,
+    push_persons_to_integration_system,
 };
-use crate::integrations::ui::{get_persons, new_sim, resume_sim, start_sim, stop_sim, AppContext};
+use crate::integrations::ui::{new_sim, resume_sim, start_sim, stop_sim, AppContext};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::ProfilePicture;
 use crate::sim::person::registry::PersonRegistry;
@@ -40,10 +40,10 @@ use crate::integrations::queues::{
     handle_dispatch_queue_system, handle_sim_manager_dispatch_queue_system, QueueManager,
     UICommandQueues,
 };
-use crate::integrations::snapshots::{SnapshotField, SnapshotState};
+use crate::integrations::snapshots::{PersonSnapshot, SnapshotField, SnapshotState};
 use crate::integrations::snapshots_emitter::snapshots_emitter::{
-    run_snapshot_emitters_system, ExportFrequency, SnapshotEmitRegistry, SnapshotEmitterConfig,
-    SnapshotFieldEmitter,
+    run_snapshot_emitters_system, ExportFrequency, SnapshotCollectionEmitter, SnapshotEmitRegistry,
+    SnapshotEmitterConfig, SnapshotFieldEmitter,
 };
 use crate::integrations::system_queues::game_speed_manager::{
     decrease_speed, handle_game_speed_manager_queue_system, increase_speed, set_game_speed,
@@ -89,7 +89,7 @@ fn main() {
 
     //Snapshot registry
     let mut snapshot_registry = SnapshotEmitRegistry::new();
-    let game_speed_snapshot_emitter = SnapshotFieldEmitter {
+    let game_speed_snapshots_emitter = SnapshotFieldEmitter {
         field: Arc::new(main_snapshot_state.game_speed.clone()),
         config: SnapshotEmitterConfig {
             frequency: ExportFrequency::EveryTick,
@@ -97,7 +97,17 @@ fn main() {
             last_sent_tick: Default::default(),
         },
     };
-    snapshot_registry.register(game_speed_snapshot_emitter);
+
+    let person_snapshots_emitter = SnapshotCollectionEmitter {
+        map: Arc::clone(&main_snapshot_state.persons),
+        config: SnapshotEmitterConfig {
+            frequency: ExportFrequency::EveryTick,
+            event_name: "persons_snapshot",
+            last_sent_tick: Default::default(),
+        },
+    };
+    snapshot_registry.register(game_speed_snapshots_emitter);
+    snapshot_registry.register(person_snapshots_emitter);
 
     let gsm = GameSpeedManager {
         game_speed: GameSpeed::Normal,
@@ -212,14 +222,11 @@ fn main() {
                     .build();
 
                 //integration, handles generating snapshots
-                let mut pre_integration = Schedule::builder()
-                    .add_system(clear_person_list_system())
-                    .build();
+                let mut pre_integration = Schedule::builder().build();
                 let mut integration_schedule =
                     Schedule::builder() //Integration loop, add systems that updates the gui app state in this loop. this loop might run slower than the main loop
-                        .add_system(push_tick_counter_to_integration_system())
-                        .add_system(push_persons_to_integration_system())
-                        .add_system(push_game_speed_to_integration_system())
+                        .add_system(push_persons_to_integration2_system())
+                        .add_system(push_game_speed_snapshots_system())
                         .build();
                 let mut post_integration = Schedule::builder()
                     .add_system(run_snapshot_emitters_system())
@@ -296,7 +303,6 @@ fn main() {
         .manage(ui_command_queues)
         .manage(ui_sim_manager)
         .invoke_handler(tauri::generate_handler![
-            get_persons,
             set_game_speed,
             increase_speed,
             decrease_speed,

@@ -1,6 +1,6 @@
 <script>
   import { onMount } from 'svelte';
-  // import {tick} from "$lib/stores/tick.js";
+
   import {invoke} from "@tauri-apps/api/core";
   import {goto} from "$app/navigation";
   import {gameSpeed} from "$lib/stores/gameSpeed.js";
@@ -92,7 +92,10 @@
             <div class="text-green-400 mt-1">{$gameSpeed.tick.tick}Tick, {$gameSpeed.tick.quarter_tick} day tick , {$gameSpeed.tick.day}Day, {$gameSpeed.tick.week} Week</div>
             <button
                     class="px-3 py-2 border-2" on:click={async () => await invoke('new_sim')}
-            >Reset</button>
+            >Reset sim</button>
+            <button
+                    class="px-3 py-2 border-2" on:click={async () => goto("/game")}
+            >Goto game page</button>
             <button
                     class="px-3 py-2 border-2" on:click={async () => {await invoke('resume_sim');} }
             >Start</button>

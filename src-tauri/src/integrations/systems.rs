@@ -1,53 +1,57 @@
 use crate::integrations::snapshots::{
-    GameSpeedSnapshot, PersonSnapshot, ProfilePictureSnapshot, SnapshotState, StatsSnapshot,
-    TickSnapshot,
+    PersonSnapshot, ProfilePictureSnapshot, SnapshotState, StatsSnapshot
 };
 use crate::sim::game_speed::components::GameSpeedManager;
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
 use crate::sim::person::stats::Stats;
 use crate::sim::resources::global::{Dirty, TickCounter};
-use legion::{system, Entity};
-use std::sync::Arc;
-use std::sync::atomic::Ordering;
+use crate::sim::utils::snapshots::replace_if_changed;
+use dashmap::Entry;
 use legion::systems::CommandBuffer;
+use legion::{system, Entity};
 use parking_lot::RwLock;
-use tracing::callsite::register;
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
+use tracing::info;
 
 #[system]
-pub fn push_tick_counter_to_integration(
-    #[resource] app_state: &Arc<SnapshotState>,
-    #[resource] tick_counter: &Arc<TickCounter>,
-) {
-    app_state.tick.set(&tick_counter)
-}
-
-#[system]
-pub fn push_game_speed_to_integration(
+pub fn push_game_speed_snapshots(
     #[resource] app_state: &Arc<SnapshotState>,
     #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] game_speed_manager: &Arc<RwLock<GameSpeedManager>>,
 ) {
-    // TODO
+
     app_state.tick.set(&tick_counter);
 
     app_state.game_speed.value.load().tick.set(tick_counter);
-    let atomicu_speed : u8 = game_speed_manager.read().game_speed.into();
-    if app_state.game_speed.value.load().game_speed.load(Ordering::Relaxed) != atomicu_speed { app_state.game_speed.value.load().game_speed.store(atomicu_speed, Ordering::Relaxed); }
-
+    let atomicu_speed: u8 = game_speed_manager.read().game_speed.into();
+    if app_state
+        .game_speed
+        .value
+        .load()
+        .game_speed
+        .load(Ordering::Relaxed)
+        != atomicu_speed
+    {
+        app_state
+            .game_speed
+            .value
+            .load()
+            .game_speed
+            .store(atomicu_speed, Ordering::Relaxed);
+    }
 }
 
-#[system]
-pub fn clear_person_list(#[resource] app_state: &Arc<SnapshotState>) {
-    app_state.persons.clear();
-}
 
 #[system(for_each)]
 pub fn push_persons_to_integration(
+    #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] app_state: &Arc<SnapshotState>,
     person: &Person,
     stats: &Stats,
     profile_picture: &ProfilePicture,
 ) {
+    let current_tick = tick_counter.value();
     let PersonId(id) = person.person_id;
     let profile_picture = ProfilePictureSnapshot {
         gender: profile_picture.gender.to_string(),
@@ -62,35 +66,59 @@ pub fn push_persons_to_integration(
         person_id: id,
         name: person.name.clone(),
         gender: person.gender.to_string(),
+        updated: current_tick,
     };
     app_state.persons.insert(id, person);
 }
 
-
 #[system(for_each)]
 pub fn push_persons_to_integration2(
+    #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] app_state: &Arc<SnapshotState>,
     entity: &Entity,
     person: &Person,
     stats: &Stats,
     profile_picture: &ProfilePicture,
     _dirty: &Dirty,
-    cmd : &mut CommandBuffer
+    cmd: &mut CommandBuffer,
 ) {
 
+    info!(person.name);
+    let current_tick = tick_counter.value();
     let registry = &app_state.persons;
 
-    match registry.get(&person.person_id.0){
-        Some(person) => {
+    match registry.entry(person.person_id.0) {
+        Entry::Occupied(mut existing) => {
+            let existing_person = existing.get_mut();
+            let mut changed = false;
 
+            //basic person fields
+            if existing_person.name != person.name {
+                changed = true;
+                existing_person.name = person.name.clone();
+            }
+            if existing_person.gender != person.gender.to_string() {
+                changed = true;
+                existing_person.gender = person.gender.to_string();
+            }
+
+            changed |= replace_if_changed(&mut existing_person.stats, *stats);
+            changed |= replace_if_changed(&mut existing_person.profile_picture, *profile_picture);
+
+            if changed {
+                existing_person.updated = current_tick;
+            }
         }
-        None => {
-            let person = PersonSnapshot::from((person.clone(), profile_picture.clone(), stats.clone()) );
-            registry.insert(person.person_id, person);
+        Entry::Vacant(vacant) => {
+            let person = PersonSnapshot::from((
+                person.clone(),
+                profile_picture.clone(),
+                stats.clone(),
+                current_tick,
+            ));
+            vacant.insert(person);
         }
     };
+    info!("{}",app_state.persons.len());
     cmd.remove_component::<Dirty>(*entity);
-
-
-
 }

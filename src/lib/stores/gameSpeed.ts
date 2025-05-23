@@ -8,6 +8,7 @@ export interface TickSnapshot {
     quarter_tick: number;
 }
 export const  gameSpeedUpdateEventName = "game_speed_snapshot";
+
 export interface GameSpeedSnapshot {
     tick: TickSnapshot;
     game_speed: number;

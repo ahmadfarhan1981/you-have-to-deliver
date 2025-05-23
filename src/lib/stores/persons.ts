@@ -41,21 +41,7 @@ export const persons = derived(personArray, ($array) => {
     }
     return map;
 });
-
-async function pullPersons() {
-    async function fetch() {
-        try {
-            const result = await invoke<Record<number, PersonSnapshot>>("get_persons");
-            personArray.set(Object.values(result));
-        } catch (err) {
-            console.error("Failed to poll persons:", err);
-        }
-    }
-
-    await fetch(); // Initial call
-    const interval = setInterval(fetch, 5000);
-    return () => clearInterval(interval);
-}
+export const personsSnapshotEventName = "persons_snapshot";
 
 export function getProfileImageData(pic: ProfilePictureSnapshot) {
     const gender = pic.gender.slice(0, 1) === "f" ? "f" : "m";
@@ -69,4 +55,4 @@ export function getProfileImageData(pic: ProfilePictureSnapshot) {
     const position = `${col * 50}% ${row * 50}%`;
     return { fileName, position };
 }
-await pullPersons();
+//await pullPersons();

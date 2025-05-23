@@ -1,5 +1,5 @@
 <script lang="ts">
-  import {tick} from '$lib/stores/tick';
+  // import {tick} from '$lib/stores/tick';
 
   import {onMount} from 'svelte';
   import {ChevronDown, ChevronRight, Plus, Settings, X} from 'lucide-svelte';
@@ -16,6 +16,7 @@
   import TopBar from "$lib/components/TopBar.svelte";
   import {teamManager, teams, teamSizes, teamToPersons, unassignedPersons} from '$lib/stores/teams'
   import Tabs from "$lib/components/Tabs.svelte";
+  import {gameSpeed} from "$lib/stores/gameSpeed";
 
 
   // Navigation
@@ -134,6 +135,6 @@
       {/if}
     </div>
 
-    <StatusBar tick={$tick.tick}/>
+    <StatusBar tick={$gameSpeed.tick.tick}/>
   </div>
 </div>
