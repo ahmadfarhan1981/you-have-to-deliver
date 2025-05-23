@@ -80,7 +80,7 @@ impl QueueManager {
 
     pub fn process_dispatch_queue(&self) {
         if self.dispatch.queue.is_empty(){
-            debug!("Empty dispatch queue, skipping processing... ");
+            trace!("Empty dispatch queue, skipping processing... ");
             return;
         }
         let dispatch_time_limit = Duration::from_millis(5);
@@ -97,7 +97,7 @@ impl QueueManager {
                     SimCommand::SimManager(cmd) => self.sim_manager.queue.push(cmd),
                 }
             } else {
-                debug!("{} items dispatched", count);
+                trace!("{} items dispatched", count);
                 return;
             }
         }
@@ -112,7 +112,7 @@ impl QueueManager {
     /// So it gets its own dispatch queue that is outside of the suspended state killswitch.
     pub fn process_sim_manager_dispatch_queue(&self) {
         if self.sim_manager_dispatch.queue.is_empty(){
-            debug!("Empty sim manager dispatch queue, skipping processing... ");
+            trace!("Empty sim manager dispatch queue, skipping processing... ");
             return;
         }
         let dispatch_time_limit = Duration::from_millis(5);
@@ -129,7 +129,7 @@ impl QueueManager {
                     _ => {self.sim_manager.queue.push(command);},
                 }
             } else {
-                debug!("{} items dispatched", count);
+                trace!("{} items dispatched", count);
                 return;
             }
         }
@@ -166,7 +166,7 @@ pub fn handle_dispatch_queue(#[resource]queue_manager: &QueueManager ) {
 
 #[system]
 pub fn handle_sim_manager_dispatch_queue(#[resource]queue_manager: &QueueManager ) {
-    debug!("Sim manager dispatch queue");
+    trace!("Sim manager dispatch queue");
     queue_manager.process_sim_manager_dispatch_queue();
 }
 

@@ -54,7 +54,7 @@ pub fn handle_sim_manager_queue(
     #[resource] queue_manager: &QueueManager,
     #[resource] sim_manager: &Arc<SimManager>,
 ) {
-    debug!("Handling sim manager queue");
+    trace!("Handling sim manager queue");
     let queue = &queue_manager.sim_manager;
     let dispatch_time_limit = Duration::from_millis(5);
 
@@ -111,7 +111,7 @@ pub fn handle_new_game_manager_queue(
     #[resource] reset_request: &mut Arc<ResetRequest>,
     #[resource] command_queues: &Arc<UICommandQueues>,
 ) {
-    debug!("Handle new game manager queue");
+    trace!("Handle new game manager queue");
 
     let queue = &queue_manager.new_game_manager;
     let dispatch_time_limit = Duration::from_millis(5);

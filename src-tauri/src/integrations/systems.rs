@@ -5,11 +5,13 @@ use crate::integrations::snapshots::{
 use crate::sim::game_speed::components::GameSpeedManager;
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
 use crate::sim::person::stats::Stats;
-use crate::sim::resources::global::TickCounter;
-use legion::system;
+use crate::sim::resources::global::{Dirty, TickCounter};
+use legion::{system, Entity};
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
+use legion::systems::CommandBuffer;
 use parking_lot::RwLock;
+use tracing::callsite::register;
 
 #[system]
 pub fn push_tick_counter_to_integration(
@@ -62,4 +64,33 @@ pub fn push_persons_to_integration(
         gender: person.gender.to_string(),
     };
     app_state.persons.insert(id, person);
+}
+
+
+#[system(for_each)]
+pub fn push_persons_to_integration2(
+    #[resource] app_state: &Arc<SnapshotState>,
+    entity: &Entity,
+    person: &Person,
+    stats: &Stats,
+    profile_picture: &ProfilePicture,
+    _dirty: &Dirty,
+    cmd : &mut CommandBuffer
+) {
+
+    let registry = &app_state.persons;
+
+    match registry.get(&person.person_id.0){
+        Some(person) => {
+
+        }
+        None => {
+            let person = PersonSnapshot::from((person.clone(), profile_picture.clone(), stats.clone()) );
+            registry.insert(person.person_id, person);
+        }
+    };
+    cmd.remove_component::<Dirty>(*entity);
+
+
+
 }
