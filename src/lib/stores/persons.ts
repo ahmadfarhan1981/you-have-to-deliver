@@ -55,4 +55,3 @@ export function getProfileImageData(pic: ProfilePictureSnapshot) {
     const position = `${col * 50}% ${row * 50}%`;
     return { fileName, position };
 }
-//await pullPersons();
