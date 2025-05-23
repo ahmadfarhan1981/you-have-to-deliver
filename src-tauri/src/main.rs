@@ -19,7 +19,7 @@ use std::time::{Duration, Instant};
 use std::{fmt, thread};
 use std::sync::Arc;
 use crate::integrations::systems::{clear_person_list_system, push_game_speed_to_integration_system, push_persons_to_integration_system, push_tick_counter_to_integration_system};
-use crate::integrations::ui::{get_persons, get_tick, new_sim, resume_sim, start_sim, stop_sim, AppContext};
+use crate::integrations::ui::{get_persons, new_sim, resume_sim, start_sim, stop_sim, AppContext};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::ProfilePicture;
 use crate::sim::person::registry::PersonRegistry;
@@ -44,7 +44,7 @@ use crate::sim::systems::banner::print_banner;
 use crate::sim::utils::sim_reset::ResetRequest;
 use crate::sim::utils::term::{bold, green, italic, red};
 use parking_lot::{Mutex, RwLock};
-use crate::integrations::snapshots_emitter::snapshots_emitter::{SnapshotEmitRegistry, SnapshotFieldEmitter};
+use crate::integrations::snapshots_emitter::snapshots_emitter::{run_snapshot_emitters_system, ExportFrequency, SnapshotEmitRegistry, SnapshotEmitterConfig, SnapshotFieldEmitter};
 fn print_startup_banner() {
     print_banner();
 }
@@ -72,21 +72,23 @@ fn main() {
     info!("Starting...");
 
     debug!("Debug log is {ENABLED}. Logs will be verbose. Use {log_settings} environment variable for normal operations.",ENABLED= red(&bold("ENABLED")), log_settings= green(&italic("RUST_LOG=info")));
-
-    //Snapshot registry
-    let snapshot_registry = SnapshotEmitRegistry::new();
-    let sim_reg = Arc::new(snapshot_registry);
-    let reg = Arc::clone(&sim_reg);
     let snapshot_state = SnapshotState::default();
-
     let ui_snapshot_state = Arc::new(snapshot_state);
     let sim_snapshot_state = Arc::clone(&ui_snapshot_state); // Clone for ECS thread
     let main_snapshot_state = Arc::clone(&ui_snapshot_state); // Clone for ECS thread
 
-    let g = &main_snapshot_state.game_speed;
+    //Snapshot registry
+    let mut snapshot_registry = SnapshotEmitRegistry::new();
+    let game_speed_snapshot_emitter  = SnapshotFieldEmitter{ field: Arc::new(main_snapshot_state.game_speed.clone()), config: SnapshotEmitterConfig{
+        frequency: ExportFrequency::EveryTick,
+        event_name: "game_speed_snapshot",
+        last_sent_tick: Default::default(),
+    } };
+    snapshot_registry.register(game_speed_snapshot_emitter);
 
-    let x  = SnapshotFieldEmitter{ field: Arc::new(g.into()), config: Default::default() };
-    //snapshot_registry.register(x);
+
+
+
 
 
     let gsm =GameSpeedManager {
@@ -134,7 +136,7 @@ fn main() {
                 let mut world = World::default();
                 let mut resources = Resources::default();
 
-                resources.insert(reg);
+                resources.insert(snapshot_registry);
                 resources.insert(Arc::new(AppContext { app_handle }));
 
                 resources.insert( reset_request );
@@ -214,7 +216,7 @@ fn main() {
                         .add_system(push_game_speed_to_integration_system())
                         .build();
                 let mut post_integration = Schedule::builder()
-                    // .add_system()
+                    .add_system(run_snapshot_emitters_system())
                     .build();
 
                 let sleeper =
@@ -289,7 +291,6 @@ fn main() {
         .manage(ui_command_queues)
         .manage(ui_sim_manager)
         .invoke_handler(tauri::generate_handler![
-            get_tick,
             get_persons,
             set_game_speed,
             increase_speed,

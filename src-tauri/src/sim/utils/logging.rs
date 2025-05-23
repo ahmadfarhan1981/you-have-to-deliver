@@ -1,6 +1,6 @@
 use std::sync::Once;
 use tracing_subscriber::fmt::time::ChronoLocal;
-use tracing_subscriber::EnvFilter;
+use tracing_subscriber::{fmt, EnvFilter};
 
 /// Keeps global init from running twice
 static INIT: Once = Once::new();
@@ -19,6 +19,7 @@ pub fn init_logging() {
             .with_thread_names(true)
             .with_target(false)
             .with_level(true)
+            .with_span_events(fmt::format::FmtSpan::CLOSE)
             .init();
     });
 }

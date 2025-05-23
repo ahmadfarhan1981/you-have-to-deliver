@@ -1,8 +1,9 @@
 <script>
   import { onMount } from 'svelte';
-  import {tick} from "$lib/stores/tick.js";
+  // import {tick} from "$lib/stores/tick.js";
   import {invoke} from "@tauri-apps/api/core";
   import {goto} from "$app/navigation";
+  import {gameSpeed} from "$lib/stores/gameSpeed.js";
 
   // State management
   let selectedMenu = "New Game";
@@ -88,7 +89,7 @@
             <div class="text-slate-300">Welcome to DevCorp Simulation v1.0.42</div>
             <div class="text-slate-300">Initializing corporate simulation environment...</div>
             <div class="text-green-400 mt-1">$ _{#if showCursor}<span class="terminal-cursor"></span>{/if}</div>
-            <div class="text-green-400 mt-1">{$tick.tick}</div>
+            <div class="text-green-400 mt-1">{$gameSpeed.tick.tick}Tick, {$gameSpeed.tick.quarter_tick} day tick , {$gameSpeed.tick.day}Day, {$gameSpeed.tick.week} Week</div>
             <button
                     class="px-3 py-2 border-2" on:click={async () => await invoke('new_sim')}
             >Reset</button>

@@ -1,17 +1,23 @@
 use std::hash::Hash;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::thread::sleep;
+use std::time::Duration;
 use dashmap::DashMap;
+use legion::system;
 use serde::Serialize;
 use tauri::{AppHandle, Emitter};
+use tracing::{info, instrument};
 use crate::integrations::snapshots::{GameSpeedSnapshot, SnapshotField, SnapshotState};
+use crate::integrations::ui::AppContext;
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
+use crate::sim::resources::global::TickCounter;
 
 trait SnapshotEmitter {
-    fn maybe_emit(&self, tick: u64, app: &AppHandle);
+    fn maybe_emit(&self, tick: u64, app: &AppHandle)->bool;
 }
 #[derive(Debug, Default)]
-enum ExportFrequency {
+pub enum ExportFrequency {
     #[default]
     EveryTick,
     EveryNTicks(u64),
@@ -41,14 +47,24 @@ impl SnapshotEmitRegistry {
         self.emitters.push(Box::new(emitter));
     }
 
+    #[instrument(skip_all)]
     pub fn maybe_emit_all(&self, tick: u64, app: &AppHandle) {
         for emitter in &self.emitters {
-            emitter.maybe_emit(tick, app);
+            let _did_emit = emitter.maybe_emit(tick, app);
         }
     }
 }
 
 
+#[system]
+pub fn run_snapshot_emitters(
+    #[resource] registry: &SnapshotEmitRegistry,
+    #[resource] app_context: &Arc<AppContext>,
+    #[resource] tick_counter: &Arc<TickCounter>,
+) {
+    let current_tick = tick_counter.value(); // However you expose tick as u64
+    registry.maybe_emit_all(current_tick, &app_context.app_handle);
+}
 
 
 
@@ -62,7 +78,7 @@ pub struct SnapshotFieldEmitter<T> {
 }
 
 impl<T: Serialize> SnapshotEmitter for SnapshotFieldEmitter<T> {
-    fn maybe_emit(&self, tick: u64, app: &AppHandle) {
+    fn maybe_emit(&self, tick: u64, app: &AppHandle) -> bool {
         let should_emit = match self.config.frequency {
             ExportFrequency::EveryTick => true,
             ExportFrequency::EveryNTicks(n) => tick % n == 0,
@@ -75,6 +91,7 @@ impl<T: Serialize> SnapshotEmitter for SnapshotFieldEmitter<T> {
             let _ = app.emit(self.config.event_name, data);
 
         }
+        should_emit
     }
 }
 
@@ -93,7 +110,7 @@ where
     K: Eq + Hash + Clone,
     V: Serialize + Clone,
 {
-    fn maybe_emit(&self, tick: u64, app: &AppHandle) {
+    fn maybe_emit(&self, tick: u64, app: &AppHandle) -> bool {
         let should_emit = match self.config.frequency {
             ExportFrequency::EveryTick => true,
             ExportFrequency::EveryNTicks(n) => tick % n == 0,
@@ -106,15 +123,6 @@ where
             let all: Vec<V> = self.map.iter().map(|entry| entry.value().clone()).collect();
             let _ = app.emit( self.config.event_name, &all);
         }
+        should_emit
     }
-}
-
-
-pub fn test(){
-    let gm = GameSpeedManager {
-        game_speed: GameSpeed::Normal,
-    };
-    let mut snapshot_state = SnapshotState::default();
-
-    snapshot_state.game_speed= GameSpeedSnapshot::default().into();
 }
