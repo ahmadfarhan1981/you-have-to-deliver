@@ -52,7 +52,7 @@
 
 </script>
 
-<div class="border-b border-slate-200">
+<div class="border-b border-slate-200 ">
     <div
             class="flex items-center p-2 bg-slate-600 cursor-pointer hover:bg-slate-900"
             on:click={() => toggleTeam(team)}

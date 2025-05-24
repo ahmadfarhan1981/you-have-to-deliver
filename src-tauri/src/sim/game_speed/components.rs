@@ -3,19 +3,19 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize,Deserialize, Default)]
 pub enum GameSpeed {
-    Stopped = 0,
-    Slow = 1,
+    Stopped = 1,
+    Slow = 2,
     #[default]
-    Normal = 2,
-    Fast = 3,
-    Max = 4,
+    Normal = 3,
+    Fast = 4,
+    Max = 5,
 }
 impl From<u8> for GameSpeed {
     fn from(value: u8) -> Self {
         match value {
-            1 => GameSpeed::Slow,
-            2 => GameSpeed::Normal,
-            3 => GameSpeed::Fast,
+            2 => GameSpeed::Slow,
+            3 => GameSpeed::Normal,
+            4 => GameSpeed::Fast,
             5 => GameSpeed::Max,
             _ => GameSpeed::Stopped,
         }
@@ -35,7 +35,7 @@ impl GameSpeed {
             GameSpeed::Slow => Some(Duration::from_millis(1000)),
             GameSpeed::Normal => Some(Duration::from_millis(500)),
             GameSpeed::Fast => Some(Duration::from_millis(200)),
-            GameSpeed::Max => Some(Duration::from_millis(50)),
+            GameSpeed::Max => Some(Duration::from_millis(30)),
         }
     }
 

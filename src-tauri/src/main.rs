@@ -278,7 +278,7 @@ fn main() {
 
                         match maybe_interval {
                             Some(tick_duration) => {
-                                debug!("tick duration {}", tick_duration.as_millis());
+                                trace!("tick duration {} elapse {}", tick_duration.as_millis(), elapsed.as_millis());
                                 if elapsed < tick_duration {
                                     sleeper.sleep(tick_duration - elapsed);
                                 } else {

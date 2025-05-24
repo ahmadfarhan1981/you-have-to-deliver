@@ -13,8 +13,8 @@
         });
 
         const person_unlisten = listen<PersonSnapshot[]>(personsSnapshotEventName, (event) => {
-            console.log("persons snapshot")
-            console.log(JSON.stringify(event.payload))
+            // console.log("persons snapshot")
+            // console.log(JSON.stringify(event.payload))
             personArray.set(event.payload)
         });
         return () => {

@@ -89,7 +89,7 @@
             <div class="text-slate-300">Welcome to DevCorp Simulation v1.0.42</div>
             <div class="text-slate-300">Initializing corporate simulation environment...</div>
             <div class="text-green-400 mt-1">$ _{#if showCursor}<span class="terminal-cursor"></span>{/if}</div>
-            <div class="text-green-400 mt-1">{$gameSpeed.tick.tick}Tick, {$gameSpeed.tick.quarter_tick} day tick , {$gameSpeed.tick.day}Day, {$gameSpeed.tick.week} Week</div>
+            <div class="text-green-400 mt-1">{$gameSpeed.game_speed} {$gameSpeed.tick.tick}Tick, {$gameSpeed.tick.quarter_tick} day tick , {$gameSpeed.tick.day}Day, {$gameSpeed.tick.week} Week</div>
             <button
                     class="px-3 py-2 border-2" on:click={async () => await invoke('new_sim')}
             >Reset sim</button>
@@ -103,7 +103,7 @@
                     class="px-3 py-2 border-2" on:click={async () => await invoke('increase_speed')}
             >+</button>
             <button
-                    class="px-3 py-2 border-2" on:click={async ()=>await invoke('decrease_speed')}
+                    class="px-3 py-2 border-2" on:click={async ()=> await invoke('decrease_speed')}
             >-</button>
             <button
                     class="px-3 py-2 border-2" on:click={async () => await invoke('stop_sim')}
