@@ -24,3 +24,19 @@ export const gameSpeed = writable<GameSpeedSnapshot>({
     },
     game_speed: 0,
 });
+
+
+export function getGameSpeedText(speed: number): string {
+    switch (speed) {
+        case 2:
+            return "Slow";
+        case 3:
+            return "Normal";
+        case 4:
+            return "Fast";
+        case 5:
+            return "Max";
+        default:
+            return "Stopped";
+    }
+}

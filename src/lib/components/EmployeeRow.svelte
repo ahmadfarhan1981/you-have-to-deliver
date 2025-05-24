@@ -17,7 +17,7 @@
 </script>
 
 <div
-        class="bg-slate-50 grid grid-cols-12 gap-1 px-2 py-2 hover:bg-blue-400 cursor-pointer"
+        class=" grid grid-cols-12 gap-1 px-2 py-2 hover:bg-blue-400 cursor-pointer"
         on:click={() =>tabState.openEmployeeTab(person)}
 >
     <!-- Identity -->

@@ -30,8 +30,8 @@
         <option value="EmployeeDetail" />
         <option value="Tabs" />
         <option value="SimControl" />
-        <option value="TypeScript File" />
         <option value="Rust File" />
+        <option value="TypeScript File" />
       </list>
     </option>
   </component>
@@ -126,7 +126,8 @@
       <workItem from="1747816260022" duration="12794000" />
       <workItem from="1747910625478" duration="8394000" />
       <workItem from="1747962506743" duration="5311000" />
-      <workItem from="1748010090154" duration="11433000" />
+      <workItem from="1748010090154" duration="14274000" />
+      <workItem from="1748050591773" duration="13849000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />
@@ -184,7 +185,23 @@
       <option name="project" value="LOCAL" />
       <updated>1747967068659</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="person updates via emits, and using dirty">
+      <option name="closed" value="true" />
+      <created>1748023289777</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1748023289777</updated>
+    </task>
+    <task id="LOCAL-00009" summary="person updates via emits, and using dirty">
+      <option name="closed" value="true" />
+      <created>1748023313485</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1748023313485</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -211,7 +228,8 @@
     <MESSAGE value="reset finally working. a bit wonky but working" />
     <MESSAGE value="linting stuff" />
     <MESSAGE value="sent ticks via emits." />
-    <option name="LAST_COMMIT_MESSAGE" value="sent ticks via emits." />
+    <MESSAGE value="person updates via emits, and using dirty" />
+    <option name="LAST_COMMIT_MESSAGE" value="person updates via emits, and using dirty" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="XDebuggerManager">

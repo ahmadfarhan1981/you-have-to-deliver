@@ -44,7 +44,7 @@ impl SnapshotEmitRegistry {
         self.emitters.push(Box::new(emitter));
     }
 
-    #[instrument(skip_all)]
+    #[instrument(skip_all, level="debug")]
     pub fn maybe_emit_all(&self, tick: u64, app: &AppHandle) {
         for emitter in &self.emitters {
             let _did_emit = emitter.maybe_emit(tick, app);
@@ -82,7 +82,7 @@ impl<T: Serialize> SnapshotEmitter for SnapshotFieldEmitter<T> {
             ExportFrequency::ManualOnly => false,
         };
 
-        if should_emit && self.config.last_sent_tick.load(Ordering::Relaxed) != tick {
+        if should_emit {//&& self.config.last_sent_tick.load(Ordering::Relaxed) != tick {
             self.config.last_sent_tick.store(tick, Ordering::Relaxed);
             let data: &T = &*self.field.value.load();
             let _ = app.emit(self.config.event_name, data);
@@ -119,10 +119,8 @@ where
             self.config.last_sent_tick.store(tick, Ordering::Relaxed);
 
             let all: Vec<V> = self.map.iter().map(|entry| entry.value().clone()).collect();
-            info!("{:?}", all.len());
             let _ = app.emit( self.config.event_name, &all);
         }
-        info!("Maybe emit {} {}", should_emit, self.config.event_name);
         should_emit
     }
 }

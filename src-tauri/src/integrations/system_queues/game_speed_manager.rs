@@ -25,7 +25,8 @@ pub enum GameSpeedManagerCommand {
     ResumeGame,
 }
 #[tauri::command]
-pub fn set_game_speed(queues: State<'_, Arc<UICommandQueues>>, game_speed: GameSpeed){
+pub fn set_game_speed(queues: State<'_, Arc<UICommandQueues>>, speed_number: u8){
+    let game_speed = GameSpeed::from(speed_number);
     queues.runtime.push(SimCommand::GameSpeed(SetGameSpeed(game_speed)));
 
 }

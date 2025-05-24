@@ -1,8 +1,9 @@
 use crate::integrations::snapshots::{
-    PersonSnapshot, ProfilePictureSnapshot, SnapshotState, StatsSnapshot
+    PersonSnapshot, ProfilePictureSnapshot, SnapshotState, StatsSnapshot,
 };
 use crate::sim::game_speed::components::GameSpeedManager;
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
+use crate::sim::person::spawner::spawn_person;
 use crate::sim::person::stats::Stats;
 use crate::sim::resources::global::{Dirty, TickCounter};
 use crate::sim::utils::snapshots::replace_if_changed;
@@ -20,28 +21,27 @@ pub fn push_game_speed_snapshots(
     #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] game_speed_manager: &Arc<RwLock<GameSpeedManager>>,
 ) {
-
     app_state.tick.set(&tick_counter);
 
     app_state.game_speed.value.load().tick.set(tick_counter);
-    let atomicu_speed: u8 = game_speed_manager.read().game_speed.into();
-    if app_state
+    let game_speed: u8 = game_speed_manager.read().game_speed.into();
+    let snapshot_speed = app_state
         .game_speed
         .value
         .load()
         .game_speed
-        .load(Ordering::Relaxed)
-        != atomicu_speed
-    {
+        .load(Ordering::Relaxed);
+    let speed_changed = snapshot_speed != game_speed;
+
+    if speed_changed {
         app_state
             .game_speed
             .value
             .load()
             .game_speed
-            .store(atomicu_speed, Ordering::Relaxed);
+            .store(game_speed, Ordering::Relaxed);
     }
 }
-
 
 #[system(for_each)]
 pub fn push_persons_to_integration(
@@ -82,7 +82,6 @@ pub fn push_persons_to_integration2(
     _dirty: &Dirty,
     cmd: &mut CommandBuffer,
 ) {
-
     info!(person.name);
     let current_tick = tick_counter.value();
     let registry = &app_state.persons;
@@ -119,6 +118,6 @@ pub fn push_persons_to_integration2(
             vacant.insert(person);
         }
     };
-    info!("{}",app_state.persons.len());
+    info!("{}", app_state.persons.len());
     cmd.remove_component::<Dirty>(*entity);
 }
