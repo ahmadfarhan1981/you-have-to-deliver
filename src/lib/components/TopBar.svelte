@@ -19,7 +19,7 @@
     <div class="flex items-center space-x-4">
         <div class="flex items-center space-x-2">
             <Clock size={14} />
-            <a href="/backup" >Backup</a><a href="/backup" >Company</a>
+            <a href="/backup" >Backup</a><a href="/company" >Company</a>
             <span class="text-xs">{currentTime}</span>
         </div>
         <div class="flex items-center space-x-2">

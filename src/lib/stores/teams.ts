@@ -35,10 +35,36 @@ const _teamToPersons = derived(
 
 // === Derived: people not assigned to any team ===
 
-const _unassignedPersons = derived(
-    [personArray, _personToTeam],
-    ([$personArray, $personToTeam]) =>
-        $personArray.filter(p => !$personToTeam.has(p.person_id))
+
+export const unassignedSort = writable({
+    key: 'total_points',   // or 'name', etc.
+    direction: 'asc'       // or 'desc'
+});
+
+export const _unassignedPersons = derived(
+    [personArray, _personToTeam, unassignedSort],
+    ([$personArray, $personToTeam, $unassignedSort]) => {
+        let result = $personArray.filter(p => !$personToTeam.has(p.person_id));
+
+        const { key, direction } = $unassignedSort;
+
+        if (key) {
+            result.sort((a, b) => {
+                const aVal = a[key];
+                const bVal = b[key];
+
+                // Handle string or number
+                const comparison =
+                    typeof aVal === 'string'
+                        ? aVal.localeCompare(bVal)
+                        : aVal - bVal;
+
+                return direction === 'asc' ? comparison : -comparison;
+            });
+        }
+
+        return result;
+    }
 );
 
 // === Internal helpers (non-exported) ===

@@ -1,5 +1,5 @@
 <script>
-  import { tick } from '$lib/stores/tick';
+  // import { tick } from '$lib/stores/tick';
 
   import { onMount } from 'svelte';
   import { 
@@ -866,7 +866,7 @@
         </div>
       </div>
       <div class="flex items-center space-x-4">
-        <div>Tick #{$tick}/{isPlaying ? '4,231' : '4,230'}</div>
+        <div>Tick #{432}/{isPlaying ? '4,231' : '4,230'}</div>
         <div>v1.0.42</div>
       </div>
     </div>
