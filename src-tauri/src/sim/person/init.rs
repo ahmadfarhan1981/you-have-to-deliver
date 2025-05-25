@@ -22,10 +22,10 @@ pub fn generate_employees(
     use crate::sim::person::spawner::TalentGrade::*;
 
     let per_grade = [
-        (Basic, 2),
-        (Apt, 6),
-        (Sharp, 2),
-        (Gifted, 1),
+        (Basic, 4),
+        (Apt, 8),
+        (Sharp, 3),
+        (Gifted, 2),
         (Brilliant, 1),
         (Exceptional, 1),
     ];
