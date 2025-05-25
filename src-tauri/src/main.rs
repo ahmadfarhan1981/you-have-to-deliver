@@ -7,23 +7,23 @@
 mod config;
 mod integrations;
 mod macros;
+mod master_data;
 mod sim;
 
 use crate::sim::resources::global::{AssetBasePath, SimManager, TickCounter};
 use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRegistry};
 
-use legion::{Resources, Schedule, World};
+use legion::{Entity, Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
 use crate::integrations::systems::{
-    push_game_speed_snapshots_system, push_persons_to_integration2_system,
+    push_game_speed_snapshots_system,
     push_persons_to_integration_system,
 };
 use crate::integrations::ui::{new_sim, resume_sim, start_sim, stop_sim, AppContext};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
-use crate::sim::person::components::ProfilePicture;
-use crate::sim::person::registry::PersonRegistry;
-use crate::sim::person::systems::generate_employees_system;
+use crate::sim::person::components::{PersonId, ProfilePicture};
+use crate::sim::person::init::{generate_employees_system, load_global_skills_system};
 use crate::sim::utils::logging::init_logging;
 use crossbeam::queue::SegQueue;
 use dashmap::DashSet;
@@ -53,10 +53,14 @@ use crate::integrations::system_queues::sim_manager::{
     delete_all_entity_system, handle_new_game_manager_queue_system,
     handle_sim_manager_queue_system, reset_state_system,
 };
+
 use crate::sim::systems::banner::print_banner;
 use crate::sim::utils::sim_reset::ResetRequest;
 use crate::sim::utils::term::{bold, green, italic, red};
 use parking_lot::{Mutex, RwLock};
+use crate::sim::person::skills::SkillId;
+use crate::sim::registries::registry::Registry;
+
 fn print_startup_banner() {
     print_banner();
 }
@@ -153,28 +157,34 @@ fn main() {
                 let mut world = World::default();
                 let mut resources = Resources::default();
 
-                resources.insert(snapshot_registry);
                 resources.insert(Arc::new(AppContext { app_handle }));
 
                 resources.insert(reset_request);
                 resources.insert(Arc::clone(&sim_manager));
-                //queues
+
+                //command queues related
                 resources.insert(queue_manager);
+                resources.insert(sim_command_queues);
 
                 //tick counter
                 resources.insert(tick_counter.clone());
                 resources.insert(Arc::clone(&game_speed));
 
-                // Insert Arc into resources so ECS systems can sync to it
                 resources.insert(sim_snapshot_state); // Insert the cloned Arc
-                resources.insert(sim_command_queues);
 
                 resources.insert(AssetBasePath(path));
                 resources.insert(used_portrait);
-                resources.insert(Arc::new(PersonRegistry::new()));
+
+                //registries
+                // resources.insert(Arc::new(PersonRegistry::new()));
+                resources.insert(Arc::new(Registry::<PersonId, Entity>::with_name("Person registry")));
+                resources.insert(snapshot_registry);
+                resources.insert(Arc::new(Registry::<SkillId, Entity>::with_name("Skill registry")));
+
                 // Startup schedule, runs once on startup. add run once systems here.
                 let mut startup = Schedule::builder()
                     .add_system(generate_employees_system())
+                    .add_system(load_global_skills_system())
                     .build();
 
                 // processes the command dispatch queues,  dispatch then sends to the resource profile specific queues.
@@ -225,7 +235,7 @@ fn main() {
                 let mut pre_integration = Schedule::builder().build();
                 let mut integration_schedule =
                     Schedule::builder() //Integration loop, add systems that updates the gui app state in this loop. this loop might run slower than the main loop
-                        .add_system(push_persons_to_integration2_system())
+                        .add_system(push_persons_to_integration_system())
                         .add_system(push_game_speed_snapshots_system())
                         .build();
                 let mut post_integration = Schedule::builder()
@@ -278,7 +288,11 @@ fn main() {
 
                         match maybe_interval {
                             Some(tick_duration) => {
-                                trace!("tick duration {} elapse {}", tick_duration.as_millis(), elapsed.as_millis());
+                                trace!(
+                                    "tick duration {} elapse {}",
+                                    tick_duration.as_millis(),
+                                    elapsed.as_millis()
+                                );
                                 if elapsed < tick_duration {
                                     sleeper.sleep(tick_duration - elapsed);
                                 } else {

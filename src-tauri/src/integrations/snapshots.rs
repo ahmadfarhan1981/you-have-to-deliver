@@ -1,5 +1,5 @@
 use crate::sim::person::components::{Person, ProfilePicture};
-use crate::sim::person::stats::{Stat, Stats};
+use crate::sim::person::stats::{StatType, Stats};
 use crate::sim::resources::global::{SimDate, TickCounter};
 use arc_swap::ArcSwap;
 use dashmap::DashMap;
@@ -8,6 +8,7 @@ use std::cmp::PartialEq;
 use std::hash::Hash;
 use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
 use std::sync::Arc;
+use crate::sim::person::skills::{GlobalSkill, SkillId};
 
 /// this is tha main integration state
 #[derive(Debug, Default)]
@@ -165,10 +166,10 @@ pub struct ProfilePictureSnapshot {
 }
 impl PartialEq<ProfilePicture> for ProfilePictureSnapshot {
     fn eq(&self, other: &ProfilePicture) -> bool {
-        return self.gender == other.gender.to_string()
+            self.gender == other.gender.to_string()
             && self.category == other.category.as_file_category_number()
             && self.batch == other.batch
-            && self.index == other.index;
+            && self.index == other.index
     }
 }
 impl From<ProfilePicture> for ProfilePictureSnapshot {
@@ -208,31 +209,46 @@ pub struct StatsSnapshot {
 impl From<Stats> for StatsSnapshot {
     fn from(s: Stats) -> Self {
         Self {
-            judgement: s.get_stat(Stat::Judgement),
-            creativity: s.get_stat(Stat::Creativity),
-            systems: s.get_stat(Stat::Systems),
-            precision: s.get_stat(Stat::Precision),
-            focus: s.get_stat(Stat::Focus),
-            discipline: s.get_stat(Stat::Discipline),
-            empathy: s.get_stat(Stat::Empathy),
-            communication: s.get_stat(Stat::Communication),
-            resilience: s.get_stat(Stat::Resilience),
-            adaptability: s.get_stat(Stat::Adaptability),
+            judgement: s.get_stat(StatType::Judgement),
+            creativity: s.get_stat(StatType::Creativity),
+            systems: s.get_stat(StatType::Systems),
+            precision: s.get_stat(StatType::Precision),
+            focus: s.get_stat(StatType::Focus),
+            discipline: s.get_stat(StatType::Discipline),
+            empathy: s.get_stat(StatType::Empathy),
+            communication: s.get_stat(StatType::Communication),
+            resilience: s.get_stat(StatType::Resilience),
+            adaptability: s.get_stat(StatType::Adaptability),
         }
     }
 }
 
 impl PartialEq<Stats> for StatsSnapshot {
     fn eq(&self, other: &Stats) -> bool {
-        return self.judgement == other.get_stat(Stat::Judgement)
-            && self.creativity == other.get_stat(Stat::Creativity)
-            && self.systems == other.get_stat(Stat::Systems)
-            && self.precision == other.get_stat(Stat::Precision)
-            && self.focus == other.get_stat(Stat::Focus)
-            && self.discipline == other.get_stat(Stat::Discipline)
-            && self.empathy == other.get_stat(Stat::Empathy)
-            && self.communication == other.get_stat(Stat::Communication)
-            && self.resilience == other.get_stat(Stat::Resilience)
-            && self.adaptability == other.get_stat(Stat::Adaptability);
+            self.judgement == other.get_stat(StatType::Judgement)
+            && self.creativity == other.get_stat(StatType::Creativity)
+            && self.systems == other.get_stat(StatType::Systems)
+            && self.precision == other.get_stat(StatType::Precision)
+            && self.focus == other.get_stat(StatType::Focus)
+            && self.discipline == other.get_stat(StatType::Discipline)
+            && self.empathy == other.get_stat(StatType::Empathy)
+            && self.communication == other.get_stat(StatType::Communication)
+            && self.resilience == other.get_stat(StatType::Resilience)
+            && self.adaptability == other.get_stat(StatType::Adaptability)
+    }
+}
+
+pub struct GlobalSkillSnapshot {
+    pub id: u32,
+    pub name: String,
+    pub description: String,
+}
+impl From<&GlobalSkill> for GlobalSkillSnapshot {
+    fn from(value: &GlobalSkill) -> Self {
+        Self{
+            id:value.id.0 ,
+            name: value.name.clone(),
+            description: value.description.clone(),
+        }
     }
 }

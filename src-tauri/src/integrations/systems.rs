@@ -47,34 +47,6 @@ pub fn push_game_speed_snapshots(
 pub fn push_persons_to_integration(
     #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] app_state: &Arc<SnapshotState>,
-    person: &Person,
-    stats: &Stats,
-    profile_picture: &ProfilePicture,
-) {
-    let current_tick = tick_counter.value();
-    let PersonId(id) = person.person_id;
-    let profile_picture = ProfilePictureSnapshot {
-        gender: profile_picture.gender.to_string(),
-        category: profile_picture.category.as_file_category_number(),
-        batch: profile_picture.batch,
-        index: profile_picture.index,
-    };
-    let stats = StatsSnapshot::from(*stats);
-    let person = PersonSnapshot {
-        stats,
-        profile_picture,
-        person_id: id,
-        name: person.name.clone(),
-        gender: person.gender.to_string(),
-        updated: current_tick,
-    };
-    app_state.persons.insert(id, person);
-}
-
-#[system(for_each)]
-pub fn push_persons_to_integration2(
-    #[resource] tick_counter: &Arc<TickCounter>,
-    #[resource] app_state: &Arc<SnapshotState>,
     entity: &Entity,
     person: &Person,
     stats: &Stats,

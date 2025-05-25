@@ -30,8 +30,8 @@
         <option value="EmployeeDetail" />
         <option value="Tabs" />
         <option value="SimControl" />
-        <option value="Rust File" />
         <option value="TypeScript File" />
+        <option value="Rust File" />
       </list>
     </option>
   </component>
@@ -127,7 +127,10 @@
       <workItem from="1747910625478" duration="8394000" />
       <workItem from="1747962506743" duration="5311000" />
       <workItem from="1748010090154" duration="14274000" />
-      <workItem from="1748050591773" duration="13849000" />
+      <workItem from="1748050591773" duration="18843000" />
+      <workItem from="1748094684650" duration="1921000" />
+      <workItem from="1748128316283" duration="15723000" />
+      <workItem from="1748146582464" duration="3942000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />

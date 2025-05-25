@@ -1,7 +1,8 @@
+use std::str::FromStr;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum Stat {
+pub enum StatType {
     Judgement,
     Creativity,
     Systems,
@@ -12,6 +13,30 @@ pub enum Stat {
     Communication,
     Resilience,
     Adaptability,
+}
+impl FromStr for StatType {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "Judgement" => Ok(StatType::Judgement),
+            "Creativity" => Ok(StatType::Creativity),
+            "Systems" => Ok(StatType::Systems),
+            "Precision" => Ok(StatType::Precision),
+            "Focus" => Ok(StatType::Focus),
+            "Discipline" => Ok(StatType::Discipline),
+            "Empathy" => Ok(StatType::Empathy),
+            "Communication" => Ok(StatType::Communication),
+            "Resilience" => Ok(StatType::Resilience),
+            "Adaptability" => Ok(StatType::Adaptability),
+            _ => Err(()),
+        }
+    }
+}
+impl StatType {
+    pub fn from_str_lossy(s: &str) -> Option<Self> {
+        s.parse().ok()
+    }
 }
 
 #[derive(Default, Debug, Serialize, Deserialize)]
@@ -107,18 +132,18 @@ pub enum StatGroup {
 }
 
 impl Stats {
-    pub fn get_stat(&self, stat: Stat) -> u16 {
+    pub fn get_stat(&self, stat: StatType) -> u16 {
         match stat {
-            Stat::Judgement => self.judgement,
-            Stat::Creativity => self.creativity,
-            Stat::Systems => self.systems,
-            Stat::Precision => self.precision,
-            Stat::Focus => self.focus,
-            Stat::Discipline => self.discipline,
-            Stat::Empathy => self.empathy,
-            Stat::Communication => self.communication,
-            Stat::Resilience => self.resilience,
-            Stat::Adaptability => self.adaptability,
+            StatType::Judgement => self.judgement,
+            StatType::Creativity => self.creativity,
+            StatType::Systems => self.systems,
+            StatType::Precision => self.precision,
+            StatType::Focus => self.focus,
+            StatType::Discipline => self.discipline,
+            StatType::Empathy => self.empathy,
+            StatType::Communication => self.communication,
+            StatType::Resilience => self.resilience,
+            StatType::Adaptability => self.adaptability,
         }
     }
     pub fn average_cognition(&self) -> f32 {
