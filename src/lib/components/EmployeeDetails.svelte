@@ -4,13 +4,7 @@
     import StatPanel from "$lib/components/StatPanel.svelte";
     import StatPanel2 from "$lib/components/StatPanel2.svelte";
     import type {PersonSnapshot} from "$lib/stores/persons";
-
-
-
-
     export let person:PersonSnapshot;
-
-
 </script>
 
 <div class="p-6">
@@ -80,18 +74,18 @@
                         </div>
 
                     </div>
-                    <div class="ml-2">
-                        <StatPanel stats={person.stats}/>
-                    </div>
+<!--                    <div class="ml-2">-->
+<!--                        <StatPanel stats={person.stats}/>-->
+<!--                    </div>-->
 
                 </div>
                 <!--{#if person.warning}-->
-                {#if true}
-                    <div class="mt-6 bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-medium flex items-center">
-                        <AlertCircle size={12} class="mr-1" />
-                        Requires Attention
-                    </div>
-                {/if}
+                <!--{#if true}-->
+                <!--    <div class="mt-6 bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-medium flex items-center">-->
+                <!--        <AlertCircle size={12} class="mr-1" />-->
+                <!--        Requires Attention-->
+                <!--    </div>-->
+                <!--{/if}-->
             </div>
         </div>
 
@@ -164,27 +158,27 @@
 
             <StatPanel stats={person.stats}/>
 <!--            <StatPanel2 employee={person} />-->
-<!--            <div class="border border-slate-200 rounded-lg p-6 bg-white shadow-sm">-->
-<!--                <h3 class="text-lg font-bold mb-4">Projects</h3>-->
+            <div class="border border-slate-200 rounded-lg p-6 bg-white shadow-sm">
+                <h3 class="text-lg font-bold mb-4">Projects</h3>
 
-<!--                {#if person.details?.projects}-->
-<!--                    <div class="space-y-2">-->
-<!--                        {#each person.details.projects as project}-->
-<!--                            <div class="p-3 bg-slate-50 rounded border border-slate-200">-->
-<!--                                <div class="font-medium">{project}</div>-->
-<!--                                <div class="text-xs text-slate-500 mt-1">Active</div>-->
-<!--                            </div>-->
-<!--                        {/each}-->
-<!--                    </div>-->
-<!--                {:else}-->
-<!--                    <p class="text-slate-500 text-sm">No projects assigned.</p>-->
-<!--                {/if}-->
+                {#if true}
+                    <div class="space-y-2">
 
-<!--                <div class="mt-6 flex justify-end space-x-2">-->
-<!--                    <button class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 rounded text-sm">Schedule Meeting</button>-->
-<!--                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm">Assign Task</button>-->
-<!--                </div>-->
-<!--            </div>-->
+                            <div class="p-3 bg-slate-50 rounded border border-slate-200">
+                                <div class="font-medium">Project phoenix</div>
+                                <div class="text-xs text-slate-500 mt-1">Active</div>
+                            </div>
+
+                    </div>
+                {:else}
+                    <p class="text-slate-500 text-sm">No projects assigned.</p>
+                {/if}
+
+                <div class="mt-6 flex justify-end space-x-2">
+                    <button class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 rounded text-sm">Schedule Meeting</button>
+                    <button class="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm">Assign Task</button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
