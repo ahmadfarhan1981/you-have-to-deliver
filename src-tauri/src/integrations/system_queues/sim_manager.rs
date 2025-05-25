@@ -2,8 +2,7 @@ use crate::integrations::queues::{QueueManager, UICommandQueues};
 use crate::integrations::system_queues::shared::timed_dispatch;
 
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
-use crate::sim::person::components::{Person, ProfilePicture};
-use crate::sim::person::registry::PersonRegistry;
+use crate::sim::person::components::{Person, PersonId, ProfilePicture};
 use crate::sim::person::stats::Stats;
 use crate::sim::resources::global::{SimManager, TickCounter};
 use crate::sim::systems::global::UsedProfilePictureRegistry;
@@ -20,6 +19,7 @@ use parking_lot::RwLock;
 use tracing::field::debug;
 use tracing::{debug, error, info, trace, warn};
 use crate::integrations::snapshots::SnapshotState;
+use crate::sim::registries::registry::Registry;
 
 #[derive(Default)]
 pub enum SimManagerCommand {
@@ -70,7 +70,7 @@ pub fn handle_sim_manager_queue(
 
         SimManagerCommand::ResetSim => {
             error!("Unexpected item in queue. ResetSim should be handled by new game queue")
-            //reset is handled by new game manager queue}
+            //reset is handled by new game manager queue
         }
     });
 }
@@ -107,7 +107,7 @@ pub fn handle_new_game_manager_queue(
     #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] game_speed: &Arc<RwLock<GameSpeedManager>>,
     #[resource] used_profile_picture_registry: &UsedProfilePictureRegistry,
-    #[resource] person_registry: &Arc<PersonRegistry>,
+    #[resource] person_registry: &Arc<Registry<PersonId, Entity>>,
     #[resource] reset_request: &mut Arc<ResetRequest>,
     #[resource] command_queues: &Arc<UICommandQueues>,
 ) {

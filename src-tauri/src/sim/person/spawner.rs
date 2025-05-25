@@ -1,7 +1,6 @@
 use super::components::Person;
 use super::stats::{Stats, StatsConfig};
 use crate::sim::person::components::{Gender, PersonId, ProfilePicture, ProfilePictureCategory};
-use crate::sim::person::registry::PersonRegistry;
 use crate::sim::resources::global::{AssetBasePath, Dirty};
 use dashmap::DashSet;
 use legion::systems::CommandBuffer;
@@ -15,6 +14,7 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, trace};
+use crate::sim::registries::registry::Registry;
 use crate::sim::systems::global::UsedProfilePictureRegistry;
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: u16, max: u16) -> u16 {
@@ -160,16 +160,16 @@ fn generate_stats(tier: TalentGrade) -> Stats {
         }};
     }
 
-    let (judgement, judgement_raw) = gen!();
-    let (creativity, creativity_raw) = gen!();
-    let (systems, systems_raw) = gen!();
-    let (precision, precision_raw) = gen!();
-    let (focus, focus_raw) = gen!();
-    let (discipline, discipline_raw) = gen!();
-    let (empathy, empathy_raw) = gen!();
-    let (communication, communication_raw) = gen!();
-    let (resilience, resilience_raw) = gen!();
-    let (adaptability, adaptability_raw) = gen!();
+    let (judgement, _judgement_raw) = gen!();
+    let (creativity, _creativity_raw) = gen!();
+    let (systems, _systems_raw) = gen!();
+    let (precision, _precision_raw) = gen!();
+    let (focus, _focus_raw) = gen!();
+    let (discipline, _discipline_raw) = gen!();
+    let (empathy, _empathy_raw) = gen!();
+    let (communication, _communication_raw) = gen!();
+    let (resilience, _resilience_raw) = gen!();
+    let (adaptability, _adaptability_raw) = gen!();
 
     let config =StatsConfig {
         judgement,
@@ -233,10 +233,12 @@ pub fn spawn_person(
     tier: TalentGrade,
     asset_path: &AssetBasePath,
     used_portraits: &UsedProfilePictureRegistry,
-    person_registry: &Arc<PersonRegistry>,
+
+    person_registry: &Arc<Registry<PersonId, Entity>>
 ) -> (PersonId, Entity) {
     debug!("Spawning person");
-    let id = person_registry.generate_id();
+    let id = PersonId(person_registry.generate_id());
+
     // let peron_id = person_registry.generate_id();
     let gender = random_gender();
     let person = Person {
@@ -249,5 +251,6 @@ pub fn spawn_person(
     let stats = generate_stats(tier);
     let entity = cmd.push((person, stats, profile_picture, Dirty));
     person_registry.insert(id, entity);
+
     (id, entity)
 }

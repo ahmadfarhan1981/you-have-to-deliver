@@ -12,6 +12,8 @@ use tracing::{error, info};
 use crate::integrations::snapshots::SnapshotState;
 use crate::integrations::snapshots_emitter::snapshots_emitter::{SnapshotEmitRegistry, SnapshotFieldEmitter};
 use crate::integrations::ui::AppContext;
+use crate::sim::person::skills::SkillId;
+use crate::sim::registries::registry::Registry;
 
 #[system]
 pub fn increase_sim_tick(#[resource] tick_counter: &Arc<TickCounter>) {
@@ -19,7 +21,9 @@ pub fn increase_sim_tick(#[resource] tick_counter: &Arc<TickCounter>) {
 }
 
 #[system]
-pub fn print_person( #[resource] app_context: &Arc<AppContext>,) {
+pub fn print_person( #[resource] app_context: &Arc<AppContext>,
+#[resource]skill_registry: &Arc<Registry<SkillId, Entity>>) {
+    info!("{}",skill_registry)
 // pub fn print_person(cmd: &mut CommandBuffer, e:&Entity, person: &Person, stats: &Stats, profile_picture: &ProfilePicture, #[resource] app_context: &Arc<AppContext>,) {
 //     info!("Printing person...");
     //info!("Person: {:?}", person);
