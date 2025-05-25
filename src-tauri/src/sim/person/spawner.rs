@@ -14,6 +14,7 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, trace};
+use crate::sim::person::stat_sculpter::{sculpt_axis_bias, sculpt_blindspot, sculpt_monofocus};
 use crate::sim::registries::registry::Registry;
 use crate::sim::systems::global::UsedProfilePictureRegistry;
 
@@ -183,7 +184,9 @@ fn generate_stats(tier: TalentGrade) -> Stats {
         resilience,
         adaptability,
     };
-    config.into()
+    let mut stats = config.into();
+    // sculpt_blindspot(&mut stats);
+    stats
 }
 
 fn generate_profile_picture(
@@ -246,7 +249,7 @@ pub fn spawn_person(
         name: generate_full_name(&gender, &asset_path).expect("Cannot generate full name"),
         person_id: id.clone(),
     };
-
+    info!("Created person {}", person.name);
     let profile_picture = generate_profile_picture(gender, used_portraits);
     let stats = generate_stats(tier);
     let entity = cmd.push((person, stats, profile_picture, Dirty));
