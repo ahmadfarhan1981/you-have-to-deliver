@@ -54,7 +54,6 @@ pub fn push_persons_to_integration(
     _dirty: &Dirty,
     cmd: &mut CommandBuffer,
 ) {
-    info!(person.name);
     let current_tick = tick_counter.value();
     let registry = &app_state.persons;
 
@@ -90,6 +89,5 @@ pub fn push_persons_to_integration(
             vacant.insert(person);
         }
     };
-    info!("{}", app_state.persons.len());
     cmd.remove_component::<Dirty>(*entity);
 }

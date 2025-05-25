@@ -7,7 +7,6 @@
   import {activeView} from '$lib/stores/ui_states'
   import {activeTab, tabState} from '$lib/stores/TabStore'
   // Employee data
-  import {employees} from "$lib/mock/mock.js";
   import Sidebar from "$lib/components/Sidebar.svelte"
   import StatusBar from "$lib/components/StatusBar.svelte";
   import ReportDashboard from "$lib/components/ReportDashboard.svelte";
@@ -17,21 +16,13 @@
   import {teamManager, teams, teamSizes, teamToPersons, unassignedPersons} from '$lib/stores/teams'
   import Tabs from "$lib/components/Tabs.svelte";
   import {gameSpeed} from "$lib/stores/gameSpeed";
+  import EmployeeTableSectionHeader from "$lib/components/EmployeeTableSectionHeader.svelte";
 
 
   // Navigation
   function navigateTo(view) {
     $activeView = view;
     // In a real app, this would change the content displayed
-  }
-
-  // Helper function to get the current employee for an employee tab
-  function getEmployeeById(id) {
-    for (const team in employees) {
-      const employee = employees[team].find(e => e.id === id);
-      if (employee) return employee;
-    }
-    return null;
   }
 
   // Clock
@@ -47,6 +38,7 @@
     };
   });
 
+  let showUnassign = $state(true)
 
 </script>
 
@@ -91,31 +83,46 @@
 
             {#if team.expanded}
               <!-- Table Header -->
-              <div class="grid grid-cols-12 gap-1 px-2 py-1 bg-slate-200 text-xs font-bold text-slate-600 border-y border-slate-300">
-                <div class="col-span-2 flex items-center">Employee</div>
-                <div class="col-span-2">Current Task</div>
-                <div class="col-span-1">Mood</div>
-                <div class="col-span-1">Energy</div>
-                <div class="col-span-1">Stress</div>
-                <div class="col-span-1">Coding</div>
-                <div class="col-span-1">Design</div>
-                <div class="col-span-1">Testing</div>
-                <div class="col-span-1">Teamwork</div>
-                <div class="col-span-1">Actions</div>
-              </div>
+              <EmployeeTableSectionHeader />
 
               <!-- Employee Rows -->
               <div class="divide-y divide-slate-100">
                 {#each $teamToPersons as person}
-                  <EmployeeRow person={person}  openEmployeeTab={openEmployeeTab}/>
+                  <EmployeeRow person={person} />
                 {/each}
               </div>
             {/if}
           </div>
         {/each}
+        <div
+                class="flex items-center p-2 bg-slate-600 cursor-pointer hover:bg-slate-900"
+                on:click={()=>{showUnassign = !showUnassign}}
+        >
+          {#if showUnassign}
+            <ChevronDown size={16} class="mr-2 text-slate-500" />
+          {:else}
+            <ChevronRight size={16} class="mr-2 text-slate-500" />
+          {/if}
+          <h2 class="font-bold">Unassigned employees</h2>
+          <span class="ml-2 text-xs text-slate-500">({ $unassignedPersons.length } {$unassignedPersons.length === 1 ? 'member' : 'members'})</span>
+          <div class="ml-auto flex items-center space-x-2">
+            <button class="p-1 hover:bg-slate-500 rounded">
+              <Plus size={14} />
+            </button>
+            <button class="p-1 hover:bg-slate-500 rounded">
+              <Settings size={14} />
+            </button>
+          </div>
+        </div>
+        {#if showUnassign}
+          <EmployeeTableSectionHeader />
         {#each $unassignedPersons as person}
-          <EmployeeRow person={person} />
+
+          <div class="divide-y divide-slate-100">
+            <EmployeeRow person={person} />
+          </div>
         {/each}
+          {/if}
       {:else if $activeTab?.id === "reports"}
         <ReportDashboard />
       {:else}

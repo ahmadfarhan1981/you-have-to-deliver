@@ -87,8 +87,7 @@ pub fn delete_all_entity(
     if !reset_request.should_reset.load(Ordering::Relaxed) {
         return;
     }
-    // println!("{:?}", entity);
-    info!("{:?}", entity);
+
     if sim_manager.is_running() {
         warn!("Unexpected delete request when sim is running");
         return;

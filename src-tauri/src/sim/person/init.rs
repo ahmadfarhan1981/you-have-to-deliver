@@ -21,15 +21,22 @@ pub fn generate_employees(
     use crate::sim::person::spawner::spawn_person;
     use crate::sim::person::spawner::TalentGrade::*;
 
+    // let per_grade = [
+    //     (Basic, 4),
+    //     (Apt, 8),
+    //     (Sharp, 3),
+    //     (Gifted, 2),
+    //     (Brilliant, 1),
+    //     (Exceptional, 1),
+    // ];
     let per_grade = [
-        (Basic, 4),
-        (Apt, 8),
-        (Sharp, 3),
-        (Gifted, 2),
-        (Brilliant, 1),
-        (Exceptional, 1),
+        (Basic, 0),
+        (Apt, 20),
+        (Sharp, 0),
+        (Gifted, 0),
+        (Brilliant, 0),
+        (Exceptional, 0),
     ];
-
     for (grade, count) in per_grade {
         for _ in 0..count {
             spawn_person(cmd, grade, asset_base_path, used_portrait, person_registry);
@@ -42,7 +49,7 @@ pub fn load_global_skills(
     cmd: &mut CommandBuffer,
     #[resource] skill_registry: &Arc<Registry<SkillId, Entity>>,
 ) {
-    info!("{}", SKILL_DEFS.len());
+    // info!("{}", SKILL_DEFS.len());
     for skill_def in SKILL_DEFS{
         trace!("Single skill load {}", skill_def.id.to_string());
         let mut global_skill = GlobalSkill::from(skill_def);

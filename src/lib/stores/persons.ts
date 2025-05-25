@@ -1,6 +1,6 @@
 // src/lib/stores/persons.ts
-import { writable, derived } from "svelte/store";
-import { invoke } from "@tauri-apps/api/core";
+import {writable, derived, type Readable} from "svelte/store";
+import {invoke} from "@tauri-apps/api/core";
 
 export type StatsSnapshot = {
     judgement: number;
@@ -30,14 +30,27 @@ export type PersonSnapshot = {
     gender: string;
 };
 
+export type PersonSnapshotWithTotal = PersonSnapshot & {
+    total_points : number
+};
+
 // Exposed array for easy iteration
-export  const personArray = writable<PersonSnapshot[]>([]);
+export const basePersonArray = writable<PersonSnapshot []>([]);
+//export const personArray = writable<PersonSnapshotWithTotal []>([]);
+
+export const personArray:Readable<PersonSnapshotWithTotal []> = derived(basePersonArray, ($people) =>
+    $people.map((person) => ({
+        ...person,
+        total_points: Object.values(person.stats).reduce((sum, val) => sum + val, 0)
+    }))
+);
 
 // Exposed map for fast lookup by ID
 export const persons = derived(personArray, ($array) => {
-    const map = new Map<number, PersonSnapshot>();
+    const map = new Map<number, PersonSnapshot & {total_points:number}>();
     for (const p of $array) {
-        map.set(p.person_id, p);
+        map.set(p.person_id, {...p,
+            total_points: Object.values(p.stats).reduce((sum, val) => sum + val, 0)});
     }
     return map;
 });
@@ -53,5 +66,5 @@ export function getProfileImageData(pic: ProfilePictureSnapshot) {
     const col = index % 3;
     const row = Math.floor(index / 3);
     const position = `${col * 50}% ${row * 50}%`;
-    return { fileName, position };
+    return {fileName, position};
 }
