@@ -1,6 +1,7 @@
 use super::components::Person;
 use super::stats::{Stats, StatsConfig};
 use crate::sim::person::components::{Gender, PersonId, ProfilePicture, ProfilePictureCategory};
+use crate::sim::person::personality_matrix::{PersonalityAxis, PersonalityMatrix};
 use crate::sim::resources::global::{AssetBasePath, Dirty};
 use dashmap::DashSet;
 use legion::systems::CommandBuffer;
@@ -14,24 +15,25 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, trace};
+
 use crate::sim::person::stat_sculpter::{sculpt_axis_bias, sculpt_blindspot, sculpt_monofocus};
 use crate::sim::registries::registry::Registry;
 use crate::sim::systems::global::UsedProfilePictureRegistry;
 
-pub fn bounded_normal(mean: f64, std_dev: f64, min: u16, max: u16) -> u16 {
+pub fn bounded_normal(mean: f64, std_dev: f64, min: i16, max: i16) -> i16 {
     let normal = Normal::new(mean, std_dev).unwrap();
     let mut rng = rng();
 
     for _ in 0..10 {
         let sample = normal.sample(&mut rng).round();
         if sample >= min.into() && sample <= max.into() {
-            return sample as u16;
+            return sample as i16;
         }
     }
 
     // Escape hatch: clamp after 10 failed tries
     let fallback = normal.sample(&mut rng).round();
-    return fallback.clamp(min.into(), max.into()) as u16;
+    return fallback.clamp(min.into(), max.into()) as i16;
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -100,7 +102,6 @@ impl NameDictionary {
     }
 }
 
-#[instrument(skip_all)]
 pub fn generate_full_name(gender: &Gender, asset_path: &AssetBasePath) -> Option<String> {
     let first = generate_name_part(gender, &NameParts::First, &asset_path)?;
     let last = generate_name_part(gender, &NameParts::Last, &asset_path)?;
@@ -156,7 +157,7 @@ fn generate_stats(tier: TalentGrade) -> Stats {
 
     macro_rules! gen {
         () => {{
-            let val = bounded_normal(mean, std_dev, 0, 100);
+            let val = bounded_normal(mean, std_dev, 0, 100) as u16;
             (val, val as u32 * 1000)
         }};
     }
@@ -172,7 +173,7 @@ fn generate_stats(tier: TalentGrade) -> Stats {
     let (resilience, _resilience_raw) = gen!();
     let (adaptability, _adaptability_raw) = gen!();
 
-    let config =StatsConfig {
+    let config = StatsConfig {
         judgement,
         creativity,
         systems,
@@ -201,7 +202,7 @@ fn generate_profile_picture(
     last_portrait.insert((Gender::Male, ProfilePictureCategory::Office), 3);
     last_portrait.insert((Gender::Male, ProfilePictureCategory::Social), 1);
 
-    const MAX_ATTEMPTS:usize = 10;
+    const MAX_ATTEMPTS: usize = 10;
 
     let mut rng = rand::rng();
     let mut profile_picture = ProfilePicture::default();
@@ -230,14 +231,31 @@ fn generate_profile_picture(
     profile_picture
 }
 
-#[tracing::instrument(level = "debug", skip(cmd, asset_path) )]
+fn generate_personality_matrix() -> PersonalityMatrix {
+    let matrix = PersonalityMatrix {
+        assertiveness: bounded_normal(0f64, 40f64, -100, 100) as i8,
+        structure_preference: bounded_normal(0f64, 40f64, -100, 100) as i8,
+        openness: bounded_normal(0f64, 40f64, -100, 100) as i8,
+        sociability: bounded_normal(0f64, 40f64, -100, 100) as i8,
+        influence: bounded_normal(0f64, 40f64, -100, 100) as i8,
+    };
+    // info!("Generated someone that is {},{}", matrix.describe_axis(PersonalityAxis::Assertiveness), matrix.assertiveness);
+    // info!("Generated someone that is {},{}", matrix.describe_axis(PersonalityAxis::StructurePreference), matrix.structure_preference);
+    // info!("Generated someone that is {},{}", matrix.describe_axis(PersonalityAxis::Openness) , matrix.openness);
+    // info!("Generated someone that is {},{}", matrix.describe_axis(PersonalityAxis::Sociability), matrix.sociability );
+    // info!("Generated someone that is {},{}", matrix.describe_axis(PersonalityAxis::Influence), matrix.influence );
+
+    return matrix;
+}
+
+#[tracing::instrument(level = "debug", skip(cmd, asset_path))]
 pub fn spawn_person(
     cmd: &mut CommandBuffer,
     tier: TalentGrade,
     asset_path: &AssetBasePath,
     used_portraits: &UsedProfilePictureRegistry,
 
-    person_registry: &Arc<Registry<PersonId, Entity>>
+    person_registry: &Arc<Registry<PersonId, Entity>>,
 ) -> (PersonId, Entity) {
     debug!("Spawning person");
     let id = PersonId(person_registry.generate_id());
@@ -249,10 +267,11 @@ pub fn spawn_person(
         name: generate_full_name(&gender, &asset_path).expect("Cannot generate full name"),
         person_id: id.clone(),
     };
-    info!("Created person {}", person.name);
+    debug!("Created person {}", person.name);
     let profile_picture = generate_profile_picture(gender, used_portraits);
     let stats = generate_stats(tier);
-    let entity = cmd.push((person, stats, profile_picture, Dirty));
+    let personality_matrix = generate_personality_matrix();
+    let entity = cmd.push((person, stats, profile_picture, personality_matrix, Dirty));
     person_registry.insert(id, entity);
 
     (id, entity)

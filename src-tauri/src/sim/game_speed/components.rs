@@ -1,7 +1,7 @@
-use std::time::Duration;
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize,Deserialize, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum GameSpeed {
     Stopped = 1,
     Slow = 2,

@@ -1,6 +1,6 @@
+use crate::sim::utils::term::{bold, green, red, yellow};
 use tracing::info;
 use unicode_segmentation::UnicodeSegmentation;
-use crate::sim::utils::term::{bold, green, red, yellow};
 
 pub fn print_banner() {
     //
@@ -17,7 +17,6 @@ pub fn print_banner() {
         yellow("YOU"),
         bold(&red("HAVE")),
         green("to DELIVER!"),
-
     );
     // fn print_colored_banner_line(line: &str, a: usize, b: usize) {
     //     let graphemes: Vec<_> = line.graphemes(true).collect();

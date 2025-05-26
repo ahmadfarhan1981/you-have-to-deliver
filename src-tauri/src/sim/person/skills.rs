@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use crate::master_data::skills::SkillDef;
 use crate::sim::person::stats::StatType;
+use serde::{Deserialize, Serialize};
 use tracing::warn;
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq)]
@@ -15,7 +15,6 @@ struct SkillBoost {
     direct_boost: Vec<SkillLink>,
     indirect_boost: Vec<SkillLink>,
 }
-
 
 pub struct GlobalSkill {
     pub id: SkillId,

@@ -1,14 +1,14 @@
-use crate::sim::game_speed::components::GameSpeed;
-use crossbeam::queue::SegQueue;
-use std::fmt;
-use std::sync::Arc;
-use std::time::{Duration, Instant};
-use legion::system;
-use tracing::{debug, info, trace, warn};
 use crate::integrations::system_queues::game_speed_manager::GameSpeedManagerCommand;
 use crate::integrations::system_queues::sim_manager::SimManagerCommand;
 use crate::integrations::system_queues::sim_manager::SimManagerCommand::ResetSim;
+use crate::sim::game_speed::components::GameSpeed;
 use crate::sim::resources::global::SimManager;
+use crossbeam::queue::SegQueue;
+use legion::system;
+use std::fmt;
+use std::sync::Arc;
+use std::time::{Duration, Instant};
+use tracing::{debug, info, trace, warn};
 
 #[derive(Debug, Default)]
 pub struct UICommandQueues {
@@ -16,12 +16,10 @@ pub struct UICommandQueues {
     pub control: ExposedQueue<SimManagerCommand>,
 }
 
-
 pub enum SimCommand {
     GameSpeed(GameSpeedManagerCommand),
     SimManager(SimManagerCommand),
 }
-
 
 impl fmt::Debug for SimCommand {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -31,9 +29,6 @@ impl fmt::Debug for SimCommand {
         }
     }
 }
-
-
-
 
 pub struct SystemCommandQueue<T> {
     pub queue: SegQueue<T>,
@@ -52,7 +47,6 @@ pub struct QueueManager {
     pub sim_manager: SystemCommandQueue<SimManagerCommand>, // other queues are just a segqueue, will only ever access by the queue systems
     pub game_speed_manager: SystemCommandQueue<GameSpeedManagerCommand>,
     pub new_game_manager: SystemCommandQueue<SimManagerCommand>,
-
 }
 
 impl QueueManager {
@@ -79,7 +73,7 @@ impl QueueManager {
     }
 
     pub fn process_dispatch_queue(&self) {
-        if self.dispatch.queue.is_empty(){
+        if self.dispatch.queue.is_empty() {
             trace!("Empty dispatch queue, skipping processing... ");
             return;
         }
@@ -111,7 +105,7 @@ impl QueueManager {
     /// SimManagerQueue bypasses the main loop for lifecycle tasks like NewGame, and it must must run within ECS systems to access World/Resources.
     /// So it gets its own dispatch queue that is outside of the suspended state killswitch.
     pub fn process_sim_manager_dispatch_queue(&self) {
-        if self.sim_manager_dispatch.queue.is_empty(){
+        if self.sim_manager_dispatch.queue.is_empty() {
             trace!("Empty sim manager dispatch queue, skipping processing... ");
             return;
         }
@@ -125,8 +119,13 @@ impl QueueManager {
                 count += 1;
                 info!("Sim manager command: {:?}", command);
                 match command {
-                    SimManagerCommand::ResetSim=>{self.new_game_manager.queue.push(SimManagerCommand::ResetSim)},
-                    _ => {self.sim_manager.queue.push(command);},
+                    SimManagerCommand::ResetSim => self
+                        .new_game_manager
+                        .queue
+                        .push(SimManagerCommand::ResetSim),
+                    _ => {
+                        self.sim_manager.queue.push(command);
+                    }
                 }
             } else {
                 trace!("{} items dispatched", count);
@@ -140,13 +139,12 @@ impl QueueManager {
     }
 
     pub fn dispatch(&self) -> ExposedQueue<SimCommand> {
-        ExposedQueue::<SimCommand>{
+        ExposedQueue::<SimCommand> {
             queue: Arc::clone(&self.dispatch.queue),
-
         }
     }
     pub fn sim_manager_dispatch(&self) -> ExposedQueue<SimManagerCommand> {
-        ExposedQueue::<SimManagerCommand>{
+        ExposedQueue::<SimManagerCommand> {
             queue: Arc::clone(&self.sim_manager_dispatch.queue),
         }
     }
@@ -158,19 +156,16 @@ impl fmt::Debug for QueueManager {
 }
 
 #[system]
-pub fn handle_dispatch_queue(#[resource]queue_manager: &QueueManager ) {
+pub fn handle_dispatch_queue(#[resource] queue_manager: &QueueManager) {
     trace!("Dispatch queue");
     queue_manager.process_dispatch_queue();
-
 }
 
 #[system]
-pub fn handle_sim_manager_dispatch_queue(#[resource]queue_manager: &QueueManager ) {
+pub fn handle_sim_manager_dispatch_queue(#[resource] queue_manager: &QueueManager) {
     trace!("Sim manager dispatch queue");
     queue_manager.process_sim_manager_dispatch_queue();
 }
-
-
 
 pub struct ExposedQueue<T> {
     queue: Arc<SegQueue<T>>,

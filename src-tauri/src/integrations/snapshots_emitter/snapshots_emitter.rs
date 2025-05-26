@@ -11,7 +11,7 @@ use tauri::{AppHandle, Emitter};
 use tracing::{info, instrument};
 
 trait SnapshotEmitter {
-    fn maybe_emit(&self, tick: u64, app: &AppHandle)->bool;
+    fn maybe_emit(&self, tick: u64, app: &AppHandle) -> bool;
 }
 #[derive(Debug, Default)]
 pub enum ExportFrequency {
@@ -20,7 +20,6 @@ pub enum ExportFrequency {
     EveryNTicks(u64),
     ManualOnly,
 }
-
 
 #[derive(Debug, Default)]
 pub struct SnapshotEmitterConfig {
@@ -44,14 +43,13 @@ impl SnapshotEmitRegistry {
         self.emitters.push(Box::new(emitter));
     }
 
-    #[instrument(skip_all, level="debug")]
+    #[instrument(skip_all, level = "debug")]
     pub fn maybe_emit_all(&self, tick: u64, app: &AppHandle) {
         for emitter in &self.emitters {
             let _did_emit = emitter.maybe_emit(tick, app);
         }
     }
 }
-
 
 #[system]
 pub fn run_snapshot_emitters(
@@ -62,11 +60,6 @@ pub fn run_snapshot_emitters(
     let current_tick = tick_counter.value(); // However you expose tick as u64
     registry.maybe_emit_all(current_tick, &app_context.app_handle);
 }
-
-
-
-
-
 
 #[derive(Debug, Default)]
 pub struct SnapshotFieldEmitter<T> {
@@ -82,16 +75,15 @@ impl<T: Serialize> SnapshotEmitter for SnapshotFieldEmitter<T> {
             ExportFrequency::ManualOnly => false,
         };
 
-        if should_emit {//&& self.config.last_sent_tick.load(Ordering::Relaxed) != tick {
+        if should_emit {
+            //&& self.config.last_sent_tick.load(Ordering::Relaxed) != tick {
             self.config.last_sent_tick.store(tick, Ordering::Relaxed);
             let data: &T = &*self.field.value.load();
             let _ = app.emit(self.config.event_name, data);
-
         }
         should_emit
     }
 }
-
 
 pub struct SnapshotCollectionEmitter<K, V>
 where
@@ -108,7 +100,6 @@ where
     V: Serialize + Clone,
 {
     fn maybe_emit(&self, tick: u64, app: &AppHandle) -> bool {
-
         let should_emit = match self.config.frequency {
             ExportFrequency::EveryTick => true,
             ExportFrequency::EveryNTicks(n) => tick % n == 0,
@@ -119,7 +110,7 @@ where
             self.config.last_sent_tick.store(tick, Ordering::Relaxed);
 
             let all: Vec<V> = self.map.iter().map(|entry| entry.value().clone()).collect();
-            let _ = app.emit( self.config.event_name, &all);
+            let _ = app.emit(self.config.event_name, &all);
         }
         should_emit
     }

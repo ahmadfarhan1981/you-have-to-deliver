@@ -1,4 +1,3 @@
-
 #[derive(Debug, Clone)]
 pub struct SkillDef {
     pub id: &'static str,
@@ -9,7 +8,6 @@ pub struct SkillDef {
     pub feedforward: &'static [&'static str],
     pub feedback: &'static [&'static str],
 }
-
 
 pub const SKILL_DEFS: &[SkillDef] = &[
     SkillDef {

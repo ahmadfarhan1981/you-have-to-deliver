@@ -8,8 +8,8 @@ static INIT: Once = Once::new();
 /// Initialize simple stdout logger with filtering and context info
 pub fn init_logging() {
     INIT.call_once(|| {
-        let env_filter = EnvFilter::try_from_default_env()
-            .unwrap_or_else(|_| EnvFilter::new("info"));
+        let env_filter =
+            EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
 
         tracing_subscriber::fmt()
             .with_timer(ChronoLocal::new("%Y-%m-%dT%H:%M:%S%:z".to_string()))
@@ -23,4 +23,3 @@ pub fn init_logging() {
             .init();
     });
 }
-
