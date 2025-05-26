@@ -33,6 +33,8 @@
         <option value="TypeScript File" />
         <option value="EmployeeTableSectionHeader" />
         <option value="Rust File" />
+        <option value="PersonalityMatrixPanel" />
+        <option value="PersonalityMatrix2" />
       </list>
     </option>
   </component>
@@ -137,7 +139,8 @@
       <workItem from="1748094684650" duration="1921000" />
       <workItem from="1748128316283" duration="15723000" />
       <workItem from="1748146582464" duration="18733000" />
-      <workItem from="1748178975145" duration="10340000" />
+      <workItem from="1748178975145" duration="10517000" />
+      <workItem from="1748217726178" duration="1791000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />

@@ -2,5 +2,15 @@
 @import "tailwindcss";
 
 body {
-  font-family: 'IBM Plex Mono', monospace;
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+@theme {
+    --color-mint-500: oklch(0.72 0.11 178);
+    /*--color-game-bg: #6b7280;*/
+    --color-panel-bg: #ffffff;
+}
+
+.game-bg{
+    @apply bg-slate-600
 }
