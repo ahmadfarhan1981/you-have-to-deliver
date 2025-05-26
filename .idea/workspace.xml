@@ -149,7 +149,8 @@
       <workItem from="1748217726178" duration="6685000" />
       <workItem from="1748225174547" duration="156000" />
       <workItem from="1748225337063" duration="1576000" />
-      <workItem from="1748228226292" duration="19751000" />
+      <workItem from="1748228226292" duration="20397000" />
+      <workItem from="1748270289306" duration="1311000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />
@@ -279,8 +280,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/lib/components/EmployeeDetails.svelte</url>
-          <line>116</line>
-          <properties lambdaOrdinal="-1" />
+          <line>106</line>
           <option name="timeStamp" value="7" />
         </line-breakpoint>
       </breakpoints>
