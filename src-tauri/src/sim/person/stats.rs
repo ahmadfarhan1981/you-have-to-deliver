@@ -1,7 +1,7 @@
+use rand::prelude::SliceRandom;
+use rand::{rng, Rng};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use rand::{rng, Rng};
-use rand::prelude::SliceRandom;
 use strum_macros::EnumIter;
 use tracing::info;
 
@@ -42,18 +42,18 @@ impl StatType {
         s.parse().ok()
     }
 
-    pub fn get_group(self)->StatGroup{
+    pub fn get_group(self) -> StatGroup {
         match self {
-            StatType::Judgement => {StatGroup::Cognition}
-            StatType::Creativity => {StatGroup::Cognition}
-            StatType::Systems => {StatGroup::Perception }
-            StatType::Precision => {StatGroup::Perception}
-            StatType::Focus => {StatGroup::Drive}
-            StatType::Discipline => {StatGroup::Drive}
-            StatType::Empathy => {StatGroup::Social}
-            StatType::Communication => {StatGroup::Social}
-            StatType::Resilience => {StatGroup::Defense}
-            StatType::Adaptability => {StatGroup::Defense}
+            StatType::Judgement => StatGroup::Cognition,
+            StatType::Creativity => StatGroup::Cognition,
+            StatType::Systems => StatGroup::Perception,
+            StatType::Precision => StatGroup::Perception,
+            StatType::Focus => StatGroup::Drive,
+            StatType::Discipline => StatGroup::Drive,
+            StatType::Empathy => StatGroup::Social,
+            StatType::Communication => StatGroup::Social,
+            StatType::Resilience => StatGroup::Defense,
+            StatType::Adaptability => StatGroup::Defense,
         }
     }
 }
@@ -194,7 +194,6 @@ impl Stats {
         }
     }
 
-
     /// Adjusts a single stat by the given floating-point amount.
     ///
     /// Internally calls `adjust_many` with a single-element slice.
@@ -226,7 +225,6 @@ impl Stats {
                 ($field:ident, $raw_field:ident) => {{
                     let raw = self.$raw_field as i32 + delta;
                     self.$raw_field = raw.max(0) as u32;
-
                 }};
             }
 
@@ -265,7 +263,6 @@ impl Stats {
             Resilience,
             Adaptability,
         ];
-
 
         *all_stats
             .iter()
@@ -454,5 +451,3 @@ impl Stats {
         self.adaptability = (self.adaptability_raw / 1000) as u16;
     }
 }
-
-

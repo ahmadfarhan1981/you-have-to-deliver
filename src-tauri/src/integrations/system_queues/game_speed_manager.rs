@@ -1,20 +1,22 @@
-use std::ptr::write;
-use std::sync::Arc;
 use crate::integrations::queues::{QueueManager, SimCommand, UICommandQueues};
 use crate::integrations::system_queues::shared::timed_dispatch;
+use std::ptr::write;
+use std::sync::Arc;
 
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::resources::global::SimManager;
 use crossbeam::queue::SegQueue;
 use legion::system;
 
-use std::time::{Duration, Instant};
+use crate::integrations::snapshots::SnapshotState;
+use crate::integrations::system_queues::game_speed_manager::GameSpeedManagerCommand::{
+    DecreaseGameSpeed, IncreaseGameSpeed, SetGameSpeed,
+};
 use parking_lot::RwLock;
+use std::time::{Duration, Instant};
 use tauri::utils::assets::phf::Set;
 use tauri::State;
 use tracing::{debug, info, trace, warn};
-use crate::integrations::snapshots::SnapshotState;
-use crate::integrations::system_queues::game_speed_manager::GameSpeedManagerCommand::{DecreaseGameSpeed, IncreaseGameSpeed, SetGameSpeed};
 
 pub enum GameSpeedManagerCommand {
     //Game speed settings related.
@@ -25,22 +27,25 @@ pub enum GameSpeedManagerCommand {
     ResumeGame,
 }
 #[tauri::command]
-pub fn set_game_speed(queues: State<'_, Arc<UICommandQueues>>, speed_number: u8){
+pub fn set_game_speed(queues: State<'_, Arc<UICommandQueues>>, speed_number: u8) {
     let game_speed = GameSpeed::from(speed_number);
-    queues.runtime.push(SimCommand::GameSpeed(SetGameSpeed(game_speed)));
-
+    queues
+        .runtime
+        .push(SimCommand::GameSpeed(SetGameSpeed(game_speed)));
 }
 
 #[tauri::command]
-pub fn increase_speed(queues: State<'_, Arc<UICommandQueues>>){
-    queues.runtime.push(SimCommand::GameSpeed(IncreaseGameSpeed));
+pub fn increase_speed(queues: State<'_, Arc<UICommandQueues>>) {
+    queues
+        .runtime
+        .push(SimCommand::GameSpeed(IncreaseGameSpeed));
 }
 #[tauri::command]
-pub fn decrease_speed(queues: State<'_, Arc<UICommandQueues>>){
-    queues.runtime.push(SimCommand::GameSpeed(DecreaseGameSpeed));
+pub fn decrease_speed(queues: State<'_, Arc<UICommandQueues>>) {
+    queues
+        .runtime
+        .push(SimCommand::GameSpeed(DecreaseGameSpeed));
 }
-
-
 
 #[system]
 pub fn handle_game_speed_manager_queue(
@@ -66,8 +71,6 @@ pub fn handle_game_speed_manager_queue(
         }
         GameSpeedManagerCommand::ResumeGame => {
             game_speed_manager.write().set(GameSpeed::Normal);
-
         }
     })
-
 }

@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU16, AtomicU64, AtomicU8, Ordering};
 
-
 #[derive(Default)]
 pub struct TickCounter {
     /// Absolute tick. This is the running tick counter that never resets
@@ -111,7 +110,6 @@ impl SimManager {
         }
     }
 }
-
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct Dirty;

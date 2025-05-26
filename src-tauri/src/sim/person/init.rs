@@ -1,10 +1,10 @@
-use legion::{system, Entity};
-use legion::systems::CommandBuffer;
-use std::sync::Arc;
-use tracing::{info, trace};
 use crate::master_data::skills::SKILL_DEFS;
 use crate::sim::person::components::PersonId;
 use crate::sim::person::skills::{GlobalSkill, SkillId};
+use legion::systems::CommandBuffer;
+use legion::{system, Entity};
+use std::sync::Arc;
+use tracing::{info, trace};
 
 use crate::sim::registries::registry::Registry;
 use crate::sim::resources::global::AssetBasePath;
@@ -16,7 +16,6 @@ pub fn generate_employees(
     #[resource] asset_base_path: &AssetBasePath,
     #[resource] used_portrait: &UsedProfilePictureRegistry,
     #[resource] person_registry: &Arc<Registry<PersonId, Entity>>,
-
 ) {
     use crate::sim::person::spawner::spawn_person;
     use crate::sim::person::spawner::TalentGrade::*;
@@ -50,7 +49,7 @@ pub fn load_global_skills(
     #[resource] skill_registry: &Arc<Registry<SkillId, Entity>>,
 ) {
     // info!("{}", SKILL_DEFS.len());
-    for skill_def in SKILL_DEFS{
+    for skill_def in SKILL_DEFS {
         trace!("Single skill load {}", skill_def.id.to_string());
         let mut global_skill = GlobalSkill::from(skill_def);
 
@@ -61,5 +60,5 @@ pub fn load_global_skills(
 
         // info!("{:?}", skill_registry.get_entity_from_id(&id).unwrap());
     }
-    info!("Loading global skills... {}", skill_registry );
+    info!("Loading global skills... {}", skill_registry);
 }

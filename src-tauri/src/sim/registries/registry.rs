@@ -22,7 +22,6 @@ where
     id_to_entity: DashMap<I, T>,
     entity_to_id: DashMap<T, I>,
     next_id: AtomicU32,
-
 }
 
 impl<I, T> Debug for Registry<I, T>
@@ -30,7 +29,7 @@ where
     I: Eq + Hash + Copy + Clone,
     T: Eq + Hash + Copy + Clone,
 {
-     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let count = self.id_to_entity.len();
         let next = self.next_id.load(Ordering::Relaxed);
 
@@ -41,13 +40,14 @@ where
             bold(&count.to_string()),
             bold(&next.to_string())
         )
-     }
+    }
 }
 
-impl<I,T> Display for Registry<I, T>
+impl<I, T> Display for Registry<I, T>
 where
     I: Eq + Hash + Copy + Clone,
-    T: Eq + Hash + Copy + Clone,{
+    T: Eq + Hash + Copy + Clone,
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let count = self.id_to_entity.len();
         let next = self.next_id.load(Ordering::Relaxed);
@@ -62,10 +62,11 @@ where
     }
 }
 //
-impl<I, T> Registry<I,T>
+impl<I, T> Registry<I, T>
 where
     I: Eq + Hash + Copy,
-    T: Eq + Hash + Copy,{
+    T: Eq + Hash + Copy,
+{
     pub fn new() -> Self {
         Self {
             name: type_name::<I>().to_string(),
@@ -105,7 +106,7 @@ where
             self.entity_to_id.remove(&entity);
         }
     }
-    pub fn clear(&self){
+    pub fn clear(&self) {
         self.id_to_entity.clear();
         self.entity_to_id.clear();
         self.next_id.store(0, Ordering::Relaxed);
@@ -125,7 +126,6 @@ where
 //     }
 // }
 
-
 // pub struct IdGenerator{
 //     next_id: AtomicU32,
 //
@@ -135,4 +135,3 @@ where
 //         self.next_id.fetch_add(1, Ordering::Relaxed)
 //     }
 // }
-

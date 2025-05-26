@@ -14,8 +14,7 @@ use tracing::{debug, info};
 /// - Randomly reduce other stats until budget is balanced
 pub fn sculpt_monofocus(stats: &mut Stats) {
     /// Settings
-    const AMOUNT:i32 = 20;
-
+    const AMOUNT: i32 = 20;
 
     let total_points = stats.total(); // track before mutation
 
@@ -23,13 +22,18 @@ pub fn sculpt_monofocus(stats: &mut Stats) {
     stats.adjust(high_stat, AMOUNT as f32);
 
     let mut reduction = AMOUNT;
-    let mut others = StatType::iter().filter(|s| *s != high_stat).collect::<Vec<_>>();
+    let mut others = StatType::iter()
+        .filter(|s| *s != high_stat)
+        .collect::<Vec<_>>();
     others.shuffle(&mut rng());
 
     for stat in others {
-        if reduction <= 0 { break; }
-        let delta = random_variation(min(reduction, 3), 1 );
-        if stats.get_stat(stat) >= (delta + 10) as u16 { // avoid floor
+        if reduction <= 0 {
+            break;
+        }
+        let delta = random_variation(min(reduction, 3), 1);
+        if stats.get_stat(stat) >= (delta + 10) as u16 {
+            // avoid floor
             stats.adjust(stat, -delta as f32);
             reduction -= delta;
         }
@@ -42,7 +46,6 @@ fn random_stat() -> StatType {
     StatType::iter().choose(&mut rng()).unwrap()
     // return rng().random_range(StatType)
 }
-
 
 /// **Category:** 2 – Axis Tilt
 /// **Purpose:** Slight push within one stat _group_ (e.g. Cognition), no forced pairs
@@ -65,11 +68,15 @@ pub fn sculpt_axis_bias(stats: &mut Stats) {
     }
 
     let mut reduction = boost_amount * group.members().len() as i32;
-    let mut others = StatType::iter().filter(|s| !group.members().contains(s)).collect::<Vec<_>>();
+    let mut others = StatType::iter()
+        .filter(|s| !group.members().contains(s))
+        .collect::<Vec<_>>();
     others.shuffle(&mut rng());
 
     for stat in others {
-        if reduction <= 0 { break; }
+        if reduction <= 0 {
+            break;
+        }
         let delta = min(reduction, 10);
         if stats.get_stat(stat) >= (delta + 10) as u16 {
             debug!("Lowered {:?} by {}", stat, delta);
@@ -105,10 +112,14 @@ pub fn sculpt_blindspot(stats: &mut Stats) {
         let diff = current - 15;
         stats.set_stat(low_stat, 15);
 
-        let mut others = StatType::iter().filter(|s| *s != low_stat).collect::<Vec<_>>();
+        let mut others = StatType::iter()
+            .filter(|s| *s != low_stat)
+            .collect::<Vec<_>>();
         others.shuffle(&mut rng());
         for stat in others {
-            if diff <= 0 { break; }
+            if diff <= 0 {
+                break;
+            }
             let boost = min(3, diff);
 
             stats.adjust(stat, boost.into());

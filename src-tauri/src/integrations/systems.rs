@@ -3,6 +3,7 @@ use crate::integrations::snapshots::{
 };
 use crate::sim::game_speed::components::GameSpeedManager;
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
+use crate::sim::person::personality_matrix::PersonalityMatrix;
 use crate::sim::person::spawner::spawn_person;
 use crate::sim::person::stats::Stats;
 use crate::sim::resources::global::{Dirty, TickCounter};
@@ -51,6 +52,7 @@ pub fn push_persons_to_integration(
     person: &Person,
     stats: &Stats,
     profile_picture: &ProfilePicture,
+    personality: &PersonalityMatrix,
     _dirty: &Dirty,
     cmd: &mut CommandBuffer,
 ) {
@@ -84,6 +86,7 @@ pub fn push_persons_to_integration(
                 person.clone(),
                 profile_picture.clone(),
                 stats.clone(),
+                personality.clone(),
                 current_tick,
             ));
             vacant.insert(person);

@@ -32,9 +32,15 @@
         <option value="SimControl" />
         <option value="TypeScript File" />
         <option value="EmployeeTableSectionHeader" />
-        <option value="Rust File" />
         <option value="PersonalityMatrixPanel" />
         <option value="PersonalityMatrix2" />
+        <option value="Rust File" />
+        <option value="PersonalityBar" />
+        <option value="SkillsPanel" />
+        <option value="PerformanceHistory" />
+        <option value="PersonOverviewPanel" />
+        <option value="FinancialHealthPanel" />
+        <option value="EmployeeInfoPanel" />
       </list>
     </option>
   </component>
@@ -140,7 +146,10 @@
       <workItem from="1748128316283" duration="15723000" />
       <workItem from="1748146582464" duration="18733000" />
       <workItem from="1748178975145" duration="10517000" />
-      <workItem from="1748217726178" duration="1791000" />
+      <workItem from="1748217726178" duration="6685000" />
+      <workItem from="1748225174547" duration="156000" />
+      <workItem from="1748225337063" duration="1576000" />
+      <workItem from="1748228226292" duration="19751000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />
@@ -250,7 +259,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src-tauri/src/sim/person/spawner.rs</url>
-          <line>210</line>
+          <line>211</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
@@ -267,6 +276,12 @@
           <url>file://$PROJECT_DIR$/src/lib/stores/teams.ts</url>
           <line>26</line>
           <option name="timeStamp" value="5" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/src/lib/components/EmployeeDetails.svelte</url>
+          <line>116</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="7" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

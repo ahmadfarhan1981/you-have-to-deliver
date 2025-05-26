@@ -11,15 +11,15 @@ use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
 use legion::{system, Entity, IntoQuery, Query, Resources, World};
 use std::fmt;
-use std::sync::Arc;
 use std::sync::atomic::Ordering;
+use std::sync::Arc;
 
-use std::time::Duration;
-use parking_lot::RwLock;
-use tracing::field::debug;
-use tracing::{debug, error, info, trace, warn};
 use crate::integrations::snapshots::SnapshotState;
 use crate::sim::registries::registry::Registry;
+use parking_lot::RwLock;
+use std::time::Duration;
+use tracing::field::debug;
+use tracing::{debug, error, info, trace, warn};
 
 #[derive(Default)]
 pub enum SimManagerCommand {

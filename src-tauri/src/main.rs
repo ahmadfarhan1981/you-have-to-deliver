@@ -17,8 +17,7 @@ use legion::{Entity, Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
 use crate::integrations::systems::{
-    push_game_speed_snapshots_system,
-    push_persons_to_integration_system,
+    push_game_speed_snapshots_system, push_persons_to_integration_system,
 };
 use crate::integrations::ui::{new_sim, resume_sim, start_sim, stop_sim, AppContext};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
@@ -54,12 +53,12 @@ use crate::integrations::system_queues::sim_manager::{
     handle_sim_manager_queue_system, reset_state_system,
 };
 
+use crate::sim::person::skills::SkillId;
+use crate::sim::registries::registry::Registry;
 use crate::sim::systems::banner::print_banner;
 use crate::sim::utils::sim_reset::ResetRequest;
 use crate::sim::utils::term::{bold, green, italic, red};
 use parking_lot::{Mutex, RwLock};
-use crate::sim::person::skills::SkillId;
-use crate::sim::registries::registry::Registry;
 
 fn print_startup_banner() {
     print_banner();
@@ -177,9 +176,13 @@ fn main() {
 
                 //registries
                 // resources.insert(Arc::new(PersonRegistry::new()));
-                resources.insert(Arc::new(Registry::<PersonId, Entity>::with_name("Person registry")));
+                resources.insert(Arc::new(Registry::<PersonId, Entity>::with_name(
+                    "Person registry",
+                )));
                 resources.insert(snapshot_registry);
-                resources.insert(Arc::new(Registry::<SkillId, Entity>::with_name("Skill registry")));
+                resources.insert(Arc::new(Registry::<SkillId, Entity>::with_name(
+                    "Skill registry",
+                )));
 
                 // Startup schedule, runs once on startup. add run once systems here.
                 let mut startup = Schedule::builder()
@@ -296,7 +299,11 @@ fn main() {
                                 if elapsed < tick_duration {
                                     sleeper.sleep(tick_duration - elapsed);
                                 } else {
-                                    eprintln!("Tick lag: {:?}", elapsed - tick_duration);
+                                    eprintln!(
+                                        "{:?} Tick lag: {:?}",
+                                        tick_counter,
+                                        elapsed - tick_duration
+                                    );
                                     // Don’t sleep again — just loop immediately to catch up
                                 }
                             }

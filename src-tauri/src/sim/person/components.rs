@@ -16,7 +16,8 @@ pub struct PersonId(pub u32);
 
 #[derive(Clone, Debug, Copy, Serialize, Deserialize, Hash, Eq, PartialEq, Default)]
 pub enum Gender {
-    #[default]Male,
+    #[default]
+    Male,
     Female,
 }
 impl Display for Gender {
@@ -30,8 +31,9 @@ impl Display for Gender {
 }
 
 #[derive(Debug, EnumIter, Serialize, Deserialize, Hash, Eq, PartialEq, Clone, Default, Copy)]
-pub enum ProfilePictureCategory{
-    #[default]Office,
+pub enum ProfilePictureCategory {
+    #[default]
+    Office,
     Social,
 }
 impl ProfilePictureCategory {
@@ -52,13 +54,10 @@ impl ProfilePictureCategory {
     }
 }
 
-
-
 #[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize, Hash, Default, Copy)]
 pub struct ProfilePicture {
     pub gender: Gender,
     pub category: ProfilePictureCategory,
     pub batch: i8,
-    pub index: i8
+    pub index: i8,
 }
-
