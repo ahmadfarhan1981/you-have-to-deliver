@@ -4,6 +4,8 @@
     import StatPanel from "$lib/components/StatPanel.svelte";
     import StatPanel2 from "$lib/components/StatPanel2.svelte";
     import type {PersonSnapshot} from "$lib/stores/persons";
+    import PersonalityMatrixPanel from "$lib/components/PersonalityMatrixPanel.svelte";
+    import PersonalityMatrix2 from "$lib/components/PersonalityMatrix2.svelte";
     export let person:PersonSnapshot;
 
     function showCategory(category) {
@@ -40,7 +42,7 @@
     }
 </script>
 
-<div class="p-6">
+<div class="p-6 bg-game-bg game-bg">
     <div class="flex items-start justify-between mb-6">
         <div class="flex-row border-2 border-black w-full">
 <!--            <div class="flex items-center">-->
@@ -396,7 +398,10 @@
                 </div>
             </div>
 
-
+<!--            <PersonalityMatrixPanel />-->
+            <div class="p-2">
+            <PersonalityMatrix2 />
+            </div>
 <!--            <div class="border border-slate-200 rounded-lg p-6 bg-white shadow-sm mb-6">-->
 <!--                <h3 class="text-lg font-bold mb-4">Overview</h3>-->
 
