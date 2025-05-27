@@ -1,7 +1,7 @@
-use std::str::FromStr;
 use crate::master_data::skills::SkillDef;
 use crate::sim::person::stats::StatType;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 use tracing::warn;
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq)]
@@ -47,12 +47,47 @@ impl std::str::FromStr for Tier {
 }
 
 
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Domain {
+    Execution,
+    Coordination,
+    Interpersonal,
+    Contextual,
+}
+
+impl std::fmt::Display for Domain {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let name =match self {
+            Domain::Execution => "Execution",
+            Domain::Coordination => "Coordination",
+            Domain::Interpersonal => "Interpersonal",
+            Domain::Contextual => "Contextual",
+        };
+        write!(f, "{}", name)
+    }
+}
+impl FromStr for Domain {
+    type Err = ();
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        match input.to_lowercase().as_str() {
+            "execution" => Ok(Domain::Execution),
+            "coordination" => Ok(Domain::Coordination),
+            "interpersonal" => Ok(Domain::Interpersonal),
+            "contextual" => Ok(Domain::Contextual),
+            _ => Err(()),
+        }
+    }
+}
+
 pub struct GlobalSkill {
     pub id: SkillId,
     pub slug: String,
     pub name: String,
     pub description: String,
     pub tier: Tier,
+    pub domain: Domain,
     pub feedforward: Vec<SkillLink>,
     pub feedback: Vec<SkillLink>,
     pub related_stats: Vec<StatType>,
@@ -64,9 +99,11 @@ impl From<&SkillDef> for GlobalSkill {
             slug: value.id.parse().unwrap(),
             name: value.name.parse().unwrap(),
             description: value.description.parse().unwrap(),
+            tier: value.tier.parse().unwrap(),
+            domain: value.domain.parse().unwrap(),
             feedforward: vec![],
             feedback: vec![],
-            tier: Tier::from_str(value.tier).unwrap(),
+
             related_stats: value.related_stats.iter().fold(Vec::new(), |mut acc, s| {
                 match s.parse::<StatType>() {
                     Ok(stat) => acc.push(stat),
@@ -90,3 +127,22 @@ struct SkillThreshold {
     lower: u8,
 }
 struct AssignedSkill {}
+
+pub mod ecs_components {
+    use super::*;
+    #[derive(Copy, Clone, Debug, Default)]
+    pub struct TierFoundational;
+    #[derive(Copy, Clone, Debug, Default)]
+    pub struct TierConceptual;
+    #[derive(Copy, Clone, Debug, Default)]
+    pub struct TierApplied;
+
+    #[derive(Copy, Clone, Debug, Default)]
+    pub struct DomainExecution;
+    #[derive(Copy, Clone, Debug, Default)]
+    pub struct DomainCoordination;
+    #[derive(Copy, Clone, Debug, Default)]
+    pub struct DomainInterpersonal;
+    #[derive(Copy, Clone, Debug, Default)]
+    pub struct DomainContext;
+}
