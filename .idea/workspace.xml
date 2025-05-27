@@ -151,6 +151,8 @@
       <workItem from="1748225337063" duration="1576000" />
       <workItem from="1748228226292" duration="20397000" />
       <workItem from="1748270289306" duration="1311000" />
+      <workItem from="1748320598490" duration="5899000" />
+      <workItem from="1748334457302" duration="1708000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />
@@ -260,7 +262,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src-tauri/src/sim/person/spawner.rs</url>
-          <line>211</line>
+          <line>215</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
@@ -280,7 +282,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/lib/components/EmployeeDetails.svelte</url>
-          <line>106</line>
+          <line>107</line>
           <option name="timeStamp" value="7" />
         </line-breakpoint>
       </breakpoints>

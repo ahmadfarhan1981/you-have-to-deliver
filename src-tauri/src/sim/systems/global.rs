@@ -4,7 +4,7 @@ use crate::integrations::snapshots_emitter::snapshots_emitter::{
 };
 use crate::integrations::ui::AppContext;
 use crate::sim::person::components::ProfilePicture;
-use crate::sim::person::skills::SkillId;
+use crate::sim::person::skills::{GlobalSkill, SkillId};
 use crate::sim::registries::registry::Registry;
 use crate::sim::{
     person::components::Person, person::stats::Stats, resources::global::TickCounter,
@@ -16,19 +16,23 @@ use std::fmt;
 use std::sync::Arc;
 use tauri::Emitter;
 use tracing::{error, info};
+use crate::sim::person::skills::ecs_components::DomainInterpersonal;
 
 #[system]
 pub fn increase_sim_tick(#[resource] tick_counter: &Arc<TickCounter>) {
     tick_counter.tick()
 }
 
-#[system]
+#[system(for_each)]
 pub fn print_person(
-    #[resource] app_context: &Arc<AppContext>,
-    #[resource] skill_registry: &Arc<Registry<SkillId, Entity>>,
+    global_skill: &GlobalSkill,
+    domain_interpersonal: &DomainInterpersonal
+
 ) {
-    // info!("{}",skill_registry)
-    // pub fn print_person(cmd: &mut CommandBuffer, e:&Entity, person: &Person, stats: &Stats, profile_picture: &ProfilePicture, #[resource] app_context: &Arc<AppContext>,) {
+    // info!("print person");
+    // info!("{:?}",global_skill);
+    // info!("{:?}",domain_interpersonal);
+    // // pub fn print_person(cmd: &mut CommandBuffer, e:&Entity, person: &Person, stats: &Stats, profile_picture: &ProfilePicture, #[resource] app_context: &Arc<AppContext>,) {
     //     info!("Printing person...");
     //info!("Person: {:?}", person);
 

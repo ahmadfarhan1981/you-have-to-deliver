@@ -2,7 +2,8 @@ use crate::master_data::skills::SkillDef;
 use crate::sim::person::stats::StatType;
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
-use tracing::warn;
+use strum_macros::Display;
+use tracing::{error, warn};
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub struct SkillId(pub u32);
@@ -71,12 +72,12 @@ impl FromStr for Domain {
     type Err = ();
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        match input.to_lowercase().as_str() {
+        match input.to_lowercase().trim() {
             "execution" => Ok(Domain::Execution),
             "coordination" => Ok(Domain::Coordination),
             "interpersonal" => Ok(Domain::Interpersonal),
             "contextual" => Ok(Domain::Contextual),
-            _ => Err(()),
+            other => {error!("Seeing {}", other );Err(())},
         }
     }
 }
@@ -87,11 +88,32 @@ pub struct GlobalSkill {
     pub name: String,
     pub description: String,
     pub tier: Tier,
-    pub domain: Domain,
+    pub domain: Vec<Domain>,
     pub feedforward: Vec<SkillLink>,
     pub feedback: Vec<SkillLink>,
     pub related_stats: Vec<StatType>,
 }
+use std::fmt;
+impl fmt::Debug for GlobalSkill {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Delegate to Display for the main formatting
+        write!(f, "{}", self)
+    }
+}
+
+impl fmt::Display for GlobalSkill {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{} [{} - {}]\n{}\n",
+            self.name,
+            self.tier.to_string(),
+            self.domain.iter().map(|d| d.to_string()).collect::<Vec<_>>().join(","), //.fold(String::from(""),|d, domain |{  d += ", " + domain.to_string() }),
+            self.description
+        )
+    }
+}
+
 impl From<&SkillDef> for GlobalSkill {
     fn from(value: &SkillDef) -> Self {
         Self {
@@ -100,7 +122,7 @@ impl From<&SkillDef> for GlobalSkill {
             name: value.name.parse().unwrap(),
             description: value.description.parse().unwrap(),
             tier: value.tier.parse().unwrap(),
-            domain: value.domain.parse().unwrap(),
+            domain: value.domain.split(",").fold(Vec::<Domain>::new(),|mut acc,s|{ acc.push(s.parse().unwrap_or_else(|_| { error!("Failed to parse into domain: {}. Error:", s );Domain::Execution})); acc } ),// .map(|val|{ value}) .parse().unwrap_or_else(|_| { error!("{}", value.domain );Domain::Execution}),
             feedforward: vec![],
             feedback: vec![],
 
@@ -116,6 +138,7 @@ impl From<&SkillDef> for GlobalSkill {
         }
     }
 }
+
 
 struct SkillLink {
     target: SkillId,

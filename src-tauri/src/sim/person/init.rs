@@ -58,7 +58,8 @@ pub fn load_global_skills(
         let id = SkillId(skill_registry.generate_id());
         global_skill.id = id;
         let tier = global_skill.tier;
-        let domain = global_skill.domain;
+        let domain = global_skill.domain.clone();
+        // info!("Skill for {:?}", global_skill.clone());
         let entity = cmd.push((global_skill,));
 
 
@@ -73,21 +74,25 @@ pub fn load_global_skills(
                 cmd.add_component (entity, TierApplied)
             }
         }
-        // match domain{
-        //     Domain::Execution => {
-        //         entry.add_component (DomainExecution)
-        //     }
-        //     Domain::Coordination => {
-        //         entry.add_component (DomainCoordination)
-        //     }
-        //     Domain::Interpersonal => {
-        //         entry.add_component (DomainInterpersonal)
-        //     }
-        //     Domain::Contextual => {
-        //         entry.add_component(DomainContext)
-        //     }
-        // }
+        for d in domain{
+            match d{
+                Domain::Execution => {
+                    cmd.add_component (entity, DomainExecution)
+                }
+                Domain::Coordination => {
+                    cmd.add_component (entity, DomainCoordination)
+                }
+                Domain::Interpersonal => {
+                    cmd.add_component (entity, DomainInterpersonal)
+                }
+                Domain::Contextual => {
+                    cmd.add_component(entity, DomainContext)
+                }
+            }
+        }
+
         skill_registry.insert(id, entity);
+
 
         // info!("{:?}", skill_registry.get_entity_from_id(&id).unwrap());
     }

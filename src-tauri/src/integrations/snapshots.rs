@@ -268,7 +268,7 @@ impl From<&GlobalSkill> for GlobalSkillSnapshot {
             name: value.name.clone(),
             description: value.description.clone(),
             tier : value.tier.to_string(),
-            domain: value.domain.to_string(),
+            domain: value.domain.iter().map(|d| d.to_string()).collect::<Vec<_>>().join(","),
         }
     }
 }
