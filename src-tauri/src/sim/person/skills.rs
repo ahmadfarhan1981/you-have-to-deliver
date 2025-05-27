@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use crate::master_data::skills::SkillDef;
 use crate::sim::person::stats::StatType;
 use serde::{Deserialize, Serialize};
@@ -149,7 +150,14 @@ struct SkillThreshold {
     upper: u8,
     lower: u8,
 }
-struct AssignedSkill {}
+pub struct AssignedSkill {
+    skill :SkillId,
+    value: u32,
+}
+
+pub struct SkillSet {
+    pub(crate) skills: HashMap<SkillId, u32>,
+}
 
 pub mod ecs_components {
     use super::*;

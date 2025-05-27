@@ -2,15 +2,18 @@ use crate::master_data::skills::SKILL_DEFS;
 use crate::sim::person::components::PersonId;
 use crate::sim::person::skills::{Domain, GlobalSkill, SkillId, Tier};
 use legion::systems::CommandBuffer;
-use legion::{system, Entity, EntityStore, World};
+use legion::{component, system, Entity, EntityStore, IntoQuery, Query, World};
 use std::sync::Arc;
 use legion::world::SubWorld;
 use tracing::{info, trace};
+use tracing_subscriber::fmt::writer::WithFilter;
 use crate::integrations::ui::AppContext;
 use crate::sim::person::skills::ecs_components::{DomainContext, DomainCoordination, DomainExecution, DomainInterpersonal, TierApplied, TierConceptual, TierFoundational};
 use crate::sim::registries::registry::Registry;
 use crate::sim::resources::global::AssetBasePath;
 use crate::sim::systems::global::UsedProfilePictureRegistry;
+
+
 
 #[system]
 pub fn generate_employees(
@@ -18,9 +21,12 @@ pub fn generate_employees(
     #[resource] asset_base_path: &AssetBasePath,
     #[resource] used_portrait: &UsedProfilePictureRegistry,
     #[resource] person_registry: &Arc<Registry<PersonId, Entity>>,
+    query: &mut Query<&GlobalSkill>,
+    world: &mut SubWorld,
 ) {
     use crate::sim::person::spawner::spawn_person;
     use crate::sim::person::spawner::TalentGrade::*;
+
 
     // let per_grade = [
     //     (Basic, 4),
@@ -40,8 +46,23 @@ pub fn generate_employees(
     ];
     for (grade, count) in per_grade {
         for _ in 0..count {
-            spawn_person(cmd, grade, asset_base_path, used_portrait, person_registry);
+            let (id, entity) = spawn_person(cmd, grade, asset_base_path, used_portrait, person_registry);
+
+            // let skills = query.
+
+
         }
+    }
+    info!("Generated employees");
+    for global_skill in query.iter(world) {
+        // GlobalSkill with TierFoundational but NOT Disabled
+        info!("@@{:?}", global_skill);
+    }
+    let mut q2 = <&GlobalSkill>::query().filter(component::<TierFoundational>()).filter(component::<DomainCoordination>());
+    let global_skills = q2.iter(world).collect::<Vec<_>>();
+
+    for skill in global_skills{
+        info!("{:?}", skill);
     }
 }
 

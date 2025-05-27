@@ -186,8 +186,9 @@ fn main() {
 
                 // Startup schedule, runs once on startup. add run once systems here.
                 let mut startup = Schedule::builder()
-                    .add_system(generate_employees_system())
                     .add_system(load_global_skills_system())
+                    .flush()
+                    .add_system(generate_employees_system())
                     .build();
 
                 // processes the command dispatch queues,  dispatch then sends to the resource profile specific queues.
