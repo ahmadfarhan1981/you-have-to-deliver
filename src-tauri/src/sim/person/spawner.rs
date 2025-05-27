@@ -15,7 +15,7 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, trace};
-
+use crate::sim::person::skills::SkillSet;
 use crate::sim::person::stat_sculpter::{sculpt_axis_bias, sculpt_blindspot, sculpt_monofocus};
 use crate::sim::registries::registry::Registry;
 use crate::sim::systems::global::UsedProfilePictureRegistry;
@@ -271,8 +271,18 @@ pub fn spawn_person(
     let profile_picture = generate_profile_picture(gender, used_portraits);
     let stats = generate_stats(tier);
     let personality_matrix = generate_personality_matrix();
+    let skillset = generate_initial_skillset( &stats, &personality_matrix);
     let entity = cmd.push((person, stats, profile_picture, personality_matrix, Dirty));
     person_registry.insert(id, entity);
 
     (id, entity)
 }
+
+fn generate_initial_skillset(stats: &Stats, personality_axis: &PersonalityMatrix) -> SkillSet {
+    SkillSet{
+        skills: HashMap::new(),
+    }
+
+}
+
+

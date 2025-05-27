@@ -11,9 +11,10 @@ use crate::sim::{
 };
 use dashmap::DashSet;
 use legion::systems::CommandBuffer;
-use legion::{system, Entity};
+use legion::{system, Entity, Query};
 use std::fmt;
 use std::sync::Arc;
+use legion::world::SubWorld;
 use tauri::Emitter;
 use tracing::{error, info};
 use crate::sim::person::skills::ecs_components::DomainInterpersonal;
@@ -23,12 +24,19 @@ pub fn increase_sim_tick(#[resource] tick_counter: &Arc<TickCounter>) {
     tick_counter.tick()
 }
 
-#[system(for_each)]
+#[system]
 pub fn print_person(
-    global_skill: &GlobalSkill,
-    domain_interpersonal: &DomainInterpersonal
+    // global_skill: &GlobalSkill,
+    // domain_interpersonal: &DomainInterpersonal
+    query: &mut Query<&GlobalSkill>,
+    world: &mut SubWorld,
 
 ) {
+    // info!("Print");
+    // for global_skill in query.iter(world) {
+    //     // GlobalSkill with TierFoundational but NOT Disabled
+    //     info!("@@{:?}", global_skill);
+    // }
     // info!("print person");
     // info!("{:?}",global_skill);
     // info!("{:?}",domain_interpersonal);
