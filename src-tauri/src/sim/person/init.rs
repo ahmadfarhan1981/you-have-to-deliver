@@ -1,11 +1,13 @@
 use crate::master_data::skills::SKILL_DEFS;
 use crate::sim::person::components::PersonId;
-use crate::sim::person::skills::{GlobalSkill, SkillId};
+use crate::sim::person::skills::{Domain, GlobalSkill, SkillId, Tier};
 use legion::systems::CommandBuffer;
-use legion::{system, Entity};
+use legion::{system, Entity, EntityStore, World};
 use std::sync::Arc;
+use legion::world::SubWorld;
 use tracing::{info, trace};
-
+use crate::integrations::ui::AppContext;
+use crate::sim::person::skills::ecs_components::{DomainContext, DomainCoordination, DomainExecution, DomainInterpersonal, TierApplied, TierConceptual, TierFoundational};
 use crate::sim::registries::registry::Registry;
 use crate::sim::resources::global::AssetBasePath;
 use crate::sim::systems::global::UsedProfilePictureRegistry;
@@ -55,7 +57,36 @@ pub fn load_global_skills(
 
         let id = SkillId(skill_registry.generate_id());
         global_skill.id = id;
+        let tier = global_skill.tier;
+        let domain = global_skill.domain;
         let entity = cmd.push((global_skill,));
+
+
+        match tier{
+            Tier::Foundational => {
+                cmd.add_component (entity, TierFoundational)
+            }
+            Tier::Conceptual => {
+                cmd.add_component (entity,TierConceptual)
+            }
+            Tier::Applied => {
+                cmd.add_component (entity, TierApplied)
+            }
+        }
+        // match domain{
+        //     Domain::Execution => {
+        //         entry.add_component (DomainExecution)
+        //     }
+        //     Domain::Coordination => {
+        //         entry.add_component (DomainCoordination)
+        //     }
+        //     Domain::Interpersonal => {
+        //         entry.add_component (DomainInterpersonal)
+        //     }
+        //     Domain::Contextual => {
+        //         entry.add_component(DomainContext)
+        //     }
+        // }
         skill_registry.insert(id, entity);
 
         // info!("{:?}", skill_registry.get_entity_from_id(&id).unwrap());

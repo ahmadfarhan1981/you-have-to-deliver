@@ -258,6 +258,8 @@ pub struct GlobalSkillSnapshot {
     pub id: u32,
     pub name: String,
     pub description: String,
+    pub tier: String,
+    pub domain: String,
 }
 impl From<&GlobalSkill> for GlobalSkillSnapshot {
     fn from(value: &GlobalSkill) -> Self {
@@ -265,6 +267,8 @@ impl From<&GlobalSkill> for GlobalSkillSnapshot {
             id: value.id.0,
             name: value.name.clone(),
             description: value.description.clone(),
+            tier : value.tier.to_string(),
+            domain: value.domain.to_string(),
         }
     }
 }
