@@ -164,7 +164,7 @@
       <workItem from="1748386892570" duration="298000" />
       <workItem from="1748390084266" duration="26238000" />
       <workItem from="1748446448661" duration="37000" />
-      <workItem from="1748446503421" duration="3183000" />
+      <workItem from="1748446503421" duration="7357000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />
@@ -274,7 +274,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src-tauri/src/sim/person/spawner.rs</url>
-          <line>215</line>
+          <line>237</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">

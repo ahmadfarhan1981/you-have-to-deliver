@@ -32,7 +32,10 @@
 
 <div
         class=" grid grid-cols-12 gap-1 px-2 py-2 hover:bg-blue-400 cursor-pointer border-black border-b-2"
-        on:click={() =>tabState.openEmployeeTab(person)}
+        on:click={() =>{
+            tabState.openEmployeeTab(person);
+            document.querySelector('#main_container')?.scrollTo({ top: 0, behavior: 'smooth' })
+        }}
 >
     <!-- Identity -->
     <div class="col-span-2 flex items-center">

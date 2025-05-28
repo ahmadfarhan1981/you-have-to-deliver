@@ -16,9 +16,10 @@ use std::path::Path;
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, trace};
 use crate::sim::person::skills::SkillSet;
-use crate::sim::person::stat_sculpter::{sculpt_axis_bias, sculpt_blindspot, sculpt_monofocus};
+use crate::sim::person::stat_sculpter::{sculpt_axis_bias, sculpt_blindspot, sculpt_contrasting_pair, sculpt_monofocus};
 use crate::sim::registries::registry::Registry;
 use crate::sim::systems::global::UsedProfilePictureRegistry;
+use rand::prelude::*;
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: i16, max: i16) -> i16 {
     let normal = Normal::new(mean, std_dev).unwrap();
@@ -186,7 +187,28 @@ fn generate_stats(tier: TalentGrade) -> Stats {
         adaptability,
     };
     let mut stats = config.into();
-    // sculpt_blindspot(&mut stats);
+    let mut choices = (1..=4).collect::<Vec<_>>();
+
+    match choices.choose(&mut rng()){
+        None => {}
+        Some(&1) => {
+            sculpt_monofocus(&mut stats);
+        }
+        Some(&2) => {
+            sculpt_axis_bias(&mut stats);
+        }
+        Some(&3) => {
+            sculpt_blindspot(&mut stats);
+        }
+        Some(&4) => {
+            sculpt_contrasting_pair(&mut stats);
+        }
+        _ => {}
+    }
+
+
+
+     sculpt_blindspot(&mut stats);
     stats
 }
 
@@ -197,10 +219,10 @@ fn generate_profile_picture(
     let used_picture_set = &used_picture_registry.used_profile_pictures;
     // HARDCODED DEBUG VALUES. This block should not be change. TODO Externalize these values.
     let mut last_portrait = HashMap::new();
-    last_portrait.insert((Gender::Female, ProfilePictureCategory::Office), 4);
-    last_portrait.insert((Gender::Female, ProfilePictureCategory::Social), 1);
-    last_portrait.insert((Gender::Male, ProfilePictureCategory::Office), 3);
-    last_portrait.insert((Gender::Male, ProfilePictureCategory::Social), 1);
+    last_portrait.insert((Gender::Female, ProfilePictureCategory::Office), 10);
+    last_portrait.insert((Gender::Female, ProfilePictureCategory::Social), 10);
+    last_portrait.insert((Gender::Male, ProfilePictureCategory::Office), 8);
+    last_portrait.insert((Gender::Male, ProfilePictureCategory::Social), 9);
 
     const MAX_ATTEMPTS: usize = 10;
 
