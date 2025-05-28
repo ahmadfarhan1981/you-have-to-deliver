@@ -82,7 +82,7 @@ impl FromStr for Domain {
         }
     }
 }
-
+#[derive(Clone)]
 pub struct GlobalSkill {
     pub id: SkillId,
     pub slug: String,
@@ -141,6 +141,7 @@ impl From<&SkillDef> for GlobalSkill {
 }
 
 
+#[derive(Clone)]
 struct SkillLink {
     target: SkillId,
     factor: u8,

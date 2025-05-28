@@ -256,7 +256,7 @@ pub fn spawn_person(
     used_portraits: &UsedProfilePictureRegistry,
 
     person_registry: &Arc<Registry<PersonId, Entity>>,
-) -> (PersonId, Entity) {
+) -> (PersonId, Entity, Person, Stats, ProfilePicture, PersonalityMatrix) {
     debug!("Spawning person");
     let id = PersonId(person_registry.generate_id());
 
@@ -267,6 +267,7 @@ pub fn spawn_person(
         name: generate_full_name(&gender, &asset_path).expect("Cannot generate full name"),
         person_id: id.clone(),
     };
+    let person_clone = person.clone();
     debug!("Created person {}", person.name);
     let profile_picture = generate_profile_picture(gender, used_portraits);
     let stats = generate_stats(tier);
@@ -275,7 +276,7 @@ pub fn spawn_person(
     let entity = cmd.push((person, stats, profile_picture, personality_matrix, Dirty));
     person_registry.insert(id, entity);
 
-    (id, entity)
+    (id, entity,person_clone, stats,  profile_picture, personality_matrix)
 }
 
 fn generate_initial_skillset(stats: &Stats, personality_axis: &PersonalityMatrix) -> SkillSet {

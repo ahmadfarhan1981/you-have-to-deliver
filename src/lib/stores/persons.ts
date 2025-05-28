@@ -22,13 +22,25 @@ export type ProfilePictureSnapshot = {
     index: number;
 };
 
+export type AssignedSkillSnapshot = {
+    skill_id: string;
+    value: number;
+    skill_name: string;
+};
+
+export type SkillSetSnapshot = {
+    assigned_skills: AssignedSkillSnapshot[];
+};
+
 export type PersonSnapshot = {
     stats: StatsSnapshot;
     profile_picture: ProfilePictureSnapshot;
-    personality: PersonSnapshot;
+    personality: PersonalitySnapshot;
     person_id: number;
     name: string;
     gender: string;
+    assigned_skill: SkillSetSnapshot;
+    updated: number;
 };
 
 export const personalityAxisSpectrum: Record<PersonalityAxis, { low: string; high: string }> = {

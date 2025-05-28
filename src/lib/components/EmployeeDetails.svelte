@@ -105,7 +105,7 @@
 
 <div class="grid grid-cols-3 gap-6">
     <div class="col-span-2">
-        <SkillsPanel/>
+        <SkillsPanel person={person}/>
         <PersonalityMatrixPanel personality={person.personality}/>
         <PersonOverviewPanel person={person}/>
         <PerformanceHistory/>

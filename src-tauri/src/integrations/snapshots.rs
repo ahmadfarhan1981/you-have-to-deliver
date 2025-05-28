@@ -1,12 +1,14 @@
 use crate::sim::person::components::{Person, ProfilePicture};
 use crate::sim::person::personality_matrix::{PersonalityAxis, PersonalityMatrix};
-use crate::sim::person::skills::{GlobalSkill, SkillId};
+use crate::sim::person::skills::{AssignedSkill, GlobalSkill, SkillId, SkillSet};
 use crate::sim::person::stats::{StatType, Stats};
+use crate::sim::registries::registry::GlobalSkillNameMap;
 use crate::sim::resources::global::{SimDate, TickCounter};
 use arc_swap::ArcSwap;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
+use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
 use std::sync::Arc;
@@ -140,6 +142,45 @@ impl TickSnapshot {
     }
 }
 
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
+pub struct AssignedSkillSnapshot {
+    pub skill_id: String,
+    pub value: u32,
+    pub skill_name: String,
+}
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
+pub struct SkillSetSnapshot {
+    pub assigned_skills: Vec<AssignedSkillSnapshot>,
+}
+
+impl SkillSetSnapshot {
+    pub fn from_sim(skillset: &SkillSet, name_lookup: &GlobalSkillNameMap) -> Self {
+        let skill_list = skillset.skills.iter().collect::<Vec<_>>();
+
+        let snapshot_list = skill_list
+            .iter()
+            .map(|(s, v)| {
+                let id = **s;
+                let val = **v;
+                let binding = name_lookup.0.get(&id).unwrap();
+                let name = binding.value();
+
+                AssignedSkillSnapshot {
+                    skill_id: id.0.to_string(),
+                    value: val,
+                    skill_name: name.clone(),
+                }
+            })
+            .collect::<Vec<_>>();
+
+        SkillSetSnapshot {
+            assigned_skills: snapshot_list,
+        }
+
+        
+    }
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct PersonSnapshot {
     pub(crate) stats: StatsSnapshot,
@@ -148,16 +189,27 @@ pub struct PersonSnapshot {
     pub(crate) name: String,
     pub(crate) gender: String,
     pub(crate) personality: PersonalitySnapshot,
+    pub(crate) assigned_skill: SkillSetSnapshot,
     /// The tick number this snapshot was last updated
     pub updated: u64,
 }
-impl From<(Person, ProfilePicture, Stats, PersonalityMatrix, u64)> for PersonSnapshot {
+impl
+    From<(
+        Person,
+        ProfilePicture,
+        Stats,
+        PersonalityMatrix,
+        (&SkillSet, &GlobalSkillNameMap),
+        u64,
+    )> for PersonSnapshot
+{
     fn from(
-        (person, picture, stats, personality, current_tick): (
+        (person, picture, stats, personality, skillset, current_tick): (
             Person,
             ProfilePicture,
             Stats,
             PersonalityMatrix,
+            (&SkillSet, &GlobalSkillNameMap),
             u64,
         ),
     ) -> Self {
@@ -168,6 +220,7 @@ impl From<(Person, ProfilePicture, Stats, PersonalityMatrix, u64)> for PersonSna
             name: person.name,
             gender: person.gender.to_string(),
             personality: PersonalitySnapshot::from(personality),
+            assigned_skill: SkillSetSnapshot::from_sim(skillset.0, skillset.1),
             updated: current_tick,
         }
     }
@@ -267,8 +320,13 @@ impl From<&GlobalSkill> for GlobalSkillSnapshot {
             id: value.id.0,
             name: value.name.clone(),
             description: value.description.clone(),
-            tier : value.tier.to_string(),
-            domain: value.domain.iter().map(|d| d.to_string()).collect::<Vec<_>>().join(","),
+            tier: value.tier.to_string(),
+            domain: value
+                .domain
+                .iter()
+                .map(|d| d.to_string())
+                .collect::<Vec<_>>()
+                .join(","),
         }
     }
 }

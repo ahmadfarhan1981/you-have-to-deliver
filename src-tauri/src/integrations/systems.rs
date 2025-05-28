@@ -1,11 +1,13 @@
 use crate::integrations::snapshots::{
-    PersonSnapshot, ProfilePictureSnapshot, SnapshotState, StatsSnapshot,
+    AssignedSkillSnapshot, PersonSnapshot, ProfilePictureSnapshot, SnapshotState, StatsSnapshot,
 };
 use crate::sim::game_speed::components::GameSpeedManager;
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
 use crate::sim::person::personality_matrix::PersonalityMatrix;
+use crate::sim::person::skills::{SkillId, SkillSet};
 use crate::sim::person::spawner::spawn_person;
 use crate::sim::person::stats::Stats;
+use crate::sim::registries::registry::GlobalSkillNameMap;
 use crate::sim::resources::global::{Dirty, TickCounter};
 use crate::sim::utils::snapshots::replace_if_changed;
 use dashmap::Entry;
@@ -15,6 +17,8 @@ use parking_lot::RwLock;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use tracing::info;
+
+use super::snapshots::SkillSetSnapshot;
 
 #[system]
 pub fn push_game_speed_snapshots(
@@ -48,16 +52,20 @@ pub fn push_game_speed_snapshots(
 pub fn push_persons_to_integration(
     #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] app_state: &Arc<SnapshotState>,
+    #[resource] global_skill_name_map: &Arc<GlobalSkillNameMap>,
     entity: &Entity,
     person: &Person,
     stats: &Stats,
     profile_picture: &ProfilePicture,
     personality: &PersonalityMatrix,
+    skill_set: &SkillSet,
     _dirty: &Dirty,
     cmd: &mut CommandBuffer,
 ) {
     let current_tick = tick_counter.value();
     let registry = &app_state.persons;
+    
+    let skillset_snapshot = SkillSetSnapshot::from_sim(skill_set, global_skill_name_map);
 
     match registry.entry(person.person_id.0) {
         Entry::Occupied(mut existing) => {
@@ -76,7 +84,7 @@ pub fn push_persons_to_integration(
 
             changed |= replace_if_changed(&mut existing_person.stats, *stats);
             changed |= replace_if_changed(&mut existing_person.profile_picture, *profile_picture);
-
+            changed |= replace_if_changed(&mut existing_person.assigned_skill, skillset_snapshot);
             if changed {
                 existing_person.updated = current_tick;
             }
@@ -87,6 +95,7 @@ pub fn push_persons_to_integration(
                 profile_picture.clone(),
                 stats.clone(),
                 personality.clone(),
+                (skill_set, &**global_skill_name_map),
                 current_tick,
             ));
             vacant.insert(person);

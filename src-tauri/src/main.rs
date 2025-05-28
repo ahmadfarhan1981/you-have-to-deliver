@@ -9,6 +9,7 @@ mod integrations;
 mod macros;
 mod master_data;
 mod sim;
+mod testing_main;
 
 use crate::sim::resources::global::{AssetBasePath, SimManager, TickCounter};
 use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRegistry};
@@ -54,11 +55,12 @@ use crate::integrations::system_queues::sim_manager::{
 };
 
 use crate::sim::person::skills::SkillId;
-use crate::sim::registries::registry::Registry;
+use crate::sim::registries::registry::{GlobalSkillNameMap, Registry};
 use crate::sim::systems::banner::print_banner;
 use crate::sim::utils::sim_reset::ResetRequest;
 use crate::sim::utils::term::{bold, green, italic, red};
 use parking_lot::{Mutex, RwLock};
+
 
 fn print_startup_banner() {
     print_banner();
@@ -174,15 +176,18 @@ fn main() {
                 resources.insert(AssetBasePath(path));
                 resources.insert(used_portrait);
 
+
                 //registries
                 // resources.insert(Arc::new(PersonRegistry::new()));
                 resources.insert(Arc::new(Registry::<PersonId, Entity>::with_name(
                     "Person registry",
                 )));
-                resources.insert(snapshot_registry);
+
                 resources.insert(Arc::new(Registry::<SkillId, Entity>::with_name(
                     "Skill registry",
                 )));
+                resources.insert(snapshot_registry);
+                resources.insert(Arc::<GlobalSkillNameMap>::new(GlobalSkillNameMap::default()));
 
                 // Startup schedule, runs once on startup. add run once systems here.
                 let mut startup = Schedule::builder()
@@ -336,3 +341,4 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("error running tauri app");
 }
+
