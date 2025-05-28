@@ -1,4 +1,10 @@
 <script lang="ts">
+    import { derived } from 'svelte/store';
+    import {type PersonSnapshot} from "$lib/stores/persons"
+    import EmployeeSkillRow from "$lib/components/EmployeeSkillRow.svelte";
+
+
+    let  {person}: {person:PersonSnapshot} = $props();
 
     function showCategory(category) {
         // Hide all categories
@@ -32,6 +38,7 @@
             }
         });
     }
+    
 </script>
 
 <div class="bg-panel-bg rounded-lg p-6 shadow-lg max-w-md">
@@ -81,202 +88,205 @@
 
     <!-- Skills List Container -->
     <div class="skills-container max-h-64 overflow-y-auto">
+        {#each person.assigned_skill.assigned_skills as skill}
+            <EmployeeSkillRow skill={skill} />
+        {/each}
         <!-- Programming Skills -->
-        <div class="skill-category" data-category="programming">
-            <div class="space-y-2">
-                <div class="skill-item flex items-center justify-between py-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-gray-700">JavaScript</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 92%"></div>
-                        </div>
-                        <span class="text-xs text-gray-600 w-8">92</span>
-                    </div>
-                </div>
+<!--        <div class="skill-category" data-category="programming">-->
+<!--            <div class="space-y-2">-->
+<!--                <div class="skill-item flex items-center justify-between py-1">-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>-->
+<!--                        <span class="text-sm font-medium text-gray-700">JavaScript</span>-->
+<!--                    </div>-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-16 bg-gray-200 rounded-full h-1.5">-->
+<!--                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 92%"></div>-->
+<!--                        </div>-->
+<!--                        <span class="text-xs text-gray-600 w-8">92</span>-->
+<!--                    </div>-->
+<!--                </div>-->
 
-                <div class="skill-item flex items-center justify-between py-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-gray-700">Python</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 88%"></div>
-                        </div>
-                        <span class="text-xs text-gray-600 w-8">88</span>
-                    </div>
-                </div>
+<!--                <div class="skill-item flex items-center justify-between py-1">-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>-->
+<!--                        <span class="text-sm font-medium text-gray-700">Python</span>-->
+<!--                    </div>-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-16 bg-gray-200 rounded-full h-1.5">-->
+<!--                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 88%"></div>-->
+<!--                        </div>-->
+<!--                        <span class="text-xs text-gray-600 w-8">88</span>-->
+<!--                    </div>-->
+<!--                </div>-->
 
-                <div class="skill-item flex items-center justify-between py-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-gray-700">React</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 85%"></div>
-                        </div>
-                        <span class="text-xs text-gray-600 w-8">85</span>
-                    </div>
-                </div>
+<!--                <div class="skill-item flex items-center justify-between py-1">-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>-->
+<!--                        <span class="text-sm font-medium text-gray-700">React</span>-->
+<!--                    </div>-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-16 bg-gray-200 rounded-full h-1.5">-->
+<!--                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 85%"></div>-->
+<!--                        </div>-->
+<!--                        <span class="text-xs text-gray-600 w-8">85</span>-->
+<!--                    </div>-->
+<!--                </div>-->
 
-                <div class="skill-item flex items-center justify-between py-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-gray-700">Node.js</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-yellow-500 h-1.5 rounded-full" style="width: 72%"></div>
-                        </div>
-                        <span class="text-xs text-gray-600 w-8">72</span>
-                    </div>
-                </div>
+<!--                <div class="skill-item flex items-center justify-between py-1">-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>-->
+<!--                        <span class="text-sm font-medium text-gray-700">Node.js</span>-->
+<!--                    </div>-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-16 bg-gray-200 rounded-full h-1.5">-->
+<!--                            <div class="bg-yellow-500 h-1.5 rounded-full" style="width: 72%"></div>-->
+<!--                        </div>-->
+<!--                        <span class="text-xs text-gray-600 w-8">72</span>-->
+<!--                    </div>-->
+<!--                </div>-->
 
-                <div class="skill-item flex items-center justify-between py-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-gray-700">TypeScript</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-yellow-500 h-1.5 rounded-full" style="width: 68%"></div>
-                        </div>
-                        <span class="text-xs text-gray-600 w-8">68</span>
-                    </div>
-                </div>
+<!--                <div class="skill-item flex items-center justify-between py-1">-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>-->
+<!--                        <span class="text-sm font-medium text-gray-700">TypeScript</span>-->
+<!--                    </div>-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-16 bg-gray-200 rounded-full h-1.5">-->
+<!--                            <div class="bg-yellow-500 h-1.5 rounded-full" style="width: 68%"></div>-->
+<!--                        </div>-->
+<!--                        <span class="text-xs text-gray-600 w-8">68</span>-->
+<!--                    </div>-->
+<!--                </div>-->
 
-                <div class="skill-item flex items-center justify-between py-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-gray-700">Rust</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-red-500 h-1.5 rounded-full" style="width: 35%"></div>
-                        </div>
-                        <span class="text-xs text-gray-600 w-8">35</span>
-                    </div>
-                </div>
+<!--                <div class="skill-item flex items-center justify-between py-1">-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-2 h-2 bg-red-500 rounded-full"></div>-->
+<!--                        <span class="text-sm font-medium text-gray-700">Rust</span>-->
+<!--                    </div>-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-16 bg-gray-200 rounded-full h-1.5">-->
+<!--                            <div class="bg-red-500 h-1.5 rounded-full" style="width: 35%"></div>-->
+<!--                        </div>-->
+<!--                        <span class="text-xs text-gray-600 w-8">35</span>-->
+<!--                    </div>-->
+<!--                </div>-->
 
-                <div class="skill-item flex items-center justify-between py-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-gray-700">SQL</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 90%"></div>
-                        </div>
-                        <span class="text-xs text-gray-600 w-8">90</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!--                <div class="skill-item flex items-center justify-between py-1">-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>-->
+<!--                        <span class="text-sm font-medium text-gray-700">SQL</span>-->
+<!--                    </div>-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-16 bg-gray-200 rounded-full h-1.5">-->
+<!--                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 90%"></div>-->
+<!--                        </div>-->
+<!--                        <span class="text-xs text-gray-600 w-8">90</span>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
 
-        <!-- Tools Skills -->
-        <div class="skill-category hidden" data-category="tools">
-            <div class="space-y-2">
-                <div class="skill-item flex items-center justify-between py-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-gray-700">Git</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 95%"></div>
-                        </div>
-                        <span class="text-xs text-gray-600 w-8">95</span>
-                    </div>
-                </div>
+<!--        &lt;!&ndash; Tools Skills &ndash;&gt;-->
+<!--        <div class="skill-category hidden" data-category="tools">-->
+<!--            <div class="space-y-2">-->
+<!--                <div class="skill-item flex items-center justify-between py-1">-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>-->
+<!--                        <span class="text-sm font-medium text-gray-700">Git</span>-->
+<!--                    </div>-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-16 bg-gray-200 rounded-full h-1.5">-->
+<!--                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 95%"></div>-->
+<!--                        </div>-->
+<!--                        <span class="text-xs text-gray-600 w-8">95</span>-->
+<!--                    </div>-->
+<!--                </div>-->
 
-                <div class="skill-item flex items-center justify-between py-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-gray-700">Docker</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 82%"></div>
-                        </div>
-                        <span class="text-xs text-gray-600 w-8">82</span>
-                    </div>
-                </div>
+<!--                <div class="skill-item flex items-center justify-between py-1">-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>-->
+<!--                        <span class="text-sm font-medium text-gray-700">Docker</span>-->
+<!--                    </div>-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-16 bg-gray-200 rounded-full h-1.5">-->
+<!--                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 82%"></div>-->
+<!--                        </div>-->
+<!--                        <span class="text-xs text-gray-600 w-8">82</span>-->
+<!--                    </div>-->
+<!--                </div>-->
 
-                <div class="skill-item flex items-center justify-between py-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-gray-700">Kubernetes</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-yellow-500 h-1.5 rounded-full" style="width: 65%"></div>
-                        </div>
-                        <span class="text-xs text-gray-600 w-8">65</span>
-                    </div>
-                </div>
+<!--                <div class="skill-item flex items-center justify-between py-1">-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>-->
+<!--                        <span class="text-sm font-medium text-gray-700">Kubernetes</span>-->
+<!--                    </div>-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-16 bg-gray-200 rounded-full h-1.5">-->
+<!--                            <div class="bg-yellow-500 h-1.5 rounded-full" style="width: 65%"></div>-->
+<!--                        </div>-->
+<!--                        <span class="text-xs text-gray-600 w-8">65</span>-->
+<!--                    </div>-->
+<!--                </div>-->
 
-                <div class="skill-item flex items-center justify-between py-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-gray-700">VS Code</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 98%"></div>
-                        </div>
-                        <span class="text-xs text-gray-600 w-8">98</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!--                <div class="skill-item flex items-center justify-between py-1">-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>-->
+<!--                        <span class="text-sm font-medium text-gray-700">VS Code</span>-->
+<!--                    </div>-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-16 bg-gray-200 rounded-full h-1.5">-->
+<!--                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 98%"></div>-->
+<!--                        </div>-->
+<!--                        <span class="text-xs text-gray-600 w-8">98</span>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
 
-        <!-- Soft Skills -->
-        <div class="skill-category hidden" data-category="soft">
-            <div class="space-y-2">
-                <div class="skill-item flex items-center justify-between py-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-gray-700">Problem Solving</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 89%"></div>
-                        </div>
-                        <span class="text-xs text-gray-600 w-8">89</span>
-                    </div>
-                </div>
+<!--        &lt;!&ndash; Soft Skills &ndash;&gt;-->
+<!--        <div class="skill-category hidden" data-category="soft">-->
+<!--            <div class="space-y-2">-->
+<!--                <div class="skill-item flex items-center justify-between py-1">-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>-->
+<!--                        <span class="text-sm font-medium text-gray-700">Problem Solving</span>-->
+<!--                    </div>-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-16 bg-gray-200 rounded-full h-1.5">-->
+<!--                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 89%"></div>-->
+<!--                        </div>-->
+<!--                        <span class="text-xs text-gray-600 w-8">89</span>-->
+<!--                    </div>-->
+<!--                </div>-->
 
-                <div class="skill-item flex items-center justify-between py-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-gray-700">Team Leadership</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-yellow-500 h-1.5 rounded-full" style="width: 73%"></div>
-                        </div>
-                        <span class="text-xs text-gray-600 w-8">73</span>
-                    </div>
-                </div>
+<!--                <div class="skill-item flex items-center justify-between py-1">-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>-->
+<!--                        <span class="text-sm font-medium text-gray-700">Team Leadership</span>-->
+<!--                    </div>-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-16 bg-gray-200 rounded-full h-1.5">-->
+<!--                            <div class="bg-yellow-500 h-1.5 rounded-full" style="width: 73%"></div>-->
+<!--                        </div>-->
+<!--                        <span class="text-xs text-gray-600 w-8">73</span>-->
+<!--                    </div>-->
+<!--                </div>-->
 
-                <div class="skill-item flex items-center justify-between py-1">
-                    <div class="flex items-center space-x-2">
-                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span class="text-sm font-medium text-gray-700">Communication</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <div class="w-16 bg-gray-200 rounded-full h-1.5">
-                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 81%"></div>
-                        </div>
-                        <span class="text-xs text-gray-600 w-8">81</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!--                <div class="skill-item flex items-center justify-between py-1">-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>-->
+<!--                        <span class="text-sm font-medium text-gray-700">Communication</span>-->
+<!--                    </div>-->
+<!--                    <div class="flex items-center space-x-2">-->
+<!--                        <div class="w-16 bg-gray-200 rounded-full h-1.5">-->
+<!--                            <div class="bg-green-500 h-1.5 rounded-full" style="width: 81%"></div>-->
+<!--                        </div>-->
+<!--                        <span class="text-xs text-gray-600 w-8">81</span>-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--            </div>-->
+<!--        </div>-->
     </div>
 
     <!-- Show More Button -->

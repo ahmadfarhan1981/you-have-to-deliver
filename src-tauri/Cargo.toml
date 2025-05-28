@@ -36,4 +36,5 @@ tracing = "0.1.41"
 tracing-appender = "0.2.3"
 unicode-segmentation = "1.10"
 arc-swap = "1.7.1"
+rayon = "1.10.0"
 

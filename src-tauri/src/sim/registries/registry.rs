@@ -6,6 +6,7 @@ use std::fmt::{Debug, Display};
 use std::hash::Hash;
 use std::sync::atomic::{AtomicU32, Ordering};
 use strum_macros::Display;
+use crate::sim::person::skills::SkillId;
 
 /// A generic registry that manages items with unique IDs.
 ///
@@ -111,6 +112,9 @@ where
         self.entity_to_id.clear();
         self.next_id.store(0, Ordering::Relaxed);
     }
+    // pub fn iter(&self) -> impl Iterator<Item = (&I, &T)> {
+    //     self.id_to_entity.iter()
+    // }
 }
 
 // pub struct AutoIncrementingId{
@@ -135,3 +139,6 @@ where
 //         self.next_id.fetch_add(1, Ordering::Relaxed)
 //     }
 // }
+
+#[derive(Default)]
+pub struct GlobalSkillNameMap(pub DashMap<SkillId,String>);
