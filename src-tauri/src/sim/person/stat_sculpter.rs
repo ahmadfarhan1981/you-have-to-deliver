@@ -57,8 +57,8 @@ fn random_stat() -> StatType {
 pub fn sculpt_axis_bias(stats: &mut Stats) {
     let total_points = stats.total();
 
-    let base_modifier = 5;
-    let variable = 3;
+    let base_modifier = 12;
+    let variable = 5;
 
     let boost_amount = random_variation(base_modifier, variable);
     let group = random_stat_group(); // returns Vec<StatType>
@@ -136,6 +136,7 @@ pub fn sculpt_blindspot(stats: &mut Stats) {
 /// - Pick two unrelated stats randomly (not same group)
 /// - Push one up, one down
 pub fn sculpt_contrasting_pair(stats: &mut Stats) {
+    let amount = 12f32;
     let total_points = stats.total();
 
     let mut a = random_stat();
@@ -144,8 +145,8 @@ pub fn sculpt_contrasting_pair(stats: &mut Stats) {
         b = random_stat();
     }
 
-    stats.adjust(a, 8f32);
-    stats.adjust(b, -8f32);
+    stats.adjust(a, amount);
+    stats.adjust(b, -amount);
     stats.normalize_to(total_points);
 }
 

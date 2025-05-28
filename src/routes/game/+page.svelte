@@ -17,7 +17,11 @@
   import Tabs from "$lib/components/Tabs.svelte";
   import {gameSpeed} from "$lib/stores/gameSpeed";
   import EmployeeTableSectionHeader from "$lib/components/EmployeeTableSectionHeader.svelte";
+  import { afterNavigate } from '$app/navigation';
 
+  afterNavigate(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 
   // Navigation
   function navigateTo(view) {
@@ -55,7 +59,7 @@
     <Tabs />
 
     <!-- Main Grid Area -->
-    <div class="flex-1 overflow-auto bg-slate-400">
+    <div id="main_container" class="flex-1 overflow-auto bg-slate-400">
       {#if $activeTab?.id === "overview"}
         <!--- --->
 
