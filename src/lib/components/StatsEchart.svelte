@@ -33,7 +33,7 @@
     $: isDetailed = false; // Toggle between detailed (10) and consolidated (5) view
     let groupedStats: GroupedStatSnapshot[];
     $: groupedStats = (()=>{
-        //echarts radar graph shows stuff in counterclockwise, we have to reverse the list to acheive the clockwise order.
+        //echarts radar graph shows stuff in counterclockwise, we have to reverse the list to achieve the clockwise order.
         let val = getGroupedStatSnapshot(statsSnapshot);
         val.reverse();
         val.map(v => {// sub array also needs to be reversed.
