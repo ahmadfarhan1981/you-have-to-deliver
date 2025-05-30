@@ -1,23 +1,15 @@
 <script lang="ts">
     import {onMount} from 'svelte';
+    import type {ECharts} from 'echarts';
     import * as echarts from 'echarts';
-    import type {ECharts, EChartsOption} from 'echarts';
-    import {
-        getGroupedStatSnapshot,
-        type GroupedStatDefinition,
-        stats_definition,
-        type StatsSnapshot
-    } from "$lib/models/stats";
-
+    import {getGroupedStatSnapshot, type GroupedStatSnapshot, type StatsSnapshot} from "$lib/models/stats";
 
     export let statsSnapshot: StatsSnapshot;
-
     interface RadarIndicator {
         name: string;
         max: number;
         category?: string;
     }
-
     interface ChartDataItem {
         name: string;
         value: number[];
@@ -29,78 +21,62 @@
     interface TooltipParams {
         seriesName: string;
         dataIndex: number;
-        value: number;
+        value: number[];
         color: string;
+        name: string;
+        dimensionNames?: string[];
+        encode?: any;
     }
 
     let chartContainer: HTMLDivElement;
     let chart: ECharts;
-    $: isDetailed = true; // Toggle between detailed (10) and consolidated (5) view
-
-    $: groupedStats = getGroupedStatSnapshot(statsSnapshot)
-
-    // Detailed 10-stat data
-    const detailedChartData: ChartDataItem[] = [
-        // {
-        //     name: 'Profile A',
-        //     value: [85, 72, 90, 68, 78, 82, 91, 75, 88, 69],
-        //     itemStyle: {
-        //         color: '#5470c6'
-        //     }
-        // },
-        // {
-        //     name: 'Profile B',
-        //     value: [75, 85, 70, 92, 65, 88, 73, 95, 71, 86],
-        //     itemStyle: {
-        //         color: '#91cc75'
-        //     }
-        // }
-    ];
-
-    // Consolidated 5-stat data (averaged/consolidated from the 10 stats)
-    const consolidatedChartData: ChartDataItem[] = [
-        // {
-        //     name: 'Profile A',
-        //     value: [78, 79, 80, 83, 78], // Performance, Control, Reliability, Experience, Features
-        //     itemStyle: {
-        //         color: '#5470c6'
-        //     }
-        // },
-        // {
-        //     name: 'Profile B',
-        //     value: [80, 81, 76, 84, 78],
-        //     itemStyle: {
-        //         color: '#91cc75'
-        //     }
-        // }
-    ];
-
-
-
-
-    // let indicators: RadarIndicator[] = stats_definition.map(group => ({
-    //     name: group.group,
-    //     max: 100
-    // }));
-    let indicators: RadarIndicator[] = [];
+    $: isDetailed = false; // Toggle between detailed (10) and consolidated (5) view
+    let groupedStats: GroupedStatSnapshot[];
+    $: groupedStats = (()=>{
+        let val = getGroupedStatSnapshot(statsSnapshot);
+        val.reverse();
+        return val;
+    })();
+    let detailedChartData: ChartDataItem[] = [];
+    let consolidatedChartData: ChartDataItem[] = [];
     let detailedRadarIndicators: RadarIndicator[] = [];
-    console.log(JSON.stringify(stats_definition))
-    stats_definition.forEach( (group:GroupedStatDefinition) => {
-        console.log(JSON.stringify(group))
-        indicators.push({name: group.group, max: 100});
-        group.items.forEach((statDef) => {
-            console.log(JSON.stringify(statDef))
-            detailedRadarIndicators.push({name: statDef.label, max: 100})
+    let consolidatedRadarIndicators: RadarIndicator[] = [];
 
-        });
-    });
+    $: {
+        consolidatedRadarIndicators = groupedStats.map(stat => ({
+            name: stat.group.name,
+            max: 100
+        })
+        );
 
+        consolidatedChartData = [{
+            name: 'Profile A',
+            value: groupedStats.map(stat => stat.group.average),
+            itemStyle: {
+                color: '#5470c6'
+            }
+        }];
+    }
 
-
-
-    // Consolidated 5 categories
-    const consolidatedRadarIndicators: RadarIndicator[] = indicators;
-
+    $:{
+        detailedRadarIndicators = groupedStats.flatMap(stat =>
+            stat.items.map(statDef => {
+                return {
+                    name: statDef.label,
+                    max: 100
+                }
+            })
+        );
+        detailedChartData = [{
+            name: 'Profile A',
+            value: groupedStats.flatMap(stat =>
+                stat.items.map(statDef => (statDef.value
+                ))),
+            itemStyle: {
+                color: '#5470c6'
+            }
+        }];
+    }
 
     // Reactive values that change based on toggle
     $: currentChartData = isDetailed ? detailedChartData : consolidatedChartData;
@@ -118,19 +94,34 @@
         // },
         tooltip: {
             trigger: 'item',
-            formatter: function (params: TooltipParams): string {
-                const dataIndex: number = params.dataIndex;
-                const indicator: RadarIndicator = currentRadarIndicators[dataIndex];
-                const value: number = params.value;
+            formatter: function(params: TooltipParams | TooltipParams[]): string {
+                // Handle both single item and array cases
+                const param = Array.isArray(params) ? params[0] : params;
 
-                return `
+                // For radar charts, we need to show all dimensions for the hovered series
+                const values = param.value as number[];
+                const seriesName = param.name;
+                const color = param.color;
+
+                let tooltipContent = `
           <div style="padding: 8px;">
-            <strong>${params.seriesName}</strong><br/>
-            <span style="color: ${params.color};">●</span>
-            ${indicator.name}: <strong>${value}</strong><br/>
-            ${indicator.category ? `<small>Category: ${indicator.category}</small>` : ''}
-          </div>
+            <strong style="color: ${color};">${seriesName}</strong><br/>
         `;
+
+                // Show all attributes for this series
+                currentRadarIndicators.forEach((indicator: RadarIndicator, index: number) => {
+                    const value = values[index];
+                    tooltipContent += `
+            <div style="margin: 4px 0;">
+              <span style="color: ${color};">●</span>
+              ${indicator.name}: <strong>${value}</strong>
+              ${indicator.category ? ` <small>(${indicator.category})</small>` : ''}
+            </div>
+          `;
+                });
+
+                tooltipContent += '</div>';
+                return tooltipContent;
             }
         },
         // legend: {
@@ -162,7 +153,8 @@
                 lineStyle: {
                     color: '#ccc'
                 }
-            }
+            },
+
         },
         series: [{
             name: 'Attributes',
@@ -179,7 +171,7 @@
                 }
             }))
         }]
-    } ;
+    };
 
     // Function to toggle between views
     function toggleView(): void {
@@ -197,8 +189,6 @@
     $: if (chart && isDetailed !== undefined) {
         updateChart();
     }
-
-
 
     onMount(() => {
         chart = echarts.init(chartContainer);
@@ -218,6 +208,8 @@
     });
 </script>
 
+Current indicators: {currentRadarIndicators.map(i => i.name).join(', ')}
+{JSON.stringify(currentRadarIndicators)}
 <div class="chart-wrapper ">
     <div class="h-[200px]"></div>
     <div class="toggle-container">
