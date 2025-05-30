@@ -92,7 +92,7 @@
     "org.rust.first.attach.projects": "true",
     "run.code.analysis.last.selected.profile": "pProject Default",
     "settings.editor.selected.configurable": "preferences.keymap",
-    "ts.external.directory.path": "D:\\projects\\you-have-to-deliver\\node_modules\\typescript\\lib",
+    "ts.external.directory.path": "C:\\Work\\Project\\you-have-to-deliver\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   },
   "keyToStringList": {
@@ -311,12 +311,6 @@
           <url>file://$PROJECT_DIR$/src/lib/stores/teams.ts</url>
           <line>26</line>
           <option name="timeStamp" value="5" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/lib/components/StatsEchart.svelte</url>
-          <line>87</line>
-          <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="6" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
