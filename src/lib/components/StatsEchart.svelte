@@ -33,8 +33,13 @@
     $: isDetailed = false; // Toggle between detailed (10) and consolidated (5) view
     let groupedStats: GroupedStatSnapshot[];
     $: groupedStats = (()=>{
+        //echarts radar graph shows stuff in counterclockwise, we have to reverse the list to acheive the clockwise order.
         let val = getGroupedStatSnapshot(statsSnapshot);
         val.reverse();
+        val.map(v => {// sub array also needs to be reversed.
+           v.items.reverse();
+           return v;
+        });
         return val;
     })();
     let detailedChartData: ChartDataItem[] = [];
@@ -50,7 +55,7 @@
         );
 
         consolidatedChartData = [{
-            name: 'Profile A',
+            name: 'Stat group average',
             value: groupedStats.map(stat => stat.group.average),
             itemStyle: {
                 color: '#5470c6'
@@ -68,7 +73,7 @@
             })
         );
         detailedChartData = [{
-            name: 'Profile A',
+            name: 'Stat value',
             value: groupedStats.flatMap(stat =>
                 stat.items.map(statDef => (statDef.value
                 ))),
@@ -81,7 +86,7 @@
     // Reactive values that change based on toggle
     $: currentChartData = isDetailed ? detailedChartData : consolidatedChartData;
     $: currentRadarIndicators = isDetailed ? detailedRadarIndicators : consolidatedRadarIndicators;
-
+    $: startAngle = isDetailed ? 90 + (360 /10 ) : 90 + (360/5);
     // let option :EChartsOption;
     $: option = {
         // title: {
@@ -154,6 +159,8 @@
                     color: '#ccc'
                 }
             },
+            startAngle:startAngle,
+
 
         },
         series: [{
@@ -207,9 +214,6 @@
         };
     });
 </script>
-
-Current indicators: {currentRadarIndicators.map(i => i.name).join(', ')}
-{JSON.stringify(currentRadarIndicators)}
 <div class="chart-wrapper ">
     <div class="h-[200px]"></div>
     <div class="toggle-container">
