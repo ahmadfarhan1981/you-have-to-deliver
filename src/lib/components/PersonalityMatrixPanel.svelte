@@ -1,6 +1,6 @@
 <script lang="ts">
     import PersonalityBar from "$lib/components/PersonalityBar.svelte";
-    import {allPersonalityAxes, type PersonalityAxis} from "$lib/stores/persons";
+    import {allPersonalityAxes, type PersonalityAxis} from "$lib/models/personality";
 
     export let personality
 </script>

@@ -1,21 +1,21 @@
 <script lang="ts" >
     import {
         getAxisValue,
-        type PersonalityAxis, personalityAxisLabels,
-        personalityAxisSpectrum, type PersonalityAxisValue,
-        type PersonalitySnapshot
-    } from "$lib/stores/persons";
+        type PersonalityAxis,
+        personalityAxisLabels, personalityAxisSpectrum,
+        type PersonalityAxisValue, type PersonalitySnapshot
+    } from "$lib/models/personality";
 
-    const { personality, axis } = $props<{
-        personality: PersonalitySnapshot;
-        axis: PersonalityAxis;
-    }>();
 
-    const value = $derived(getAxisValue(personality, axis));
-    // const value: PersonalityAxisValue = {value:40,desc:"Desc"}
-    const percentage_value = $derived( ((value.value + 100)  / 200) * 100);
+    export let personality: PersonalitySnapshot;
+    export let axis: PersonalityAxis;
 
-    let showTooltip = $state(false);
+
+
+    $: value = getAxisValue(personality, axis);
+    $: percentage_value =  ((value.value + 100)  / 200) * 100;
+
+    let showTooltip = false;
 
     function getPersonalityColorClass(value: number): string {
         if (value >= 90 || value <= -90) return 'bg-red-600';   // Extreme
@@ -54,7 +54,7 @@
                     <div class="space-y-1">
                         <div class="flex items-center gap-2">
                             <div class="w-2 h-2 rounded-full {getPersonalityColorClass(value.value)}"></div>
-                            <span>{personalityAxisLabels[axis].value}: {Math.abs(value.value)}%</span>
+                            <span>{personalityAxisLabels[axis]}: {Math.abs(value.value)}%</span>
                         </div>
                         <div class="flex items-center gap-2">
 <!--                            <div class="w-2 h-2 rounded-full {getPersonalityColorClass(value.value)}"></div>-->

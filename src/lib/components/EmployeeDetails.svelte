@@ -11,6 +11,7 @@
     import FinancialHealthPanel from "$lib/components/FinancialHealthPanel.svelte";
     import EmployeeInfoPanel from "$lib/components/EmployeeInfoPanel.svelte";
     import ProjectPanel from "$lib/components/ProjectPanel.svelte";
+    import StatsEchart from "$lib/components/StatsEchart.svelte";
 
     export let person: PersonSnapshot;
 
@@ -79,6 +80,7 @@
 
     <div class="col-span-1">
         <StatPanel stats={person.stats}/>
+
     </div>
     <div class="col-span-1">
         <SkillsPanel person={person}/>

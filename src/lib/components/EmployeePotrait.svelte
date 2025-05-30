@@ -1,5 +1,6 @@
 <script lang="ts">
-    import {getProfileImageData, type PersonSnapshot} from "$lib/stores/persons";
+    import {type PersonSnapshot} from "$lib/stores/persons";
+    import {getProfileImageData} from "$lib/models/skill";
     export let person:PersonSnapshot
     let fileName = "";
     let position = "";
