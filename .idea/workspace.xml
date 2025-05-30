@@ -26,7 +26,6 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="StatPanel" />
-        <option value="EmployeeList" />
         <option value="EmployeeDetail" />
         <option value="Tabs" />
         <option value="SimControl" />
@@ -44,6 +43,8 @@
         <option value="ManagersNote" />
         <option value="StatsEchart" />
         <option value="TypeScript File" />
+        <option value="CompanyOverview" />
+        <option value="EmployeeList" />
       </list>
     </option>
   </component>
@@ -185,7 +186,7 @@
       <workItem from="1748527580185" duration="2954000" />
       <workItem from="1748530583302" duration="3871000" />
       <workItem from="1748563518416" duration="8017000" />
-      <workItem from="1748593023444" duration="2094000" />
+      <workItem from="1748593023444" duration="7443000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />

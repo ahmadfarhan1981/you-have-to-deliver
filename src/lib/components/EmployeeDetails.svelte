@@ -14,7 +14,6 @@
     import StatsEchart from "$lib/components/StatsEchart.svelte";
 
     export let person: PersonSnapshot;
-
     function showCategory(category) {
         // Hide all categories
         document.querySelectorAll('.skill-category').forEach(cat => {
