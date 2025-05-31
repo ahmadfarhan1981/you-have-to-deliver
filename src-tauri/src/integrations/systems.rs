@@ -53,22 +53,37 @@ pub fn push_game_speed_snapshots(
 #[system(for_each)]
 pub fn push_company_to_integration(
     // #[resource] tick_counter: &Arc<TickCounter>,
-    #[resource] registry: &SnapshotEmitRegistry,
     #[resource] app_state: &Arc<SnapshotState>,
     entity: &Entity,
-    company: &Company,
-    player_controlled_tag: &PlayerControlled,
+    company: &Company, // Live company data from ECS
+    _player_controlled_tag: &PlayerControlled, // used for query filtering
     _dirty: &Dirty,
     cmd: &mut CommandBuffer,
 ) {
-    info!("Pushing company {} to integration", company.name);
-    let old_company = app_state.company.value.load_full();
-    let mut oc = (**old_company).clone();
+    // Use this method as the reference implementaion for all push_x_to_integration methods
 
-    let changed = replace_if_changed::<CompanySnapshot, Company>(&mut oc , company.clone());
-    
+    // 1. Load the current Arc<CompanySnapshot>. This is an Arc pointing to the snapshot data.
+    let current_arc_snapshot = app_state.company.value.load_full();
+
+    // 2. Clone the data *inside* the Arc to get a mutable CompanySnapshot.
+    //    This `mutable_snapshot_data` will be compared and potentially updated by `replace_if_changed`.
+    let mut mutable_snapshot_data = (**current_arc_snapshot).clone();
+
+    // 3. Call `replace_if_changed`.
+    //    - `&mut mutable_snapshot_data`: the snapshot to potentially update.
+    //    - `company.clone()`: creates an owned `Company` instance from the `&Company` reference.
+    //      This is necessary because `replace_if_changed` takes its `new_source_value` by value.
+    //      `CompanySnapshot` has `From<Company>`.
+    let changed = replace_if_changed::<CompanySnapshot, Company>(&mut mutable_snapshot_data, company.clone());
+
     if changed {
-        app_state.company.value.swap(Arc::new(Arc::new(oc)));
+        // If `changed` is true, `mutable_snapshot_data` now holds the new, updated snapshot.
+        // Store this new snapshot into the ArcSwap.
+        // `ArcSwap::store` expects an `Arc<T>`, T in our case is always an Arc of the data. So it's another `Arc::new()`
+        app_state.company.value.store(Arc::new(Arc::new(mutable_snapshot_data)));
+        debug!("Company '{}' snapshot updated.", company.name);
+    } else {
+        debug!("Company '{}' snapshot unchanged.", company.name);
     }
     cmd.remove_component::<Dirty>(*entity);
 }
