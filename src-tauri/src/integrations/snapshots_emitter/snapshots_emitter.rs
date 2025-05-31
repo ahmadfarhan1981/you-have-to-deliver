@@ -67,18 +67,18 @@ pub struct SnapshotFieldEmitter<T> {
     pub config: SnapshotEmitterConfig,
 }
 
-impl<T: Serialize> SnapshotEmitter for SnapshotFieldEmitter<T> {
+impl<T: Serialize + std::fmt::Debug> SnapshotEmitter for SnapshotFieldEmitter<T> {
     fn maybe_emit(&self, tick: u64, app: &AppHandle) -> bool {
         let should_emit = match self.config.frequency {
             ExportFrequency::EveryTick => true,
             ExportFrequency::EveryNTicks(n) => tick % n == 0,
             ExportFrequency::ManualOnly => false,
         };
-
         if should_emit {
             //&& self.config.last_sent_tick.load(Ordering::Relaxed) != tick {
             self.config.last_sent_tick.store(tick, Ordering::Relaxed);
             let data: &T = &*self.field.value.load();
+            // info!("Snapshot field: {:?} {:?} {:?}", self.config.event_name, data,  &*self.field.value.load_full());
             let _ = app.emit(self.config.event_name, data);
         }
         should_emit
