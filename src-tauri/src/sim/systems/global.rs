@@ -123,17 +123,17 @@ impl fmt::Debug for UsedProfilePictureRegistry {
     }
 }
 
-pub fn test() {
-    let mut snapshot_registry = SnapshotEmitRegistry::new();
-    let snapshot_state = SnapshotState::default();
-    let g = snapshot_state.game_speed;
+// pub fn test() {
+//     let mut snapshot_registry = SnapshotEmitRegistry::new();
+//     let snapshot_state = SnapshotState::default();
+//     let g = snapshot_state.game_speed;
 
-    let x = SnapshotFieldEmitter {
-        field: Arc::new(g),
-        config: Default::default(),
-    };
-    snapshot_registry.register(x);
-}
+//     let x = SnapshotFieldEmitter {
+//         field: Arc::new(g),
+//         config: Default::default(),
+//     };
+//     snapshot_registry.register(x);
+// }
 
 pub trait ReplaceIfChanged {
     fn replace_if_changed(&mut self, new: Self) -> bool;

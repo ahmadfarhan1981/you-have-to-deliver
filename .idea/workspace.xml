@@ -38,13 +38,13 @@
         <option value="PersonOverviewPanel" />
         <option value="FinancialHealthPanel" />
         <option value="EmployeeInfoPanel" />
-        <option value="Rust File" />
         <option value="ProjectPanel" />
         <option value="ManagersNote" />
         <option value="StatsEchart" />
-        <option value="TypeScript File" />
         <option value="CompanyOverview" />
         <option value="EmployeeList" />
+        <option value="Rust File" />
+        <option value="TypeScript File" />
       </list>
     </option>
   </component>
@@ -93,7 +93,7 @@
     "org.rust.cargo.project.model.impl.CargoExternalSystemProjectAware.subscribe.first.balloon": "",
     "org.rust.first.attach.projects": "true",
     "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "com.intellij.platform.ide.impl.presentationAssistant.PresentationAssistantConfigurable",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
     "ts.external.directory.path": "D:\\projects\\you-have-to-deliver\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   },
@@ -189,7 +189,8 @@
       <workItem from="1748563518416" duration="8017000" />
       <workItem from="1748593023444" duration="7443000" />
       <workItem from="1748618272779" duration="954000" />
-      <workItem from="1748669291482" duration="1667000" />
+      <workItem from="1748669291482" duration="7695000" />
+      <workItem from="1748680908578" duration="6913000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />

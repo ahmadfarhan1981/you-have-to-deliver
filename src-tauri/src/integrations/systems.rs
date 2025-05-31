@@ -1,6 +1,4 @@
-use crate::integrations::snapshots::{
-    AssignedSkillSnapshot, PersonSnapshot, ProfilePictureSnapshot, SnapshotState, StatsSnapshot,
-};
+use crate::integrations::snapshots::{AssignedSkillSnapshot, CompanySnapshot, PersonSnapshot, ProfilePictureSnapshot, SnapshotState, StatsSnapshot};
 use crate::sim::game_speed::components::GameSpeedManager;
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
 use crate::sim::person::personality_matrix::PersonalityMatrix;
@@ -9,15 +7,19 @@ use crate::sim::person::spawner::spawn_person;
 use crate::sim::person::stats::Stats;
 use crate::sim::registries::registry::GlobalSkillNameMap;
 use crate::sim::resources::global::{Dirty, TickCounter};
-use crate::sim::utils::snapshots::replace_if_changed;
+use crate::sim::utils::snapshots::{replace_if_changed};
 use dashmap::Entry;
 use legion::systems::CommandBuffer;
 use legion::{system, Entity};
 use parking_lot::RwLock;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
+use std::sync::mpsc::channel;
+use arc_swap::ArcSwap;
 use tracing::info;
-
+use tracing_subscriber::registry;
+use crate::integrations::snapshots_emitter::snapshots_emitter::{SnapshotEmitRegistry, SnapshotFieldEmitter};
+use crate::sim::company::company::{Company, PlayerControlled};
 use super::snapshots::SkillSetSnapshot;
 
 #[system]
@@ -47,6 +49,30 @@ pub fn push_game_speed_snapshots(
             .store(game_speed, Ordering::Relaxed);
     }
 }
+
+#[system(for_each)]
+pub fn push_company_to_integration(
+    // #[resource] tick_counter: &Arc<TickCounter>,
+    #[resource] registry: &SnapshotEmitRegistry,
+    #[resource] app_state: &Arc<SnapshotState>,
+    entity: &Entity,
+    company: &Company,
+    player_controlled_tag: &PlayerControlled,
+    _dirty: &Dirty,
+    cmd: &mut CommandBuffer,
+) {
+    info!("Pushing company {} to integration", company.name);
+    let old_company = app_state.company.value.load_full();
+    let mut oc = (**old_company).clone();
+
+    let changed = replace_if_changed::<CompanySnapshot, Company>(&mut oc , company.clone());
+    
+    if changed {
+        app_state.company.value.swap(Arc::new(Arc::new(oc)));
+    }
+    cmd.remove_component::<Dirty>(*entity);
+}
+
 
 #[system(for_each)]
 pub fn push_persons_to_integration(
@@ -81,6 +107,7 @@ pub fn push_persons_to_integration(
                 changed = true;
                 existing_person.gender = person.gender.to_string();
             }
+
 
             changed |= replace_if_changed(&mut existing_person.stats, *stats);
             changed |= replace_if_changed(&mut existing_person.profile_picture, *profile_picture);

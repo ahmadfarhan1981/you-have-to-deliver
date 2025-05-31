@@ -11,15 +11,14 @@ mod master_data;
 mod sim;
 mod testing_main;
 
-use crate::sim::resources::global::{AssetBasePath, SimManager, TickCounter};
+use crate::sim::resources::global::{AssetBasePath, Dirty, SimManager, TickCounter};
 use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRegistry};
 
+use integrations::snapshots::CompanySnapshot;
 use legion::{Entity, Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
-use crate::integrations::systems::{
-    push_game_speed_snapshots_system, push_persons_to_integration_system,
-};
+use crate::integrations::systems::{push_company_to_integration_system, push_game_speed_snapshots_system, push_persons_to_integration_system};
 use crate::integrations::ui::{new_sim, resume_sim, start_sim, stop_sim, AppContext};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{PersonId, ProfilePicture};
@@ -54,13 +53,13 @@ use crate::integrations::system_queues::sim_manager::{
     handle_sim_manager_queue_system, reset_state_system,
 };
 
+use crate::sim::company::company::{Company, PlayerControlled};
 use crate::sim::person::skills::SkillId;
 use crate::sim::registries::registry::{GlobalSkillNameMap, Registry};
 use crate::sim::systems::banner::print_banner;
 use crate::sim::utils::sim_reset::ResetRequest;
 use crate::sim::utils::term::{bold, green, italic, red};
 use parking_lot::{Mutex, RwLock};
-
 
 fn print_startup_banner() {
     print_banner();
@@ -95,7 +94,7 @@ fn main() {
     //Snapshot registry
     let mut snapshot_registry = SnapshotEmitRegistry::new();
     let game_speed_snapshots_emitter = SnapshotFieldEmitter {
-        field: Arc::new(main_snapshot_state.game_speed.clone()),
+        field: main_snapshot_state.game_speed.clone(), // Clones the Arc<SnapshotField>, sharing the instance
         config: SnapshotEmitterConfig {
             frequency: ExportFrequency::EveryTick,
             event_name: "game_speed_snapshot",
@@ -111,6 +110,15 @@ fn main() {
             last_sent_tick: Default::default(),
         },
     };
+    let company_snapshots_emitter:SnapshotFieldEmitter<CompanySnapshot> = SnapshotFieldEmitter {
+        field: main_snapshot_state.company.clone(), // Clones the Arc<SnapshotField>, sharing the instance
+        config: SnapshotEmitterConfig {
+            frequency: ExportFrequency::EveryTick,
+            event_name: "company_snapshot",
+            last_sent_tick: Default::default(),
+        },
+    };
+    snapshot_registry.register(company_snapshots_emitter);
     snapshot_registry.register(game_speed_snapshots_emitter);
     snapshot_registry.register(person_snapshots_emitter);
 
@@ -158,6 +166,15 @@ fn main() {
                 let mut world = World::default();
                 let mut resources = Resources::default();
 
+                //default company.
+                world.push((
+                    PlayerControlled,
+                    Dirty,
+                    Company {
+                        name: "Logic Leap Solutions".to_string(),
+                        slogan: "The Next Jump in Software Innovation.".to_string(),
+                    },
+                ));
                 resources.insert(Arc::new(AppContext { app_handle }));
 
                 resources.insert(reset_request);
@@ -175,7 +192,6 @@ fn main() {
 
                 resources.insert(AssetBasePath(path));
                 resources.insert(used_portrait);
-
 
                 //registries
                 // resources.insert(Arc::new(PersonRegistry::new()));
@@ -246,6 +262,7 @@ fn main() {
                     Schedule::builder() //Integration loop, add systems that updates the gui app state in this loop. this loop might run slower than the main loop
                         .add_system(push_persons_to_integration_system())
                         .add_system(push_game_speed_snapshots_system())
+                        .add_system(push_company_to_integration_system())
                         .build();
                 let mut post_integration = Schedule::builder()
                     .add_system(run_snapshot_emitters_system())
@@ -341,4 +358,3 @@ fn main() {
         .run(tauri::generate_context!())
         .expect("error running tauri app");
 }
-

@@ -12,14 +12,28 @@ use std::collections::HashMap;
 use std::hash::Hash;
 use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
 use std::sync::Arc;
+use crate::sim::company::company::Company;
 
 /// this is tha main integration state
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct SnapshotState {
     pub tick: TickSnapshot,
-    pub game_speed: SnapshotField<GameSpeedSnapshot>,
+    pub game_speed: Arc<SnapshotField<GameSpeedSnapshot>>,
     pub persons: Arc<DashMap<u32, PersonSnapshot>>,
+    pub company: Arc<SnapshotField<CompanySnapshot>>
 }
+
+impl Default for SnapshotState {
+    fn default() -> Self {
+        Self {
+            tick: TickSnapshot::default(),
+            game_speed: Arc::new(SnapshotField::from(GameSpeedSnapshot::default())),
+            persons: Arc::new(DashMap::new()),
+            company: Arc::new(SnapshotField::from(CompanySnapshot::default())),
+        }
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct SnapshotField<T> {
     pub value: ArcSwap<Arc<T>>,
@@ -68,6 +82,35 @@ impl Clone for GameSpeedSnapshot {
             tick: self.tick.clone(),
             game_speed: AtomicU8::new(self.game_speed.load(Ordering::Relaxed)),
         }
+    }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
+pub struct CompanySnapshot {
+    pub name: String,
+    pub slogan: String,
+    
+}
+impl From<&Company> for CompanySnapshot {
+    fn from(company: &Company) -> Self {
+        Self{
+            name: company.name.clone(),
+            slogan: company.slogan.clone() ,
+        }
+    }
+}
+
+impl From<Company> for CompanySnapshot {
+    fn from(company: Company) -> Self {
+        Self{
+            name: company.name.clone(),
+            slogan: company.slogan.clone() ,
+        }
+    }
+}
+impl PartialEq<Company> for CompanySnapshot {
+    fn eq(&self, other: &Company) -> bool {
+        self.name == other.name && self.slogan == other.slogan
     }
 }
 #[derive(Debug, Default, Serialize, Deserialize)]
