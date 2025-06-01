@@ -288,6 +288,7 @@ pub fn spawn_person(
         gender: gender,
         name: generate_full_name(&gender, &asset_path).expect("Cannot generate full name"),
         person_id: id.clone(),
+        team: None,
     };
     let person_clone = person.clone();
     debug!("Created person {}", person.name);

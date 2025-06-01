@@ -7,11 +7,13 @@ use serde::Serialize;
 use std::hash::Hash;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use dashmap::mapref::one::Ref;
 use tauri::{AppHandle, Emitter};
-use tracing::{info, instrument};
+use tracing::{debug, info, instrument, trace};
+use tracing::field::debug;
 
 trait SnapshotEmitter {
-    fn maybe_emit(&self, tick: u64, app: &AppHandle) -> bool;
+    fn maybe_emit(&self, tick: u64, last_update_map:  &DashMap<&'static str, u64>, app: &AppHandle) -> bool;
 }
 #[derive(Debug, Default)]
 pub enum ExportFrequency {
@@ -44,9 +46,9 @@ impl SnapshotEmitRegistry {
     }
 
     #[instrument(skip_all, level = "debug")]
-    pub fn maybe_emit_all(&self, tick: u64, app: &AppHandle) {
+    pub fn maybe_emit_all(&self, tick: u64, last_update_map:  &DashMap<&'static str, u64>, app: &AppHandle) {
         for emitter in &self.emitters {
-            let _did_emit = emitter.maybe_emit(tick, app);
+            let _did_emit = emitter.maybe_emit(tick, last_update_map, app);
         }
     }
 }
@@ -56,9 +58,10 @@ pub fn run_snapshot_emitters(
     #[resource] registry: &SnapshotEmitRegistry,
     #[resource] app_context: &Arc<AppContext>,
     #[resource] tick_counter: &Arc<TickCounter>,
+    #[resource] data_last_update: &Arc< DashMap<&'static str, u64>>,
 ) {
     let current_tick = tick_counter.value(); // However you expose tick as u64
-    registry.maybe_emit_all(current_tick, &app_context.app_handle);
+    registry.maybe_emit_all(current_tick, &data_last_update, &app_context.app_handle);
 }
 
 #[derive(Debug, Default)]
@@ -68,13 +71,24 @@ pub struct SnapshotFieldEmitter<T> {
 }
 
 impl<T: Serialize + std::fmt::Debug> SnapshotEmitter for SnapshotFieldEmitter<T> {
-    fn maybe_emit(&self, tick: u64, app: &AppHandle) -> bool {
+    fn maybe_emit(&self, tick: u64, last_update_map:  &DashMap<&'static str, u64>, app: &AppHandle) -> bool {
         let should_emit = match self.config.frequency {
             ExportFrequency::EveryTick => true,
             ExportFrequency::EveryNTicks(n) => tick % n == 0,
             ExportFrequency::ManualOnly => false,
         };
-        if should_emit {
+        let mut last_update: u64 = 0;
+        let mut always_emit = false;
+        match last_update_map.get(self.config.event_name){
+            None => {
+                debug!("Last data update time not found. Assume data always needs update");
+                always_emit = true;
+            }
+            Some(cell) => { last_update = *cell.value()}
+        }
+        let  last_sent = self.config.last_sent_tick.load(Ordering::Relaxed);
+        trace!("Event name {}, always emit? {}. last update? {} ", self.config.event_name, always_emit, last_update);
+        if should_emit && ( always_emit || last_sent < last_update  ) {
             //&& self.config.last_sent_tick.load(Ordering::Relaxed) != tick {
             self.config.last_sent_tick.store(tick, Ordering::Relaxed);
             let data: &T = &*self.field.value.load();
@@ -99,14 +113,25 @@ where
     K: Eq + Hash + Clone,
     V: Serialize + Clone,
 {
-    fn maybe_emit(&self, tick: u64, app: &AppHandle) -> bool {
+    fn maybe_emit(&self, tick: u64, last_update_map:  &DashMap<&'static str, u64>, app: &AppHandle) -> bool {
         let should_emit = match self.config.frequency {
             ExportFrequency::EveryTick => true,
             ExportFrequency::EveryNTicks(n) => tick % n == 0,
             ExportFrequency::ManualOnly => false,
         };
+        let mut last_update: u64 = 0;
+        let mut always_emit = false;
+        match last_update_map.get(self.config.event_name){
+            None => {
+                debug!("Last data update time not found. Assume data always needs update");
+                always_emit = true;
+            }
+            Some(cell) => { last_update = *cell.value()}
+        }
 
-        if should_emit && self.config.last_sent_tick.load(Ordering::Relaxed) != tick {
+        let  last_sent = self.config.last_sent_tick.load(Ordering::Relaxed);
+        trace!("Event name {}, always emit? {}. last update? {}  map:{:?}", self.config.event_name, always_emit, last_update, last_update_map);
+        if should_emit  && ( always_emit || last_sent < last_update  )  && last_sent!= tick {
             self.config.last_sent_tick.store(tick, Ordering::Relaxed);
 
             let all: Vec<V> = self.map.iter().map(|entry| entry.value().clone()).collect();

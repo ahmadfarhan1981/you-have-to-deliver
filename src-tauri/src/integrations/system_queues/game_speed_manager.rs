@@ -18,9 +18,11 @@ use tauri::utils::assets::phf::Set;
 use tauri::State;
 use tracing::{debug, info, trace, warn};
 
+#[derive(Default)]
 pub enum GameSpeedManagerCommand {
     //Game speed settings related.
     SetGameSpeed(GameSpeed),
+    #[default]
     IncreaseGameSpeed,
     DecreaseGameSpeed,
     PauseGame,

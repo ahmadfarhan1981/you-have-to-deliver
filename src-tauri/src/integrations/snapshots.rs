@@ -13,6 +13,7 @@ use std::hash::Hash;
 use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
 use std::sync::Arc;
 use crate::sim::company::company::Company;
+use crate::sim::team::components::{Team, TeamId};
 
 /// this is tha main integration state
 #[derive(Debug)]
@@ -20,7 +21,9 @@ pub struct SnapshotState {
     pub tick: TickSnapshot,
     pub game_speed: Arc<SnapshotField<GameSpeedSnapshot>>,
     pub persons: Arc<DashMap<u32, PersonSnapshot>>,
-    pub company: Arc<SnapshotField<CompanySnapshot>>
+    pub company: Arc<SnapshotField<CompanySnapshot>>,
+    pub teams : Arc<DashMap<u32, TeamSnapshot>>,
+
 }
 
 impl Default for SnapshotState {
@@ -30,6 +33,7 @@ impl Default for SnapshotState {
             game_speed: Arc::new(SnapshotField::from(GameSpeedSnapshot::default())),
             persons: Arc::new(DashMap::new()),
             company: Arc::new(SnapshotField::from(CompanySnapshot::default())),
+            teams: Arc::new(DashMap::<u32, TeamSnapshot>::new()),
         }
     }
 }
@@ -413,5 +417,39 @@ impl PartialEq<PersonalityMatrix> for PersonalitySnapshot {
             && self.openness == other.openness
             && self.sociability == other.sociability
             && self.influence == other.influence
+    }
+}
+
+
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct TeamSnapshot {
+    pub id: u32,
+    pub name: String,
+    pub description: String,
+}
+
+impl From<&Team> for TeamSnapshot {
+    fn from(value: &Team) -> Self {
+        Self{
+            id: value.team_id.0,
+            name: value.name.clone(),
+            description: value.description.clone(),
+        }
+    }
+}
+impl From<Team> for TeamSnapshot {
+    fn from(value: Team) -> Self {
+        Self{
+            id: value.team_id.0,
+            name: value.name,
+            description: value.description,
+        }
+    }
+}
+
+
+impl PartialEq<Team> for TeamSnapshot {
+    fn eq(&self, other: &Team) -> bool {
+        self.id == other.team_id.0 && self.name == other.name && self.description == other.description
     }
 }

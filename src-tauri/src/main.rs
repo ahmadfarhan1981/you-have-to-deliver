@@ -18,14 +18,14 @@ use integrations::snapshots::CompanySnapshot;
 use legion::{Entity, Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
-use crate::integrations::systems::{push_company_to_integration_system, push_game_speed_snapshots_system, push_persons_to_integration_system};
-use crate::integrations::ui::{new_sim, resume_sim, start_sim, stop_sim, AppContext};
+use crate::integrations::systems::{push_company_to_integration_system, push_game_speed_snapshots_system, push_persons_to_integration_system, push_teams_to_integration_system};
+use crate::integrations::ui::{new_sim, new_team, resume_sim, start_sim, stop_sim, AppContext};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{PersonId, ProfilePicture};
 use crate::sim::person::init::{generate_employees_system, load_global_skills_system};
 use crate::sim::utils::logging::init_logging;
 use crossbeam::queue::SegQueue;
-use dashmap::DashSet;
+use dashmap::{DashMap, DashSet};
 use spin_sleep::SpinSleeper;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
@@ -60,6 +60,8 @@ use crate::sim::systems::banner::print_banner;
 use crate::sim::utils::sim_reset::ResetRequest;
 use crate::sim::utils::term::{bold, green, italic, red};
 use parking_lot::{Mutex, RwLock};
+use crate::integrations::system_queues::team_manager::handle_team_manager_queue_system;
+use crate::sim::team::components::TeamId;
 
 fn print_startup_banner() {
     print_banner();
@@ -110,6 +112,15 @@ fn main() {
             last_sent_tick: Default::default(),
         },
     };
+
+    let team_snapshots_emitter = SnapshotCollectionEmitter{
+        map: Arc::clone(&main_snapshot_state.teams),
+        config: SnapshotEmitterConfig {
+            frequency: ExportFrequency::EveryTick,
+            event_name: "teams_snapshot",
+            last_sent_tick: Default::default(),
+        },
+    };
     let company_snapshots_emitter:SnapshotFieldEmitter<CompanySnapshot> = SnapshotFieldEmitter {
         field: main_snapshot_state.company.clone(), // Clones the Arc<SnapshotField>, sharing the instance
         config: SnapshotEmitterConfig {
@@ -121,6 +132,7 @@ fn main() {
     snapshot_registry.register(company_snapshots_emitter);
     snapshot_registry.register(game_speed_snapshots_emitter);
     snapshot_registry.register(person_snapshots_emitter);
+    snapshot_registry.register(team_snapshots_emitter);
 
     let gsm = GameSpeedManager {
         game_speed: GameSpeed::Normal,
@@ -177,6 +189,9 @@ fn main() {
                 ));
                 resources.insert(Arc::new(AppContext { app_handle }));
 
+                let data_last_update_map: DashMap<&'static str, u64> = DashMap::new();
+                let data_last_update = Arc::new(data_last_update_map);
+                resources.insert(data_last_update);
                 resources.insert(reset_request);
                 resources.insert(Arc::clone(&sim_manager));
 
@@ -194,13 +209,16 @@ fn main() {
                 resources.insert(used_portrait);
 
                 //registries
-                // resources.insert(Arc::new(PersonRegistry::new()));
                 resources.insert(Arc::new(Registry::<PersonId, Entity>::with_name(
                     "Person registry",
                 )));
 
                 resources.insert(Arc::new(Registry::<SkillId, Entity>::with_name(
                     "Skill registry",
+                )));
+
+                resources.insert(Arc::new(Registry::<TeamId, Entity>::with_name(
+                    "Team registry",
                 )));
                 resources.insert(snapshot_registry);
                 resources.insert(Arc::<GlobalSkillNameMap>::new(GlobalSkillNameMap::default()));
@@ -248,6 +266,7 @@ fn main() {
                 /// processes the command that was dispatched from the dispatcher queues. uses different resource profiles
                 let mut subsystem_command_schedule = Schedule::builder()
                     .add_system(handle_game_speed_manager_queue_system())
+                    .add_system(handle_team_manager_queue_system())
                     .build();
 
                 // main sim
@@ -263,6 +282,7 @@ fn main() {
                         .add_system(push_persons_to_integration_system())
                         .add_system(push_game_speed_snapshots_system())
                         .add_system(push_company_to_integration_system())
+                        .add_system(push_teams_to_integration_system())
                         .build();
                 let mut post_integration = Schedule::builder()
                     .add_system(run_snapshot_emitters_system())
@@ -354,6 +374,7 @@ fn main() {
             stop_sim,
             resume_sim,
             new_sim,
+            new_team,
         ])
         .run(tauri::generate_context!())
         .expect("error running tauri app");

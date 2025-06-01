@@ -12,6 +12,7 @@
         personsSnapshotEventName
     } from "$lib/stores/persons";
     import {company, type CompanySnapshot, companySnapshotEventName} from "$lib/stores/company";
+    import {teamSnapshotEventName, teamSnapshots} from "$lib/stores/teams";
 
     onMount(() => {
         const unlisten = listen<GameSpeedSnapshot>(gameSpeedUpdateEventName, (event) => {
@@ -25,14 +26,21 @@
             basePersonArray.set(event.payload)
         });
         const company_unlisten = listen<CompanySnapshot>(companySnapshotEventName, (event)=>{
-            console.log(JSON.stringify(event.payload))
+
             company.set(event.payload)
         } );
+        const teams_unlisten = listen<CompanySnapshot>(teamSnapshotEventName, (event)=>{
+            console.log(JSON.stringify(event.payload))
+            teamSnapshots.set(event.payload)
+        } );
+
         return () => {
             // Make sure to unsubscribe when the component is destroyed
             unlisten.then(fn => fn());
             person_unlisten.then(fn=>fn());
             company_unlisten.then(fn=>fn())
+            teams_unlisten.then(fn=>fn())
+
         };
     });
 </script>

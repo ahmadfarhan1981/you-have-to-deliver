@@ -107,6 +107,9 @@
             <button
                     class="px-3 py-2 border-2" on:click={async () => await invoke('stop_sim')}
             >Stop</button>
+            <button
+                    class="px-3 py-2 border-2" on:click={async () => await invoke('new_team',{teamName:"new team name", description:"This is a team"})}
+            >New team</button>
           </div>
 
           <!-- Menu Options -->

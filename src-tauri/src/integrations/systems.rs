@@ -1,4 +1,4 @@
-use crate::integrations::snapshots::{AssignedSkillSnapshot, CompanySnapshot, PersonSnapshot, ProfilePictureSnapshot, SnapshotState, StatsSnapshot};
+use crate::integrations::snapshots::{AssignedSkillSnapshot, CompanySnapshot, PersonSnapshot, ProfilePictureSnapshot, SnapshotState, StatsSnapshot, TeamSnapshot};
 use crate::sim::game_speed::components::GameSpeedManager;
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
 use crate::sim::person::personality_matrix::PersonalityMatrix;
@@ -8,7 +8,7 @@ use crate::sim::person::stats::Stats;
 use crate::sim::registries::registry::GlobalSkillNameMap;
 use crate::sim::resources::global::{Dirty, TickCounter};
 use crate::sim::utils::snapshots::{replace_if_changed};
-use dashmap::Entry;
+use dashmap::{DashMap, Entry};
 use legion::systems::CommandBuffer;
 use legion::{system, Entity};
 use parking_lot::RwLock;
@@ -16,10 +16,11 @@ use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::sync::mpsc::channel;
 use arc_swap::ArcSwap;
-use tracing::info;
+use tracing::{debug, info};
 use tracing_subscriber::registry;
 use crate::integrations::snapshots_emitter::snapshots_emitter::{SnapshotEmitRegistry, SnapshotFieldEmitter};
 use crate::sim::company::company::{Company, PlayerControlled};
+use crate::sim::team::components::Team;
 use super::snapshots::SkillSetSnapshot;
 
 #[system]
@@ -60,7 +61,7 @@ pub fn push_company_to_integration(
     _dirty: &Dirty,
     cmd: &mut CommandBuffer,
 ) {
-    // Use this method as the reference implementaion for all push_x_to_integration methods
+    // Use this method as the reference implementation for all push_x_to_integration methods
 
     // 1. Load the current Arc<CompanySnapshot>. This is an Arc pointing to the snapshot data.
     let current_arc_snapshot = app_state.company.value.load_full();
@@ -141,6 +142,41 @@ pub fn push_persons_to_integration(
                 current_tick,
             ));
             vacant.insert(person);
+        }
+    };
+    cmd.remove_component::<Dirty>(*entity);
+}
+
+
+#[system(for_each)]
+pub fn push_teams_to_integration(
+    #[resource] tick_counter: &Arc<TickCounter>,
+    #[resource] app_state: &Arc<SnapshotState>,
+    #[resource] data_last_update: &Arc< DashMap<&'static str, u64>>,
+    entity: &Entity,
+    team: &Team,
+    _dirty: &Dirty,
+    cmd: &mut CommandBuffer,
+) {
+    let current_tick = tick_counter.value();
+    let team_snapshots = &app_state.teams;
+
+    info!("Team '{}' snapshot updated.", team.name);
+    match team_snapshots.entry(team.team_id.0) {
+        Entry::Occupied(mut existing) => {
+            let mut existing_team = existing.get_mut();
+            let mut changed = false;
+
+            changed |= replace_if_changed::<TeamSnapshot, Team>(&mut existing_team, (*team).clone());
+            if changed {
+                // existing_team.updated = current_tick;
+                data_last_update.insert("teams_snapshot", current_tick);
+            }
+        }
+        Entry::Vacant(vacant) => {
+            let team = TeamSnapshot::from(team);
+            vacant.insert(team);
+            data_last_update.insert("teams_snapshot", current_tick);
         }
     };
     cmd.remove_component::<Dirty>(*entity);
