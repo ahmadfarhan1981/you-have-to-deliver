@@ -2,7 +2,12 @@
     import {onMount} from 'svelte';
     import type {ECharts} from 'echarts';
     import * as echarts from 'echarts';
-    import {getGroupedStatSnapshot, type GroupedStatSnapshot, type StatsSnapshot} from "$lib/models/stats";
+    import {
+        getGroupedStatSnapshot,
+        type GroupedStatSnapshot, type StatDefinition, type StatGroupMetadata, type StatKey,
+        type StatsSnapshot,
+        type StatWithValue
+    } from "$lib/models/stats";
 
     export let statsSnapshot: StatsSnapshot;
     interface RadarIndicator {
@@ -18,6 +23,9 @@
         };
     }
 
+    let statRadarOrder: StatKey[];
+    statRadarOrder = [ "judgement", "systems", "focus", "empathy","resilience", "creativity","precision","discipline","communication", "adaptability" ].reverse();
+    //cognition, perception, drive, social defence
     interface TooltipParams {
         seriesName: string;
         dataIndex: number;
@@ -64,19 +72,30 @@
     }
 
     $:{
-        detailedRadarIndicators = groupedStats.flatMap(stat =>
-            stat.items.map(statDef => {
+        const stats = groupedStats.flatMap(stat =>
+            stat.items.map(statDef => (statDef)) );
+
+
+        detailedRadarIndicators =
+            statRadarOrder.map( def => {
+                const s =stats.find(s => s.key === def);
+
                 return {
-                    name: statDef.label,
-                    max: 100
+                    name: s.label,
+                    max: 100,
+                    color: '#ff0000'
                 }
             })
-        );
+            statRadarOrder.map(stat => {
+                return {
+                    name: stat,
+                    max: 100
+                }
+
+            });
         detailedChartData = [{
             name: 'Stat value',
-            value: groupedStats.flatMap(stat =>
-                stat.items.map(statDef => (statDef.value
-                ))),
+            value: statRadarOrder.map( def => stats.find(s => s.key === def).value),
             itemStyle: {
                 color: '#5470c6'
             }
@@ -177,7 +196,8 @@
                     opacity: 0.1
                 }
             }))
-        }]
+        }],
+        
     };
 
     // Function to toggle between views

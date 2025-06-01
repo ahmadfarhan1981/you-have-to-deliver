@@ -3,12 +3,14 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use crate::sim::team::components::TeamId;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Person {
     pub person_id: PersonId,
     pub name: String,
     pub gender: Gender,
+    pub team: Option<TeamId>
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq)]

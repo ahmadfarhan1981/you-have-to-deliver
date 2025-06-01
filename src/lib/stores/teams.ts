@@ -145,3 +145,13 @@ export const unassignedPersons = _unassignedPersons;
 export const teamManager = _teamManager;
 export const teamSizes = _teamSizes;
 
+
+
+export const teamSnapshotEventName ="teams_snapshot";
+export type TeamSnapshot= {
+    id: number,
+    name: string,
+    description: string
+}
+export const teamSnapshots = writable<TeamSnapshot[]>([
+]);

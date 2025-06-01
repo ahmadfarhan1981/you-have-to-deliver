@@ -9,6 +9,7 @@ use std::fmt;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tracing::{debug, info, trace, warn};
+use crate::integrations::system_queues::team_manager::TeamManagerCommand;
 
 #[derive(Debug, Default)]
 pub struct UICommandQueues {
@@ -19,6 +20,7 @@ pub struct UICommandQueues {
 pub enum SimCommand {
     GameSpeed(GameSpeedManagerCommand),
     SimManager(SimManagerCommand),
+    TeamManager(TeamManagerCommand),
 }
 
 impl fmt::Debug for SimCommand {
@@ -26,10 +28,13 @@ impl fmt::Debug for SimCommand {
         match self {
             SimCommand::GameSpeed(_) => write!(f, "SimCommand::GameSpeed(...)"),
             SimCommand::SimManager(_) => write!(f, "SimCommand::SimManager(...)"),
+            SimCommand::TeamManager(_) => write!(f, "SimCommand::TeamManager(...)"),
+
         }
     }
 }
 
+#[derive(Default)]
 pub struct SystemCommandQueue<T> {
     pub queue: SegQueue<T>,
 }
@@ -41,15 +46,22 @@ impl<T> SystemCommandQueue<T> {
     }
 }
 
+
 pub struct QueueManager {
     dispatch: ExposedQueue<SimCommand>, // dispatch queue is an arc because it will be shared by the integration to to the frontend.
     sim_manager_dispatch: ExposedQueue<SimManagerCommand>,
     pub sim_manager: SystemCommandQueue<SimManagerCommand>, // other queues are just a segqueue, will only ever access by the queue systems
     pub game_speed_manager: SystemCommandQueue<GameSpeedManagerCommand>,
     pub new_game_manager: SystemCommandQueue<SimManagerCommand>,
+    pub team_manager: SystemCommandQueue<TeamManagerCommand>,
 }
 
 impl QueueManager {
+
+    pub fn print_summary(&self) {
+        info!("{}", self.get_summary_string());
+    }
+
     pub fn new() -> Self {
         Self {
             dispatch: ExposedQueue::<SimCommand>::new(),
@@ -57,10 +69,8 @@ impl QueueManager {
             sim_manager: SystemCommandQueue::<SimManagerCommand>::new(),
             game_speed_manager: SystemCommandQueue::<GameSpeedManagerCommand>::new(),
             new_game_manager: SystemCommandQueue::<SimManagerCommand>::new(),
+            team_manager: SystemCommandQueue::<TeamManagerCommand>::new(),
         }
-    }
-    pub fn print_summary(&self) {
-        info!("{}", self.get_summary_string());
     }
 
     pub fn get_summary_string(&self) -> String {
@@ -85,10 +95,11 @@ impl QueueManager {
         while start.elapsed() < dispatch_time_limit {
             if let Some(command) = self.dispatch.queue.pop() {
                 count += 1;
-                trace!("Dispatch command: {:?}", command);
+                info!("Dispatch command: {:?}", command);
                 match command {
                     SimCommand::GameSpeed(cmd) => self.game_speed_manager.queue.push(cmd),
                     SimCommand::SimManager(cmd) => self.sim_manager.queue.push(cmd),
+                    SimCommand::TeamManager(cmd) => self.team_manager.queue.push(cmd)
                 }
             } else {
                 trace!("{} items dispatched", count);

@@ -10,6 +10,7 @@ use crate::integrations::system_queues::sim_manager::SimManagerCommand;
 use crate::sim::game_speed::components::GameSpeed;
 use tauri::{AppHandle, State};
 use tracing::info;
+use crate::integrations::system_queues::team_manager::TeamManagerCommand;
 
 #[derive(Clone)]
 pub struct AppContext {
@@ -32,4 +33,9 @@ pub fn resume_sim(queues: State<'_, Arc<UICommandQueues>>) {
 #[tauri::command]
 pub fn new_sim(queues: State<'_, Arc<UICommandQueues>>) {
     queues.control.push(SimManagerCommand::ResetSim)
+}
+
+#[tauri::command]
+pub fn new_team(team_name: String, description: String, queues: State<'_, Arc<UICommandQueues>>) {
+    queues.runtime.push(SimCommand::TeamManager(TeamManagerCommand::NewTeam {name:team_name, description }))
 }
