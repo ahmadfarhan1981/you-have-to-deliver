@@ -14,6 +14,7 @@ use tracing::field::debug;
 
 trait SnapshotEmitter {
     fn maybe_emit(&self, tick: u64, last_update_map:  &DashMap<&'static str, u64>, app: &AppHandle) -> bool;
+    fn emit(&self, tick: Option<u64>, app: &AppHandle);
 }
 #[derive(Debug, Default)]
 pub enum ExportFrequency {
@@ -51,11 +52,17 @@ impl SnapshotEmitRegistry {
             let _did_emit = emitter.maybe_emit(tick, last_update_map, app);
         }
     }
+    pub fn force_emit_all(&self, app: &AppHandle) {
+        for emitter in &self.emitters {
+            let _did_emit = emitter.emit(None, app);
+        }
+    }
+
 }
 
 #[system]
 pub fn run_snapshot_emitters(
-    #[resource] registry: &SnapshotEmitRegistry,
+    #[resource] registry: &Arc<SnapshotEmitRegistry>,
     #[resource] app_context: &Arc<AppContext>,
     #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] data_last_update: &Arc< DashMap<&'static str, u64>>,
@@ -89,13 +96,18 @@ impl<T: Serialize + std::fmt::Debug> SnapshotEmitter for SnapshotFieldEmitter<T>
         let  last_sent = self.config.last_sent_tick.load(Ordering::Relaxed);
         trace!("Event name {}, always emit? {}. last update? {} ", self.config.event_name, always_emit, last_update);
         if should_emit && ( always_emit || last_sent < last_update  ) {
-            //&& self.config.last_sent_tick.load(Ordering::Relaxed) != tick {
-            self.config.last_sent_tick.store(tick, Ordering::Relaxed);
-            let data: &T = &*self.field.value.load();
-            // info!("Snapshot field: {:?} {:?} {:?}", self.config.event_name, data,  &*self.field.value.load_full());
-            let _ = app.emit(self.config.event_name, data);
+            self.emit( Some(tick), app);
         }
         should_emit
+    }
+    fn emit(&self, tick: Option<u64>, app: &AppHandle) {
+        //&& self.config.last_sent_tick.load(Ordering::Relaxed) != tick {
+        if let Some(tick) = tick {
+            self.config.last_sent_tick.store(tick, Ordering::Relaxed);
+        }
+        let data: &T = &*self.field.value.load();
+        // info!("Snapshot field: {:?} {:?} {:?}", self.config.event_name, data,  &*self.field.value.load_full());
+        let _ = app.emit(self.config.event_name, data);
     }
 }
 
@@ -132,11 +144,16 @@ where
         let  last_sent = self.config.last_sent_tick.load(Ordering::Relaxed);
         trace!("Event name {}, always emit? {}. last update? {}  map:{:?}", self.config.event_name, always_emit, last_update, last_update_map);
         if should_emit  && ( always_emit || last_sent < last_update  )  && last_sent!= tick {
-            self.config.last_sent_tick.store(tick, Ordering::Relaxed);
-
-            let all: Vec<V> = self.map.iter().map(|entry| entry.value().clone()).collect();
-            let _ = app.emit(self.config.event_name, &all);
+           self.emit(Some(tick), app);
         }
         should_emit
+    }
+
+    fn emit(&self, tick: Option<u64>, app: &AppHandle) {
+        if let Some(tick) = tick {
+            self.config.last_sent_tick.store(tick, Ordering::Relaxed);
+        }
+        let all: Vec<V> = self.map.iter().map(|entry| entry.value().clone()).collect();
+        let _ = app.emit(self.config.event_name, &all);
     }
 }

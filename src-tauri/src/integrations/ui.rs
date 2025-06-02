@@ -10,6 +10,7 @@ use crate::integrations::system_queues::sim_manager::SimManagerCommand;
 use crate::sim::game_speed::components::GameSpeed;
 use tauri::{AppHandle, State};
 use tracing::info;
+use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotEmitRegistry;
 use crate::integrations::system_queues::team_manager::{TeamAssignmentCommand, TeamManagerCommand};
 
 #[derive(Clone)]
@@ -43,4 +44,9 @@ pub fn new_team(team_name: String, description: String, queues: State<'_, Arc<UI
 #[tauri::command]
 pub fn assign_person_to_team(team_id: u32, person_id: u32, queues: State<'_, Arc<UICommandQueues>>) {
     queues.runtime.push(SimCommand::TeamAssignment(TeamAssignmentCommand::AddPersonToTeam {person_id, team_id, }));
+}
+
+#[tauri::command]
+pub fn refresh_data(app: AppHandle, emit_registry: State<'_, SnapshotEmitRegistry>) {
+    emit_registry.force_emit_all(&app);
 }

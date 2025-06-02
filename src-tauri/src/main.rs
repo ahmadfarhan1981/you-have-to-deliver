@@ -164,6 +164,9 @@ fn main() {
     });
     let reset = Arc::clone(&reset_request);
 
+    let sim_snapshot_registry = Arc::new(snapshot_registry);
+    let ui_snapshot_registry = Arc::clone(&sim_snapshot_registry);
+
     // === Launch Tauri app ===
     tauri::Builder::default()
         .setup(|app| {
@@ -220,7 +223,9 @@ fn main() {
                 resources.insert(Arc::new(Registry::<TeamId, Entity>::with_name(
                     "Team registry",
                 )));
-                resources.insert(snapshot_registry);
+
+
+                resources.insert(sim_snapshot_registry);
                 resources.insert(Arc::<GlobalSkillNameMap>::new(GlobalSkillNameMap::default()));
 
                 // Startup schedule, runs once on startup. add run once systems here.
@@ -367,6 +372,7 @@ fn main() {
         .manage(ui_snapshot_state)
         .manage(ui_command_queues)
         .manage(ui_sim_manager)
+        .manage(ui_snapshot_registry)
         .invoke_handler(tauri::generate_handler![
             set_game_speed,
             increase_speed,
