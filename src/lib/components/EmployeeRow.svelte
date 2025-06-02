@@ -4,7 +4,7 @@
     import {tabState} from "$lib/stores/TabStore";
     import EmployeeRowStatBar from "$lib/components/EmployeeRowStatBar.svelte";
 
-    export let person: PersonSnapshotWithTotal;
+    export let person: PersonSnapshotWithTotal | undefined;
 
 
     // Compute group averages
