@@ -28,3 +28,15 @@ export const tabs = writable<Tab[]>([
 
 
 export const activeView = writable('Dashboard');
+
+
+//UI state
+export const teamExpandedState = writable<Record<number, boolean>>({});
+export function toggleTeamExpanded(teamId: number) {
+    teamExpandedState.update(state => ({
+        ...state,
+        [teamId]: !state[teamId]
+    }));
+}
+
+export const DEFAULT_TEAM_EXPANDED_STATE = true;

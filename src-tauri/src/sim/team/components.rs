@@ -1,6 +1,6 @@
 use dashmap::DashSet;
 use serde::{Deserialize, Serialize};
-use tracing::debug;
+use tracing::{debug, info};
 use crate::sim::person::components::{Person, PersonId};
 use crate::sim::utils::snapshots::convert_dashset_to_vec;
 
@@ -22,6 +22,7 @@ impl Team {
     ///
     pub fn add_person(&mut self, person: &mut Person) -> bool{
         person.team = Some(self.team_id.clone());
+        info!("Added person {} to team {:?}", person.name, person.team.unwrap());
         self.members.insert(person.person_id)
     }
 
@@ -50,7 +51,9 @@ impl Team {
     /// Clears the team assignment on the `Person` only if it was actually assigned to this `Team`
     pub fn remove_person(&mut self, person: &mut Person) {
         match self.members.remove(&person.person_id){
-            None => {debug!("Person {:?} wasn't assigned to team {:?}. Skipping...", person.person_id, self.team_id);}
+            None => {debug!("Person {:?} wasn't assigned to team {:?}. Unexpected but continuing...", person.person_id, self.team_id);
+                person.team = None
+            }
             Some(_) => {person.team = None}
         }
     }

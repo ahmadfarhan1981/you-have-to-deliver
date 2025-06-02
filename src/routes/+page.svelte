@@ -113,6 +113,9 @@
             <button
                     class="px-3 py-2 border-2" on:click={async () => await invoke('assign_person_to_team',{teamId:1, personId:1})}
             >add</button>
+            <button
+                    class="px-3 py-2 border-2" on:click={async () => await invoke('refresh_data')}
+            >refresh</button>
 
           </div>
 

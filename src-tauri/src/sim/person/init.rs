@@ -32,22 +32,22 @@ pub fn generate_employees(
 
 
 
-    let per_grade = [
-        (Basic, 6),
-        (Apt, 8),
-        (Sharp, 3),
-        (Gifted, 2),
-        (Brilliant, 1),
-        (Exceptional, 0),
-    ];
     // let per_grade = [
-    //     (Basic, 0),
-    //     (Apt, 20),
-    //     (Sharp, 20),
-    //     (Gifted, 0),
-    //     (Brilliant, 0),
+    //     (Basic, 6),
+    //     (Apt, 8),
+    //     (Sharp, 3),
+    //     (Gifted, 2),
+    //     (Brilliant, 1),
     //     (Exceptional, 0),
     // ];
+    let per_grade = [
+        (Basic, 0),
+        (Apt, 0),
+        (Sharp, 2),
+        (Gifted, 0),
+        (Brilliant, 0),
+        (Exceptional, 0),
+    ];
     let mut q2 = <&GlobalSkill>::query().filter(component::<TierFoundational>());//.filter(component::<DomainCoordination>());
     let global_skills = q2.iter(world).cloned().collect::<Vec<_>>();
     for (grade, count) in per_grade {

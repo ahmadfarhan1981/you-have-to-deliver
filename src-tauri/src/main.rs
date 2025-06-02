@@ -19,7 +19,7 @@ use legion::{Entity, Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
 use crate::integrations::systems::{push_company_to_integration_system, push_game_speed_snapshots_system, push_persons_to_integration_system, push_teams_to_integration_system};
-use crate::integrations::ui::{assign_person_to_team, new_sim, new_team, resume_sim, start_sim, stop_sim, AppContext};
+use crate::integrations::ui::{assign_person_to_team, new_sim, new_team, refresh_data, resume_sim, start_sim, stop_sim, unassign_team, AppContext};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{PersonId, ProfilePicture};
 use crate::sim::person::init::{generate_employees_system, load_global_skills_system};
@@ -382,7 +382,9 @@ fn main() {
             resume_sim,
             new_sim,
             new_team,
-            assign_person_to_team
+            assign_person_to_team,
+            unassign_team,
+            refresh_data
         ])
         .run(tauri::generate_context!())
         .expect("error running tauri app");

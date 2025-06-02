@@ -123,6 +123,10 @@ pub fn push_persons_to_integration(
                 changed = true;
                 existing_person.gender = person.gender.to_string();
             }
+            if existing_person.team != person.team.map(|id| id.0) {
+                changed = true;
+                existing_person.team = person.team.map(|id| id.0)
+            }
 
 
             changed |= replace_if_changed(&mut existing_person.stats, *stats);

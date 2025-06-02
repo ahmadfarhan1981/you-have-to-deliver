@@ -47,6 +47,13 @@ pub fn assign_person_to_team(team_id: u32, person_id: u32, queues: State<'_, Arc
 }
 
 #[tauri::command]
-pub fn refresh_data(app: AppHandle, emit_registry: State<'_, SnapshotEmitRegistry>) {
+pub fn unassign_team( person_id: u32, queues: State<'_, Arc<UICommandQueues>>) {
+    queues.runtime.push(SimCommand::TeamAssignment(TeamAssignmentCommand::UnassignTeam {person_id, }));
+}
+
+
+#[tauri::command]
+pub fn refresh_data(app: AppHandle, emit_registry: State<'_, Arc<SnapshotEmitRegistry>>) {
+    info!("Force refresh data called.");
     emit_registry.force_emit_all(&app);
 }

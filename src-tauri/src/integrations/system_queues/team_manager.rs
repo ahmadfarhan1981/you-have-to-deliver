@@ -39,9 +39,8 @@ pub enum TeamAssignmentCommand{
         person_id: u32,
         team_id: u32,
     },
-    RemovePersonFromTeam {
+    UnassignTeam {
         person_id: u32,
-        team_id: u32,
     },
 }
 
@@ -117,7 +116,7 @@ pub fn handle_team_assignment_queue(
 
     timed_dispatch(queue, dispatch_time_limit, |cmd| match cmd {
         TeamAssignmentCommand::AddPersonToTeam { person_id, team_id } => {
-            info!("Adding new person {}", team_id);
+            info!("Adding person {} to team {}", person_id, team_id);
 
             let (mut team_world, mut person_world) =  world.split::<&mut Team>();
 
@@ -177,7 +176,51 @@ pub fn handle_team_assignment_queue(
             }
         }
 
-        TeamAssignmentCommand::RemovePersonFromTeam { person_id, team_id } => {}
+        TeamAssignmentCommand::UnassignTeam { person_id} => {
+            info!("Unassigning  {} from their assigned team", person_id);
+
+            let (mut team_world, mut person_world) =  world.split::<&mut Team>();
+
+            let person_entity = match person_registry.get_entity_from_id(&PersonId(person_id)) {
+                Some(entity) => entity,
+                None => {
+                    warn!(
+                        "Can't find person entity with ID:{:?} when removing from team. Skipping...",
+                        person_id
+                    );
+                    return;
+                }
+            };
+
+            let mut person = match <&mut Person>::query().get_mut(&mut person_world, person_entity) {
+                Ok(person) => person,
+                Err(_) => {
+                    warn!(
+                        "Can't find person component with ID:{:?} when removing from team. Skipping...",
+                        person_id
+                    );
+                    return; // Early exit if person component not found
+                }
+            };
+
+
+            // If the person was on an old team, remove them from it first.
+            if let Some(old_team) = person.team {
+                trace!("Found existing team. Removing...");// no need to check, we're just unassigning
+                if let Some(team_entity) = team_registry.get_entity_from_id(&old_team) {
+                    if let Ok(mut team_component) = <&mut Team>::query().get_mut(&mut team_world, team_entity) {
+                        team_component.remove_person(person);
+                        commands.add_component(team_entity, Dirty);
+                        commands.add_component(person_entity, Dirty);
+
+                    } else {
+                        warn!("Can't find existing team component while trying to remove old team. Skipping...");
+                    }
+                } else {
+                    warn!("Can't find existing team while trying to remove old team.. Skipping...");
+                }
+            }
+        }
 
 
     })
