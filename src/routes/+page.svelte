@@ -110,6 +110,10 @@
             <button
                     class="px-3 py-2 border-2" on:click={async () => await invoke('new_team',{teamName:"new team name", description:"This is a team"})}
             >New team</button>
+            <button
+                    class="px-3 py-2 border-2" on:click={async () => await invoke('assign_person_to_team',{teamId:1, personId:1})}
+            >add</button>
+
           </div>
 
           <!-- Menu Options -->

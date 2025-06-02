@@ -169,11 +169,13 @@ pub fn push_teams_to_integration(
 
             changed |= replace_if_changed::<TeamSnapshot, Team>(&mut existing_team, (*team).clone());
             if changed {
+                info!("Existing team '{}' snapshot changed. Updating..", team.name);
                 // existing_team.updated = current_tick;
                 data_last_update.insert("teams_snapshot", current_tick);
             }
         }
         Entry::Vacant(vacant) => {
+            info!("New teamL {}. Updating..", team.name);
             let team = TeamSnapshot::from(team);
             vacant.insert(team);
             data_last_update.insert("teams_snapshot", current_tick);

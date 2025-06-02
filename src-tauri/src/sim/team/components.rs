@@ -2,6 +2,7 @@ use dashmap::DashSet;
 use serde::{Deserialize, Serialize};
 use tracing::debug;
 use crate::sim::person::components::{Person, PersonId};
+use crate::sim::utils::snapshots::convert_dashset_to_vec;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, Eq, PartialEq, Hash, Copy)]
 pub struct TeamId(pub u32);
@@ -11,11 +12,14 @@ pub struct Team{
     pub team_id: TeamId,
     pub name: String,
     pub description: String,
-    #[serde(skip)]//TODO manager recreating it after loading save
+    #[serde(skip)]//TODO manager recreating it after load/save
     members: DashSet<PersonId>
 }
 impl Team {
     /// Adds the Person to the team. Returns true if the Person was not already in the team.
+    /// **NOTE** This does not remove the `Person` from their original `Team` if they are assigned somewhere else.
+    /// Take care to manage state to ensure consistentcy.
+    ///
     pub fn add_person(&mut self, person: &mut Person) -> bool{
         person.team = Some(self.team_id.clone());
         self.members.insert(person.person_id)
@@ -59,5 +63,11 @@ impl Team {
     /// Checks if a provided Person is is the team
     pub fn is_member_by_person(&self, person: &Person) -> bool {
         self.members.contains(&person.person_id)
+    }
+
+    pub fn get_members_vec(&self) -> Vec<u32> {
+        let mut vec = self.members.iter().map(|id| id.0).collect::<Vec<u32>>();
+        vec.sort_unstable();
+        vec
     }
 }

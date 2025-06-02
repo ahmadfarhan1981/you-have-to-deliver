@@ -1,6 +1,7 @@
 <script lang="ts">
 
-    import {unassignedSort} from "$lib/stores/teams";
+    import {type TeamSnapshot, unassignedSort} from "$lib/stores/teams";
+    export let team:TeamSnapshot;
 
 
     function toggleDirection() {

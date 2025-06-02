@@ -192,7 +192,9 @@
       <workItem from="1748669291482" duration="7695000" />
       <workItem from="1748680908578" duration="6913000" />
       <workItem from="1748698903722" duration="2889000" />
-      <workItem from="1748750072039" duration="26296000" />
+      <workItem from="1748750072039" duration="26946000" />
+      <workItem from="1748796488307" duration="5445000" />
+      <workItem from="1748822739292" duration="18308000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />
@@ -328,13 +330,11 @@
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/lib/components/StatsEchart.svelte</url>
           <line>154</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="6" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/lib/components/StatsEchart.svelte</url>
           <line>184</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="7" />
         </line-breakpoint>
       </breakpoints>

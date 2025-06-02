@@ -19,7 +19,7 @@ use legion::{Entity, Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
 use crate::integrations::systems::{push_company_to_integration_system, push_game_speed_snapshots_system, push_persons_to_integration_system, push_teams_to_integration_system};
-use crate::integrations::ui::{new_sim, new_team, resume_sim, start_sim, stop_sim, AppContext};
+use crate::integrations::ui::{assign_person_to_team, new_sim, new_team, resume_sim, start_sim, stop_sim, AppContext};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{PersonId, ProfilePicture};
 use crate::sim::person::init::{generate_employees_system, load_global_skills_system};
@@ -60,7 +60,7 @@ use crate::sim::systems::banner::print_banner;
 use crate::sim::utils::sim_reset::ResetRequest;
 use crate::sim::utils::term::{bold, green, italic, red};
 use parking_lot::{Mutex, RwLock};
-use crate::integrations::system_queues::team_manager::handle_team_manager_queue_system;
+use crate::integrations::system_queues::team_manager::{handle_team_assignment_queue_system, handle_team_manager_queue_system};
 use crate::sim::team::components::TeamId;
 
 fn print_startup_banner() {
@@ -267,6 +267,7 @@ fn main() {
                 let mut subsystem_command_schedule = Schedule::builder()
                     .add_system(handle_game_speed_manager_queue_system())
                     .add_system(handle_team_manager_queue_system())
+                    .add_system(handle_team_assignment_queue_system())
                     .build();
 
                 // main sim
@@ -375,6 +376,7 @@ fn main() {
             resume_sim,
             new_sim,
             new_team,
+            assign_person_to_team
         ])
         .run(tauri::generate_context!())
         .expect("error running tauri app");

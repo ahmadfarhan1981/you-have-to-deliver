@@ -237,6 +237,7 @@ pub struct PersonSnapshot {
     pub(crate) gender: String,
     pub(crate) personality: PersonalitySnapshot,
     pub(crate) assigned_skill: SkillSetSnapshot,
+    pub team: Option<u32>,
     /// The tick number this snapshot was last updated
     pub updated: u64,
 }
@@ -261,14 +262,15 @@ impl
         ),
     ) -> Self {
         Self {
-            stats: StatsSnapshot::from(stats),
-            profile_picture: ProfilePictureSnapshot::from(picture),
             person_id: person.person_id.0,
             name: person.name,
             gender: person.gender.to_string(),
+            stats: StatsSnapshot::from(stats),
+            profile_picture: ProfilePictureSnapshot::from(picture),
             personality: PersonalitySnapshot::from(personality),
             assigned_skill: SkillSetSnapshot::from_sim(skillset.0, skillset.1),
             updated: current_tick,
+            team: person.team.map(|id| id.0),
         }
     }
 }
@@ -426,6 +428,7 @@ pub struct TeamSnapshot {
     pub id: u32,
     pub name: String,
     pub description: String,
+    pub members: Vec<u32>,
 }
 
 impl From<&Team> for TeamSnapshot {
@@ -434,15 +437,18 @@ impl From<&Team> for TeamSnapshot {
             id: value.team_id.0,
             name: value.name.clone(),
             description: value.description.clone(),
+            members: value.get_members_vec()
         }
     }
 }
 impl From<Team> for TeamSnapshot {
     fn from(value: Team) -> Self {
+        let members = value.get_members_vec();
         Self{
             id: value.team_id.0,
             name: value.name,
             description: value.description,
+            members
         }
     }
 }
@@ -450,6 +456,9 @@ impl From<Team> for TeamSnapshot {
 
 impl PartialEq<Team> for TeamSnapshot {
     fn eq(&self, other: &Team) -> bool {
-        self.id == other.team_id.0 && self.name == other.name && self.description == other.description
+        self.id == other.team_id.0
+            && self.name == other.name
+            && self.description == other.description
+            && self.members == other.get_members_vec()
     }
 }
