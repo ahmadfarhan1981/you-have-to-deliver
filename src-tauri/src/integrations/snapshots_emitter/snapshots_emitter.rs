@@ -101,6 +101,7 @@ impl<T: Serialize + std::fmt::Debug> SnapshotEmitter for SnapshotFieldEmitter<T>
         should_emit
     }
     fn emit(&self, tick: Option<u64>, app: &AppHandle) {
+        trace!("Event name {} emitting..", self.config.event_name );
         //&& self.config.last_sent_tick.load(Ordering::Relaxed) != tick {
         if let Some(tick) = tick {
             self.config.last_sent_tick.store(tick, Ordering::Relaxed);
@@ -135,7 +136,7 @@ where
         let mut always_emit = false;
         match last_update_map.get(self.config.event_name){
             None => {
-                debug!("Last data update time not found. Assume data always needs update");
+                debug!("{} Last data update time not found. Assume data always needs update", self.config.event_name );
                 always_emit = true;
             }
             Some(cell) => { last_update = *cell.value()}
@@ -150,6 +151,7 @@ where
     }
 
     fn emit(&self, tick: Option<u64>, app: &AppHandle) {
+        trace!("Event name {} emitting..", self.config.event_name );
         if let Some(tick) = tick {
             self.config.last_sent_tick.store(tick, Ordering::Relaxed);
         }

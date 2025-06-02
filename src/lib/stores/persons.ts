@@ -5,6 +5,7 @@ import {derived, type Readable, writable} from "svelte/store";
 import type {StatsSnapshot} from "$lib/models/stats";
 import type {PersonalitySnapshot} from "$lib/models/personality";
 import type {ProfilePictureSnapshot, SkillSetSnapshot} from "$lib/models/skill";
+import {invoke} from "@tauri-apps/api/core";
 
 export type AssignedSkillSnapshot = {
     skill_id: string;
@@ -25,7 +26,7 @@ export type PersonSnapshot = {
 };
 
 export type PersonSnapshotWithTotal = PersonSnapshot & {
-    total_points : number
+    total_points : number,
 };
 
 // Exposed array for easy iteration
@@ -50,4 +51,15 @@ export const persons = derived(personArray, ($array) => {
 });
 export const personsSnapshotEventName = "persons_snapshot";
 
+
+export function assignPersonToTeam(personId:number, teamId:number ){
+    console.log(personId, teamId)
+    if(teamId === -1 ){
+        invoke("unassign_team", {personId});
+
+    }else{
+        invoke("assign_person_to_team", {personId, teamId});
+    }
+
+}
 

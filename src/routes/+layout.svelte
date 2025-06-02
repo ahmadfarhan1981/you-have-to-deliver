@@ -12,7 +12,8 @@
         personsSnapshotEventName
     } from "$lib/stores/persons";
     import {company, type CompanySnapshot, companySnapshotEventName} from "$lib/stores/company";
-    import {teamSnapshotEventName, teamSnapshots} from "$lib/stores/teams";
+    import {type TeamSnapshot, teamSnapshotEventName, teamSnapshots} from "$lib/stores/teams";
+    import {invoke} from "@tauri-apps/api/core";
 
     onMount(() => {
         const unlisten = listen<GameSpeedSnapshot>(gameSpeedUpdateEventName, (event) => {
@@ -29,7 +30,7 @@
 
             company.set(event.payload)
         } );
-        const teams_unlisten = listen<CompanySnapshot>(teamSnapshotEventName, (event)=>{
+        const teams_unlisten = listen<TeamSnapshot[]>(teamSnapshotEventName, (event)=>{
             console.log(JSON.stringify(event.payload))
             teamSnapshots.set(event.payload)
         } );
@@ -43,5 +44,7 @@
 
         };
     });
+
+
 </script>
 {@render children()}

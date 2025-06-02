@@ -1,5 +1,5 @@
-import { writable, derived, get } from "svelte/store";
-import { personArray } from "./persons";
+import {writable, derived, get, type Readable} from "svelte/store";
+import {personArray, type PersonSnapshotWithTotal} from "./persons";
 import type { PersonSnapshot } from "./persons";
 
 export type Team = {
@@ -153,15 +153,39 @@ export type TeamSnapshot= {
     name: string,
     description: string,
     members: Number[],
+
 }
 export const teamSnapshots = writable<TeamSnapshot[]>([
 ]);
 
-export const teamSnapshotsWithPeople = derived(
+export type TeamWithPeople = {
+    id: number;
+    name: string;
+    description: string;
+    members: PersonSnapshotWithTotal[];
+
+};
+export const teamSnapshotsWithPeople: Readable<TeamWithPeople[]> = derived(
     [teamSnapshots, personArray],
-    ([$teams, $people]) =>
-        $teams.map(team => ({
+    ([$teams, $people]) => {
+        const teamsWithPeople = $teams.map(team => ({
             ...team,
-            members: team.members.map(id => $people.find(p => p.person_id === id)).filter(Boolean)
-        }))
+            members: team.members
+                .map(id => $people.find(p => p.person_id === id)!)
+                .filter(Boolean)
+        }));
+
+        const unassignedPeople = $people.filter(p => p.team === null);
+
+        const unassignedTeam = {
+            id: -1, // use a negative or sentinel value to avoid collision
+            name: "Unassigned",
+            description: "People not currently assigned to any team",
+            members: unassignedPeople
+        };
+
+        return [...teamsWithPeople, unassignedTeam];
+    }
 );
+
+
