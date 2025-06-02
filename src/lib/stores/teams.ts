@@ -151,7 +151,17 @@ export const teamSnapshotEventName ="teams_snapshot";
 export type TeamSnapshot= {
     id: number,
     name: string,
-    description: string
+    description: string,
+    members: Number[],
 }
 export const teamSnapshots = writable<TeamSnapshot[]>([
 ]);
+
+export const teamSnapshotsWithPeople = derived(
+    [teamSnapshots, personArray],
+    ([$teams, $people]) =>
+        $teams.map(team => ({
+            ...team,
+            members: team.members.map(id => $people.find(p => p.person_id === id)).filter(Boolean)
+        }))
+);

@@ -21,6 +21,7 @@ export type PersonSnapshot = {
     gender: string;
     assigned_skill: SkillSetSnapshot;
     updated: number;
+    team: number | null;
 };
 
 export type PersonSnapshotWithTotal = PersonSnapshot & {
