@@ -1,14 +1,20 @@
 use dashmap::DashSet;
 
 /// Replaces `target` with `new` if they are not equal. Returns `true` if changed.
-pub fn replace_if_changed<T: PartialEq<N> + From<N>, N>(target: &mut T, new: N) -> bool {
-    if *target != new {
+// Now using a lifetime 'a because N is borrowed
+pub fn replace_if_changed<'a, T, N>(target: &mut T, new: &'a N) -> bool
+where
+    T: PartialEq<&'a N>, // T can be compared with a reference to N
+    T: From<&'a N>,      // T can be constructed from a reference to N
+{
+    if *target != new { // `new` is already a reference, so no `&` needed here
         *target = T::from(new);
         true
     } else {
         false
     }
 }
+
 
 // /// Replaces `target` with `new` if they are not equal. Returns `true` if changed.
 // pub fn replace_if_changed_ref<T: PartialEq + Clone>(target: &mut T, new: &T) -> bool {

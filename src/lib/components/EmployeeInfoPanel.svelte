@@ -8,9 +8,9 @@
             <h4 class="font-bold mb-2 text-slate-700">Contact Information</h4>
             <div class="space-y-2 text-sm">
                 <p><span
-                        class="text-slate-500">Email:</span>{person.name} {"person.details?.email" || 'N/A'}
+                        class="text-slate-500">Name:</span>{person.name}
                 </p>
-                <p><span class="text-slate-500">Phone:</span> {"person.details?.phone" || 'N/A'}
+                <p><span class="text-slate-500">Talent:</span> {person.talent_grade}
                 </p>
                 <p><span
                         class="text-slate-500">Hire Date:</span> {"person.details?.hireDate" || 'N/A'}

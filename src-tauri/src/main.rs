@@ -9,7 +9,6 @@ mod integrations;
 mod macros;
 mod master_data;
 mod sim;
-mod testing_main;
 
 use crate::sim::resources::global::{AssetBasePath, Dirty, SimManager, TickCounter};
 use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRegistry};

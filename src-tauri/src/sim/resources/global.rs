@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU16, AtomicU64, AtomicU8, Ordering};
+use crate::sim::sim_date::sim_date::SimDate;
 
 #[derive(Default)]
 pub struct TickCounter {
@@ -73,13 +74,7 @@ impl std::fmt::Debug for TickCounter {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
-pub struct SimDate {
-    pub year: u16,
-    pub week: u8,
-    pub day: u8,
-    pub quarter_tick: u8,
-}
+
 
 #[derive(Debug, Default)]
 pub struct AssetBasePath(pub PathBuf);
