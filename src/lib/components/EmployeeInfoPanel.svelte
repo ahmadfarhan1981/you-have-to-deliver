@@ -1,4 +1,7 @@
 <script>
+    import {simDateFromTick, simDateToRelativeString, simDateToString} from "$lib/stores/simDate.js";
+    import {gameSpeed} from "$lib/stores/gameSpeed.js";
+
     export let person;
 </script>
 <div class="border border-slate-200 rounded-lg p-6 bg-white shadow-sm mb-6">
@@ -13,7 +16,7 @@
                 <p><span class="text-slate-500">Talent:</span> {person.talent_grade}
                 </p>
                 <p><span
-                        class="text-slate-500">Hire Date:</span> {"person.details?.hireDate" || 'N/A'}
+                        class="text-slate-500">Hire Date:</span>{simDateToRelativeString(simDateFromTick($gameSpeed.tick.tick), person.joined_gamedate)} ({simDateToString(person.joined_gamedate)})
                 </p>
                 <p><span
                         class="text-slate-500">Salary:</span> {"person.details?.salary" || 'N/A'}

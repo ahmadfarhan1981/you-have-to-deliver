@@ -6,6 +6,7 @@ import type {StatsSnapshot} from "$lib/models/stats";
 import type {PersonalitySnapshot} from "$lib/models/personality";
 import type {ProfilePictureSnapshot, SkillSetSnapshot} from "$lib/models/skill";
 import {invoke} from "@tauri-apps/api/core";
+import type {SimDate} from "$lib/stores/simDate";
 
 export type AssignedSkillSnapshot = {
     skill_id: string;
@@ -24,6 +25,8 @@ export type PersonSnapshot = {
     assigned_skill: SkillSetSnapshot;
     updated: number;
     team: number | null;
+    joined_tick: number;
+    joined_gamedate: SimDate;
 };
 export type TalentGrade =
     | "Basic"
