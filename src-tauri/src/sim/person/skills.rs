@@ -156,6 +156,7 @@ pub struct AssignedSkill {
     value: u32,
 }
 
+#[derive(Debug, Clone, Default)]
 pub struct SkillSet {
     pub(crate) skills: HashMap<SkillId, u32>,
 }

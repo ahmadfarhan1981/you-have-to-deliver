@@ -75,7 +75,7 @@ pub fn push_company_to_integration(
     //    - `company.clone()`: creates an owned `Company` instance from the `&Company` reference.
     //      This is necessary because `replace_if_changed` takes its `new_source_value` by value.
     //      `CompanySnapshot` has `From<Company>`.
-    let changed = replace_if_changed::<CompanySnapshot, Company>(&mut mutable_snapshot_data, company.clone());
+    let changed = replace_if_changed::<CompanySnapshot, Company>(&mut mutable_snapshot_data, &company);
 
     if changed {
         // If `changed` is true, `mutable_snapshot_data` now holds the new, updated snapshot.
@@ -129,19 +129,19 @@ pub fn push_persons_to_integration(
             }
 
 
-            changed |= replace_if_changed(&mut existing_person.stats, *stats);
-            changed |= replace_if_changed(&mut existing_person.profile_picture, *profile_picture);
-            changed |= replace_if_changed(&mut existing_person.assigned_skill, skillset_snapshot);
+            changed |= replace_if_changed(&mut existing_person.stats, stats);
+            changed |= replace_if_changed(&mut existing_person.profile_picture, profile_picture);
+            changed |= replace_if_changed(&mut existing_person.assigned_skill, &skillset_snapshot);
             if changed {
                 existing_person.updated = current_tick;
             }
         }
         Entry::Vacant(vacant) => {
             let person = PersonSnapshot::from((
-                person.clone(),
-                profile_picture.clone(),
-                stats.clone(),
-                personality.clone(),
+                person,
+                profile_picture,
+                stats,
+                personality,
                 (skill_set, &**global_skill_name_map),
                 current_tick,
             ));
@@ -171,7 +171,7 @@ pub fn push_teams_to_integration(
             let mut existing_team = existing.get_mut();
             let mut changed = false;
 
-            changed |= replace_if_changed::<TeamSnapshot, Team>(&mut existing_team, (*team).clone());
+            changed |= replace_if_changed::<TeamSnapshot, Team>(&mut existing_team, team);
             if changed {
                 info!("Existing team '{}' snapshot changed. Updating..", team.name);
                 // existing_team.updated = current_tick;

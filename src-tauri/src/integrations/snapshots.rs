@@ -3,7 +3,7 @@ use crate::sim::person::personality_matrix::{PersonalityAxis, PersonalityMatrix}
 use crate::sim::person::skills::{AssignedSkill, GlobalSkill, SkillId, SkillSet};
 use crate::sim::person::stats::{StatType, Stats};
 use crate::sim::registries::registry::GlobalSkillNameMap;
-use crate::sim::resources::global::{SimDate, TickCounter};
+use crate::sim::resources::global::TickCounter;
 use arc_swap::ArcSwap;
 use dashmap::DashMap;
 use serde::{Deserialize, Serialize};
@@ -13,6 +13,8 @@ use std::hash::Hash;
 use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
 use std::sync::Arc;
 use crate::sim::company::company::Company;
+use crate::sim::person::spawner::TalentGrade;
+use crate::sim::sim_date::sim_date::SimDate;
 use crate::sim::team::components::{Team, TeamId};
 
 /// this is tha main integration state
@@ -112,8 +114,8 @@ impl From<Company> for CompanySnapshot {
         }
     }
 }
-impl PartialEq<Company> for CompanySnapshot {
-    fn eq(&self, other: &Company) -> bool {
+impl PartialEq<&Company> for CompanySnapshot {
+    fn eq(&self, other: &&Company) -> bool {
         self.name == other.name && self.slogan == other.slogan
     }
 }
@@ -199,7 +201,18 @@ pub struct AssignedSkillSnapshot {
 pub struct SkillSetSnapshot {
     pub assigned_skills: Vec<AssignedSkillSnapshot>,
 }
-
+impl From<&SkillSetSnapshot> for SkillSetSnapshot {
+    fn from(value: &SkillSetSnapshot) -> Self {
+        Self{
+            assigned_skills: value.assigned_skills.iter().map(|snapshot| snapshot.clone()).collect(),
+        }
+    }
+}
+impl PartialEq<&SkillSetSnapshot> for SkillSetSnapshot {
+    fn eq(&self, other: &&SkillSetSnapshot) -> bool {
+        self.assigned_skills == other.assigned_skills
+    }
+}
 impl SkillSetSnapshot {
     pub fn from_sim(skillset: &SkillSet, name_lookup: &GlobalSkillNameMap) -> Self {
         let skill_list = skillset.skills.iter().collect::<Vec<_>>();
@@ -237,40 +250,46 @@ pub struct PersonSnapshot {
     pub(crate) gender: String,
     pub(crate) personality: PersonalitySnapshot,
     pub(crate) assigned_skill: SkillSetSnapshot,
+    pub talent_grade: TalentGrade,
     pub team: Option<u32>,
     /// The tick number this snapshot was last updated
     pub updated: u64,
+    pub joined_tick: u64,
+    pub joined_gamedate: SimDate,
 }
 impl
     From<(
-        Person,
-        ProfilePicture,
-        Stats,
-        PersonalityMatrix,
+        &Person,
+        &ProfilePicture,
+        &Stats,
+        &PersonalityMatrix,
         (&SkillSet, &GlobalSkillNameMap),
-        u64,
+        u64
     )> for PersonSnapshot
 {
     fn from(
         (person, picture, stats, personality, skillset, current_tick): (
-            Person,
-            ProfilePicture,
-            Stats,
-            PersonalityMatrix,
+            &Person,
+            &ProfilePicture,
+            &Stats,
+            &PersonalityMatrix,
             (&SkillSet, &GlobalSkillNameMap),
-            u64,
+            u64
         ),
     ) -> Self {
         Self {
             person_id: person.person_id.0,
-            name: person.name,
+            name: person.name.clone(),
             gender: person.gender.to_string(),
             stats: StatsSnapshot::from(stats),
             profile_picture: ProfilePictureSnapshot::from(picture),
             personality: PersonalitySnapshot::from(personality),
             assigned_skill: SkillSetSnapshot::from_sim(skillset.0, skillset.1),
             updated: current_tick,
+            joined_tick: person.joined,
             team: person.team.map(|id| id.0),
+            talent_grade: person.talent_grade,
+            joined_gamedate: SimDate::from(person.joined),
         }
     }
 }
@@ -282,16 +301,16 @@ pub struct ProfilePictureSnapshot {
     pub batch: i8,
     pub index: i8,
 }
-impl PartialEq<ProfilePicture> for ProfilePictureSnapshot {
-    fn eq(&self, other: &ProfilePicture) -> bool {
+impl PartialEq<&ProfilePicture> for ProfilePictureSnapshot {
+    fn eq(&self, other: &&ProfilePicture) -> bool {
         self.gender == other.gender.to_string()
             && self.category == other.category.as_file_category_number()
             && self.batch == other.batch
             && self.index == other.index
     }
 }
-impl From<ProfilePicture> for ProfilePictureSnapshot {
-    fn from(picture: ProfilePicture) -> Self {
+impl From<&ProfilePicture> for ProfilePictureSnapshot {
+    fn from(picture: &ProfilePicture) -> Self {
         Self {
             gender: picture.gender.to_string(),
             category: picture.category.as_file_category_number(),
@@ -324,8 +343,8 @@ pub struct StatsSnapshot {
     pub adaptability: u16,
 }
 
-impl From<Stats> for StatsSnapshot {
-    fn from(s: Stats) -> Self {
+impl From<&Stats> for StatsSnapshot {
+    fn from(s: &Stats) -> Self {
         Self {
             judgement: s.get_stat(StatType::Judgement),
             creativity: s.get_stat(StatType::Creativity),
@@ -341,8 +360,8 @@ impl From<Stats> for StatsSnapshot {
     }
 }
 
-impl PartialEq<Stats> for StatsSnapshot {
-    fn eq(&self, other: &Stats) -> bool {
+impl PartialEq<&Stats> for StatsSnapshot {
+    fn eq(&self, other: &&Stats) -> bool {
         self.judgement == other.get_stat(StatType::Judgement)
             && self.creativity == other.get_stat(StatType::Creativity)
             && self.systems == other.get_stat(StatType::Systems)
@@ -394,8 +413,8 @@ pub struct PersonalitySnapshot {
     pub influence_description: String,
 }
 
-impl From<PersonalityMatrix> for PersonalitySnapshot {
-    fn from(matrix: PersonalityMatrix) -> Self {
+impl From<&PersonalityMatrix> for PersonalitySnapshot {
+    fn from(matrix: &PersonalityMatrix) -> Self {
         PersonalitySnapshot {
             assertiveness: matrix.assertiveness,
             structure_preference: matrix.structure_preference,
@@ -412,8 +431,8 @@ impl From<PersonalityMatrix> for PersonalitySnapshot {
     }
 }
 
-impl PartialEq<PersonalityMatrix> for PersonalitySnapshot {
-    fn eq(&self, other: &PersonalityMatrix) -> bool {
+impl PartialEq<&PersonalityMatrix> for PersonalitySnapshot {
+    fn eq(&self, other: &&PersonalityMatrix) -> bool {
         self.assertiveness == other.assertiveness
             && self.structure_preference == other.structure_preference
             && self.openness == other.openness
@@ -454,8 +473,8 @@ impl From<Team> for TeamSnapshot {
 }
 
 
-impl PartialEq<Team> for TeamSnapshot {
-    fn eq(&self, other: &Team) -> bool {
+impl PartialEq<&Team> for TeamSnapshot {
+    fn eq(&self, other: &&Team) -> bool {
         self.id == other.team_id.0
             && self.name == other.name
             && self.description == other.description

@@ -20,10 +20,18 @@ export type PersonSnapshot = {
     person_id: number;
     name: string;
     gender: string;
+    talent_grade: TalentGrade;
     assigned_skill: SkillSetSnapshot;
     updated: number;
     team: number | null;
 };
+export type TalentGrade =
+    | "Basic"
+    | "Apt"
+    | "Sharp"
+    | "Gifted"
+    | "Brilliant"
+    | "Exceptional";
 
 export type PersonSnapshotWithTotal = PersonSnapshot & {
     total_points : number,

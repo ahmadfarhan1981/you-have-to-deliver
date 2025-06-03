@@ -1,5 +1,5 @@
 use super::components::Person;
-use super::stats::{Stats, StatsConfig};
+use super::stats::{StatType, Stats, StatsConfig};
 use crate::sim::person::components::{Gender, PersonId, ProfilePicture, ProfilePictureCategory};
 use crate::sim::person::personality_matrix::{PersonalityAxis, PersonalityMatrix};
 use crate::sim::resources::global::{AssetBasePath, Dirty};
@@ -10,16 +10,19 @@ use rand::seq::IteratorRandom;
 use rand::{rng, Rng};
 use rand_distr::{Distribution, Normal};
 use std::collections::HashMap;
+use std::fmt;
+use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, trace};
-use crate::sim::person::skills::SkillSet;
+use crate::sim::person::skills::{GlobalSkill, SkillSet};
 use crate::sim::person::stat_sculpter::{sculpt_axis_bias, sculpt_blindspot, sculpt_contrasting_pair, sculpt_monofocus};
 use crate::sim::registries::registry::Registry;
 use crate::sim::systems::global::UsedProfilePictureRegistry;
 use rand::prelude::*;
+use serde::{Deserialize, Serialize};
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: i16, max: i16) -> i16 {
     let normal = Normal::new(mean, std_dev).unwrap();
@@ -37,9 +40,11 @@ pub fn bounded_normal(mean: f64, std_dev: f64, min: i16, max: i16) -> i16 {
     return fallback.clamp(min.into(), max.into()) as i16;
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[serde(rename_all = "PascalCase")]
 pub enum TalentGrade {
     Basic,
+    #[default]
     Apt,
     Sharp,
     Gifted,
@@ -59,7 +64,19 @@ impl TalentGrade {
         }
     }
 }
-
+impl Display for TalentGrade {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let label = match self {
+            TalentGrade::Basic => "Basic",
+            TalentGrade::Apt => "Apt",
+            TalentGrade::Sharp => "Sharp",
+            TalentGrade::Gifted => "Gifted",
+            TalentGrade::Brilliant => "Brilliant",
+            TalentGrade::Exceptional => "Exceptional",
+        };
+        write!(f, "{}", label)
+    }
+}
 pub fn get_random_line_from_file(asset_path: AssetBasePath) -> Option<String> {
     // Build full path to names/first.txt
     let base_path = Path::new(&asset_path.0);
@@ -276,9 +293,10 @@ pub fn spawn_person(
     tier: TalentGrade,
     asset_path: &AssetBasePath,
     used_portraits: &UsedProfilePictureRegistry,
-
     person_registry: &Arc<Registry<PersonId, Entity>>,
-) -> (PersonId, Entity, Person, Stats, ProfilePicture, PersonalityMatrix) {
+    global_skills: &Vec<GlobalSkill>,
+    current_tick:u64,
+) -> (PersonId, Entity, Person, Stats, ProfilePicture, PersonalityMatrix, SkillSet) {
     debug!("Spawning person");
     let id = PersonId(person_registry.generate_id());
 
@@ -289,24 +307,56 @@ pub fn spawn_person(
         name: generate_full_name(&gender, &asset_path).expect("Cannot generate full name"),
         person_id: id.clone(),
         team: None,
+        talent_grade: tier,
+        joined: current_tick,
     };
     let person_clone = person.clone();
     debug!("Created person {}", person.name);
     let profile_picture = generate_profile_picture(gender, used_portraits);
     let stats = generate_stats(tier);
     let personality_matrix = generate_personality_matrix();
-    let skillset = generate_initial_skillset( &stats, &personality_matrix);
-    let entity = cmd.push((person, stats, profile_picture, personality_matrix, Dirty));
+    let skillset = assign_skills( &stats, &global_skills);
+    let entity = cmd.push((person, stats, profile_picture, personality_matrix, skillset.clone(), Dirty));
     person_registry.insert(id, entity);
 
-    (id, entity,person_clone, stats,  profile_picture, personality_matrix)
+    (id, entity,person_clone, stats,  profile_picture, personality_matrix, skillset.clone())
 }
 
-fn generate_initial_skillset(stats: &Stats, personality_axis: &PersonalityMatrix) -> SkillSet {
-    SkillSet{
-        skills: HashMap::new(),
+fn assign_skills(stats: &Stats, all_skills: &[GlobalSkill]) -> SkillSet {
+    let mut skills = HashMap::new();
+
+    for skill in all_skills {
+        let tier = determine_skill_tier(stats, &skill.related_stats);
+        if let Some((mean, stddev, min)) = skill_value_by_tier(tier) {
+            let value = bounded_normal(mean as f64, stddev as f64, min as i16, 100) as u32;
+            skills.insert(skill.id, value);
+        }
     }
 
+    SkillSet { skills }
 }
 
+fn determine_skill_tier(stats: &Stats, related_stats: &[StatType]) -> u8 {
+    if related_stats.iter().all(|s| stats.get_stat(*s) >= 80) {
+        5
+    } else if related_stats.iter().all(|s| stats.get_stat(*s) >= 70) {
+        4
+    } else if related_stats.iter().all(|s| stats.get_stat(*s) >= 60) {
+        3
+    } else if related_stats.iter().any(|s| stats.get_stat(*s) >= 50) {
+        2
+    } else {
+        1
+    }
+}
 
+fn skill_value_by_tier(tier: u8) -> Option<(u32, u32, u32)> {
+    match tier {
+        1 => Some((10, 5, 0)),
+        2 => Some((30, 5, 0)),
+        3 => Some((50, 10, 40)),
+        4 => Some((60, 10, 45)),
+        5 => Some((75, 15, 65)),
+        _ => None,
+    }
+}
