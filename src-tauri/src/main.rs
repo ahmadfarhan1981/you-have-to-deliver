@@ -13,7 +13,6 @@ mod sim;
 use crate::sim::resources::global::{AssetBasePath, Dirty, SimManager, TickCounter};
 use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRegistry};
 
-use integrations::snapshots::CompanySnapshot;
 use legion::{Entity, Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
@@ -38,7 +37,6 @@ use crate::integrations::queues::{
     handle_dispatch_queue_system, handle_sim_manager_dispatch_queue_system, QueueManager,
     UICommandQueues,
 };
-use crate::integrations::snapshots::{PersonSnapshot, SnapshotField, SnapshotState};
 use crate::integrations::snapshots_emitter::snapshots_emitter::{
     run_snapshot_emitters_system, ExportFrequency, SnapshotCollectionEmitter, SnapshotEmitRegistry,
     SnapshotEmitterConfig, SnapshotFieldEmitter,
@@ -59,6 +57,8 @@ use crate::sim::systems::banner::print_banner;
 use crate::sim::utils::sim_reset::ResetRequest;
 use crate::sim::utils::term::{bold, green, italic, red};
 use parking_lot::{Mutex, RwLock};
+use crate::integrations::snapshots::company::CompanySnapshot;
+use crate::integrations::snapshots::snapshots::SnapshotState;
 use crate::integrations::system_queues::team_manager::{handle_team_assignment_queue_system, handle_team_manager_queue_system};
 use crate::sim::team::components::TeamId;
 

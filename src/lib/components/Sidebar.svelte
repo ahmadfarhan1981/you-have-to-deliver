@@ -71,8 +71,8 @@
                     <span>Personnel</span>
                 </button>
                 <button
-                        class="flex items-center w-full px-3 py-2 rounded {activeView === 'Projects' ? 'bg-slate-700 text-slate-100' : 'hover:bg-slate-700 text-slate-300'}"
-                        on:click={() => navigateTo('Projects')}
+                        class="flex items-center w-full px-3 py-2 rounded {$activeTab?.id === 'projects' ? 'bg-slate-700 text-slate-100' : 'hover:bg-slate-700 text-slate-300'}"
+                        on:click={() => tabState.addSystemTab('projects')}
                 >
                     <Code size={16} class="mr-2" />
                     <span>Projects</span>

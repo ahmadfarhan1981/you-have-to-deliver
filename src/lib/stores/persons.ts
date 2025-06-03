@@ -14,6 +14,7 @@ export type AssignedSkillSnapshot = {
     skill_name: string;
 };
 
+
 export type PersonSnapshot = {
     stats: StatsSnapshot;
     profile_picture: ProfilePictureSnapshot;

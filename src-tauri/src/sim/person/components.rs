@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
+use crate::sim::person::needs::{Energy, Hunger};
 use crate::sim::person::spawner::TalentGrade;
 use crate::sim::team::components::TeamId;
 
@@ -15,6 +16,8 @@ pub struct Person {
     pub talent_grade: TalentGrade,
     /// The tick when this person joined the company
     pub joined: u64,
+    pub energy: Energy,
+    pub hunger: Hunger,
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq)]

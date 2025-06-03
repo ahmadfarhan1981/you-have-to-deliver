@@ -14,7 +14,7 @@ use std::fmt;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
-use crate::integrations::snapshots::SnapshotState;
+
 use crate::sim::registries::registry::Registry;
 use parking_lot::RwLock;
 use std::time::Duration;
