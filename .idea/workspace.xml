@@ -44,8 +44,8 @@
         <option value="StatsEchart" />
         <option value="CompanyOverview" />
         <option value="EmployeeList" />
-        <option value="TypeScript File" />
         <option value="Rust File" />
+        <option value="TypeScript File" />
       </list>
     </option>
   </component>
@@ -240,7 +240,7 @@
       <workItem from="1748796488307" duration="5445000" />
       <workItem from="1748822739292" duration="29489000" />
       <workItem from="1748873723957" duration="7766000" />
-      <workItem from="1748916455079" duration="22295000" />
+      <workItem from="1748916455079" duration="23622000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />
