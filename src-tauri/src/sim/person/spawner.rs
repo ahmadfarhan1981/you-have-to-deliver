@@ -23,6 +23,7 @@ use crate::sim::registries::registry::Registry;
 use crate::sim::systems::global::UsedProfilePictureRegistry;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
+use crate::sim::person::needs::{Energy, Hunger};
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: i16, max: i16) -> i16 {
     let normal = Normal::new(mean, std_dev).unwrap();
@@ -309,6 +310,8 @@ pub fn spawn_person(
         team: None,
         talent_grade: tier,
         joined: current_tick,
+        energy: Energy::default(),
+        hunger: Hunger::default(),
     };
     let person_clone = person.clone();
     debug!("Created person {}", person.name);

@@ -1,4 +1,3 @@
-use crate::integrations::snapshots::{AssignedSkillSnapshot, CompanySnapshot, PersonSnapshot, ProfilePictureSnapshot, SnapshotState, StatsSnapshot, TeamSnapshot};
 use crate::sim::game_speed::components::GameSpeedManager;
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
 use crate::sim::person::personality_matrix::PersonalityMatrix;
@@ -7,7 +6,7 @@ use crate::sim::person::spawner::spawn_person;
 use crate::sim::person::stats::Stats;
 use crate::sim::registries::registry::GlobalSkillNameMap;
 use crate::sim::resources::global::{Dirty, TickCounter};
-use crate::sim::utils::snapshots::{replace_if_changed};
+use crate::sim::utils::snapshots::replace_if_changed;
 use dashmap::{DashMap, Entry};
 use legion::systems::CommandBuffer;
 use legion::{system, Entity};
@@ -18,10 +17,15 @@ use std::sync::mpsc::channel;
 use arc_swap::ArcSwap;
 use tracing::{debug, info};
 use tracing_subscriber::registry;
+use crate::integrations::snapshots::company::CompanySnapshot;
+use crate::integrations::snapshots::person::PersonSnapshot;
+use crate::integrations::snapshots::skills::SkillSetSnapshot;
+use crate::integrations::snapshots::snapshots::SnapshotState;
+use crate::integrations::snapshots::team::TeamSnapshot;
 use crate::integrations::snapshots_emitter::snapshots_emitter::{SnapshotEmitRegistry, SnapshotFieldEmitter};
 use crate::sim::company::company::{Company, PlayerControlled};
 use crate::sim::team::components::Team;
-use super::snapshots::SkillSetSnapshot;
+
 
 #[system]
 pub fn push_game_speed_snapshots(

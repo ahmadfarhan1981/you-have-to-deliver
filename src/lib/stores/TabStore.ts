@@ -3,7 +3,7 @@ import type {PersonSnapshot} from '$lib/stores/persons';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
-export type SystemTabId = 'overview' | 'reports';
+export type SystemTabId = 'overview' | 'reports' | 'projects';
 export type TabId = SystemTabId | string;
 
 export type Tab =
@@ -32,6 +32,7 @@ type TabStateData = {
 const predefinedSystemTabs: Record<SystemTabId, Omit<Tab, 'id' | 'isActive'>> = {
     overview: { title: 'Overview', type: 'system' },
     reports: { title: 'Reports', type: 'system' },
+    projects: {title: 'Projects', type: 'system'}
 };
 
 const ADD_IF_MISSING = true;

@@ -1,4 +1,3 @@
-use crate::integrations::snapshots::SnapshotField;
 use crate::integrations::ui::AppContext;
 use crate::sim::resources::global::TickCounter;
 use dashmap::DashMap;
@@ -11,6 +10,7 @@ use dashmap::mapref::one::Ref;
 use tauri::{AppHandle, Emitter};
 use tracing::{debug, info, instrument, trace};
 use tracing::field::debug;
+use crate::integrations::snapshots::snapshots::SnapshotField;
 
 trait SnapshotEmitter {
     fn maybe_emit(&self, tick: u64, last_update_map:  &DashMap<&'static str, u64>, app: &AppHandle) -> bool;

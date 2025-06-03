@@ -3,9 +3,16 @@ use serde::{Deserialize, Serialize};
 use crate::sim::globals::{BASE_ENERGY_DECAY_PER_TICK, BASE_HUNGER_DECAY_PER_TICK};
 use crate::sim::person::stats::Stats;
 
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NeedValue{
     pub value:u8,
     value_raw:f32,
+}
+impl Default for NeedValue {
+    fn default() -> Self {
+        Self{value:100,value_raw:100_000.0}
+    }
 }
 impl NeedValue {
     fn new() -> NeedValue {
@@ -37,19 +44,31 @@ impl NeedValue {
 
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Energy{
     /// Current energy value on a 0-100 scale.
     /// 0 being dead tired and 100 being fully refreshed.
     level:NeedValue,
     pub personal_decay_modifier: f32
 }
+impl Default for Energy {
+    fn default() -> Self {
+        Self{level:NeedValue::default(), personal_decay_modifier:1.0}
+    }
+}
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Hunger{
     /// Current energy value on a 0-100 scale.
     /// 0 being straving and 100 being fully satiated.
     level:NeedValue,
     pub personal_decay_modifier: f32
 
+}
+impl Default for Hunger{
+    fn default() -> Self {
+        Self{level:NeedValue::default(), personal_decay_modifier:1.0}
+    }
 }
 impl Hunger {
     pub fn level(&self) -> HungerLevel {

@@ -54,7 +54,7 @@
     let consolidatedChartData: ChartDataItem[] = [];
     let detailedRadarIndicators: RadarIndicator[] = [];
     let consolidatedRadarIndicators: RadarIndicator[] = [];
-
+    let detailedChartDataInfo = [];
     $: {
         consolidatedRadarIndicators = groupedStats.map(stat => ({
             name: stat.group.name,
@@ -86,16 +86,17 @@
                     color: '#ff0000'
                 }
             })
-            statRadarOrder.map(stat => {
-                return {
-                    name: stat,
-                    max: 100
-                }
-
-            });
+            // statRadarOrder.map(stat => {
+            //     return {
+            //         name: stat,
+            //         max: 100
+            //     }
+            //
+            // });
+        detailedChartDataInfo = statRadarOrder.map( def => stats.find(s => s.key === def).value);
         detailedChartData = [{
             name: 'Stat value',
-            value: statRadarOrder.map( def => stats.find(s => s.key === def).value),
+            value: detailedChartDataInfo,
             itemStyle: {
                 color: '#5470c6'
             }

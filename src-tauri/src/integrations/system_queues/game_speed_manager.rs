@@ -8,7 +8,6 @@ use crate::sim::resources::global::SimManager;
 use crossbeam::queue::SegQueue;
 use legion::system;
 
-use crate::integrations::snapshots::SnapshotState;
 use crate::integrations::system_queues::game_speed_manager::GameSpeedManagerCommand::{
     DecreaseGameSpeed, IncreaseGameSpeed, SetGameSpeed,
 };

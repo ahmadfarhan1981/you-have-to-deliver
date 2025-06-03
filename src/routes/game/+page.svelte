@@ -29,6 +29,7 @@
     import CompanyOverview from "$lib/components/CompanyOverview.svelte";
     import {invoke} from "@tauri-apps/api/core";
     import {assignPersonToTeam} from "$lib/stores/persons.js";
+    import ProjectPanel from "$lib/components/ProjectPanel.svelte";
 
     $: showDrawer = false;
     afterNavigate(() => {
@@ -155,6 +156,8 @@
 
             {:else if $activeTab?.id === "reports"}
                 <ReportDashboard/>
+            {:else if $activeTab?.id === "projects"}
+                <ProjectPanel />
             {:else}
                 <!-- Employee Detail Tab -->
                 {#if $activeTab?.type === "person"}
