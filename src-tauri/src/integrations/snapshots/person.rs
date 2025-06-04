@@ -1,9 +1,11 @@
 use serde::{Deserialize, Serialize};
+use crate::integrations::snapshots::needs::{EnergySnapshot, HungerSnapshot};
 use crate::integrations::snapshots::personality::PersonalitySnapshot;
 use crate::integrations::snapshots::skills::SkillSetSnapshot;
 use crate::integrations::snapshots::profile_picture::ProfilePictureSnapshot;
 use crate::integrations::snapshots::stats::StatsSnapshot;
 use crate::sim::person::components::{Person, ProfilePicture};
+use crate::sim::person::needs::{Energy, Hunger};
 use crate::sim::person::personality_matrix::PersonalityMatrix;
 use crate::sim::person::skills::SkillSet;
 use crate::sim::person::spawner::TalentGrade;
@@ -26,6 +28,8 @@ pub struct PersonSnapshot {
     pub updated: u64,
     pub joined_tick: u64,
     pub joined_gamedate: SimDate,
+    pub energy: EnergySnapshot,
+    pub hunger: HungerSnapshot,
 }
 
 impl
@@ -61,6 +65,8 @@ impl
             team: person.team.map(|id| id.0),
             talent_grade: person.talent_grade,
             joined_gamedate: SimDate::from(person.joined),
+            energy: EnergySnapshot::default(),
+            hunger: HungerSnapshot::default(),
         }
     }
 }

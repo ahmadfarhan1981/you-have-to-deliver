@@ -8,3 +8,4 @@ pub mod team;
 pub mod person;
 pub mod profile_picture;
 pub mod game_speed;
+pub mod needs;

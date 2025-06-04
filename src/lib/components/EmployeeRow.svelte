@@ -54,7 +54,7 @@
     <div class="col-span-2 flex items-center">
         <div class="w-2 h-2 rounded-full bg-blue-500 mr-2"></div>
         <div>
-            <div class="text-slate-800 text-xs">Assigned</div>
+            <div class="text-slate-800 text-xs">Assigned personid </div>
             <div class="text-xs text-slate-500">Placeholder project</div>
         </div>
     </div>
@@ -70,11 +70,11 @@
     <!-- Defense -->
     <EmployeeRowStatBar value1={person.stats.resilience} value2={person.stats.adaptability} label1="Resilience" label2="Adaptability"/>
 
-
+    <EmployeeRowStatBar value1={person.energy.level} value2={person.hunger.level} label1="Energy" label2="Hunger"/>
     <!-- Rando -->
-    <div class="text-slate-800 col-span-1 text-center">
-        Hooray
-    </div>
+<!--    <div class="text-slate-800 col-span-1 text-center">-->
+<!--        Hooray-->
+<!--    </div>-->
 
     <!-- Social (already visualized but here for symmetry) -->
     <div class="text-slate-800 col-span-1 text-center">

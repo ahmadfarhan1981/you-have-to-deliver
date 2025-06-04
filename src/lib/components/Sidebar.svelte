@@ -33,8 +33,6 @@
         { time: "09:30", timeAgo: "15m ago", message: "New project proposal received", type: "blue" },
         { time: "09:15", timeAgo: "30m ago", message: "Server outage affecting development", type: "red" }
     ];
-
-    export let navigateTo ;
 </script>
 
 <div class="w-64 bg-slate-800 text-slate-200 flex flex-col border-r border-slate-700">
@@ -86,7 +84,7 @@
                 </button>
                 <button
                         class="flex items-center w-full px-3 py-2 rounded {activeView === 'Analytics' ? 'bg-slate-700 text-slate-100' : 'hover:bg-slate-700 text-slate-300'}"
-                        on:click={() => navigateTo('Analytics')}
+
                 >
                     <BarChart2 size={16} class="mr-2" />
                     <span>Analytics</span>

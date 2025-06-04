@@ -309,17 +309,16 @@ pub fn spawn_person(
         person_id: id.clone(),
         team: None,
         talent_grade: tier,
-        joined: current_tick,
-        energy: Energy::default(),
-        hunger: Hunger::default(),
+        joined: current_tick
     };
     let person_clone = person.clone();
-    debug!("Created person {}", person.name);
+    info!("Created person {}", person.name);
+    info!("{:?}", person);
     let profile_picture = generate_profile_picture(gender, used_portraits);
     let stats = generate_stats(tier);
     let personality_matrix = generate_personality_matrix();
     let skillset = assign_skills( &stats, &global_skills);
-    let entity = cmd.push((person, stats, profile_picture, personality_matrix, skillset.clone(), Dirty));
+    let entity = cmd.push((person, stats, profile_picture, personality_matrix, skillset.clone(), Energy::default(), Hunger::default(), Dirty));
     person_registry.insert(id, entity);
 
     (id, entity,person_clone, stats,  profile_picture, personality_matrix, skillset.clone())

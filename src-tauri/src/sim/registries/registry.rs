@@ -73,7 +73,7 @@ where
             name: type_name::<I>().to_string(),
             id_to_entity: DashMap::new(),
             entity_to_id: DashMap::new(),
-            next_id: AtomicU32::new(0),
+            next_id: AtomicU32::new(1),
         }
     }
 
@@ -82,7 +82,7 @@ where
             name: name.into(),
             id_to_entity: DashMap::new(),
             entity_to_id: DashMap::new(),
-            next_id: AtomicU32::new(0),
+            next_id: AtomicU32::new(1),
         }
     }
     pub fn generate_id(&self) -> u32 {
@@ -139,6 +139,5 @@ where
 //         self.next_id.fetch_add(1, Ordering::Relaxed)
 //     }
 // }
-
 #[derive(Default)]
 pub struct GlobalSkillNameMap(pub DashMap<SkillId,String>);

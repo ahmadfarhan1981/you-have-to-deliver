@@ -7,6 +7,7 @@ import type {PersonalitySnapshot} from "$lib/models/personality";
 import type {ProfilePictureSnapshot, SkillSetSnapshot} from "$lib/models/skill";
 import {invoke} from "@tauri-apps/api/core";
 import type {SimDate} from "$lib/stores/simDate";
+import type {Energy, Hunger} from "$lib/models/needs";
 
 export type AssignedSkillSnapshot = {
     skill_id: string;
@@ -28,6 +29,10 @@ export type PersonSnapshot = {
     team: number | null;
     joined_tick: number;
     joined_gamedate: SimDate;
+    energy: Energy;
+    hunger: Hunger;
+
+
 };
 export type TalentGrade =
     | "Basic"
@@ -43,24 +48,38 @@ export type PersonSnapshotWithTotal = PersonSnapshot & {
 
 // Exposed array for easy iteration
 export const basePersonArray = writable<PersonSnapshot []>([]);
-//export const personArray = writable<PersonSnapshotWithTotal []>([]);
 
-export const personArray:Readable<PersonSnapshotWithTotal []> = derived(basePersonArray, ($people) =>
-    $people.map((person) => ({
-        ...person,
-        total_points: Object.values(person.stats).reduce((sum, val) => sum + val, 0)
-    }))
+
+// export const personArray:Readable<PersonSnapshotWithTotal []> = derived(basePersonArray, ($people) =>
+//     $people.map((person) => ({
+//         ...person,
+//         person_id: person.person_id,
+//         total_points: Object.values(person.stats).reduce((sum, val) => sum + val, 0)
+//     }))
+// );
+export const personArray2: Readable<PersonSnapshotWithTotal[]> = derived(basePersonArray, ($people) =>
+    $people.map((person) => {
+        const calculatedTotalPoints = Object.values(person.stats).reduce((sum, val) => sum + val, 0);
+        // console.log(JSON.stringify(person))
+        const val:PersonSnapshotWithTotal = {
+            ...person,
+            person_id: person.person_id,
+            total_points: calculatedTotalPoints
+        };
+        const _dummy = val;
+        // console.log(JSON.stringify(val))
+        return val;
+    })
 );
-
 // Exposed map for fast lookup by ID
-export const persons = derived(personArray, ($array) => {
-    const map = new Map<number, PersonSnapshot & {total_points:number}>();
-    for (const p of $array) {
-        map.set(p.person_id, {...p,
-            total_points: Object.values(p.stats).reduce((sum, val) => sum + val, 0)});
-    }
-    return map;
-});
+// export const persons = derived(personArray, ($array) => {
+//     const map = new Map<number, PersonSnapshot & {total_points:number}>();
+//     for (const p of $array) {
+//         map.set(p.person_id, {...p,
+//             total_points: Object.values(p.stats).reduce((sum, val) => sum + val, 0)});
+//     }
+//     return map;
+// });
 export const personsSnapshotEventName = "persons_snapshot";
 
 

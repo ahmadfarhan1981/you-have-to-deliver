@@ -34,7 +34,7 @@
 </script>
 
 <div class="col-span-1 flex items-center">
-    <Smile size={14} class="text-gray-600 mr-1"/>
+<!--    <Smile size={14} class="text-gray-600 mr-1"/>-->
     <div
             class="w-full space-y-0.5 relative cursor-pointer"
             role="presentation"

@@ -1,8 +1,13 @@
-<script>
+<script lang="ts">
     import {simDateFromTick, simDateToRelativeString, simDateToString} from "$lib/stores/simDate.js";
     import {gameSpeed} from "$lib/stores/gameSpeed.js";
+    import type {Readable} from "svelte/store";
+    import type {PersonSnapshotWithTotal} from "$lib/stores/persons.js";
 
-    export let person;
+    export let personStore:Readable<PersonSnapshotWithTotal|null>;
+    $: person = $personStore;
+
+
 </script>
 <div class="border border-slate-200 rounded-lg p-6 bg-white shadow-sm mb-6">
     <h3 class="text-lg font-bold mb-4 w-full">{person.name}</h3>
@@ -19,7 +24,7 @@
                         class="text-slate-500">Hire Date:</span>{simDateToRelativeString(simDateFromTick($gameSpeed.tick.tick), person.joined_gamedate)} ({simDateToString(person.joined_gamedate)})
                 </p>
                 <p><span
-                        class="text-slate-500">Salary:</span> {"person.details?.salary" || 'N/A'}
+                        class="text-slate-500">Salary:</span>{person.energy.level} {"person.details?.salary" || 'N/A'}
                 </p>
             </div>
         </div>

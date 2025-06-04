@@ -1,31 +1,33 @@
+use crate::integrations::snapshots::company::CompanySnapshot;
+use crate::integrations::snapshots::person::PersonSnapshot;
+use crate::integrations::snapshots::skills::SkillSetSnapshot;
+use crate::integrations::snapshots::snapshots::SnapshotState;
+use crate::integrations::snapshots::team::TeamSnapshot;
+use crate::integrations::snapshots_emitter::snapshots_emitter::{
+    SnapshotEmitRegistry, SnapshotFieldEmitter,
+};
+use crate::sim::company::company::{Company, PlayerControlled};
 use crate::sim::game_speed::components::GameSpeedManager;
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
+use crate::sim::person::needs::{Energy, Hunger};
 use crate::sim::person::personality_matrix::PersonalityMatrix;
 use crate::sim::person::skills::{SkillId, SkillSet};
 use crate::sim::person::spawner::spawn_person;
 use crate::sim::person::stats::Stats;
 use crate::sim::registries::registry::GlobalSkillNameMap;
 use crate::sim::resources::global::{Dirty, TickCounter};
+use crate::sim::team::components::Team;
 use crate::sim::utils::snapshots::replace_if_changed;
+use arc_swap::ArcSwap;
 use dashmap::{DashMap, Entry};
 use legion::systems::CommandBuffer;
 use legion::{system, Entity};
 use parking_lot::RwLock;
 use std::sync::atomic::Ordering;
-use std::sync::Arc;
 use std::sync::mpsc::channel;
-use arc_swap::ArcSwap;
-use tracing::{debug, info};
+use std::sync::Arc;
+use tracing::{debug, info, warn};
 use tracing_subscriber::registry;
-use crate::integrations::snapshots::company::CompanySnapshot;
-use crate::integrations::snapshots::person::PersonSnapshot;
-use crate::integrations::snapshots::skills::SkillSetSnapshot;
-use crate::integrations::snapshots::snapshots::SnapshotState;
-use crate::integrations::snapshots::team::TeamSnapshot;
-use crate::integrations::snapshots_emitter::snapshots_emitter::{SnapshotEmitRegistry, SnapshotFieldEmitter};
-use crate::sim::company::company::{Company, PlayerControlled};
-use crate::sim::team::components::Team;
-
 
 #[system]
 pub fn push_game_speed_snapshots(
@@ -60,7 +62,7 @@ pub fn push_company_to_integration(
     // #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] app_state: &Arc<SnapshotState>,
     entity: &Entity,
-    company: &Company, // Live company data from ECS
+    company: &Company,                         // Live company data from ECS
     _player_controlled_tag: &PlayerControlled, // used for query filtering
     _dirty: &Dirty,
     cmd: &mut CommandBuffer,
@@ -79,13 +81,17 @@ pub fn push_company_to_integration(
     //    - `company.clone()`: creates an owned `Company` instance from the `&Company` reference.
     //      This is necessary because `replace_if_changed` takes its `new_source_value` by value.
     //      `CompanySnapshot` has `From<Company>`.
-    let changed = replace_if_changed::<CompanySnapshot, Company>(&mut mutable_snapshot_data, &company);
+    let changed =
+        replace_if_changed::<CompanySnapshot, Company>(&mut mutable_snapshot_data, &company);
 
     if changed {
         // If `changed` is true, `mutable_snapshot_data` now holds the new, updated snapshot.
         // Store this new snapshot into the ArcSwap.
         // `ArcSwap::store` expects an `Arc<T>`, T in our case is always an Arc of the data. So it's another `Arc::new()`
-        app_state.company.value.store(Arc::new(Arc::new(mutable_snapshot_data)));
+        app_state
+            .company
+            .value
+            .store(Arc::new(Arc::new(mutable_snapshot_data)));
         debug!("Company '{}' snapshot updated.", company.name);
     } else {
         debug!("Company '{}' snapshot unchanged.", company.name);
@@ -93,6 +99,41 @@ pub fn push_company_to_integration(
     cmd.remove_component::<Dirty>(*entity);
 }
 
+#[system(for_each)]
+pub fn tick_needs(energy: &mut Energy, hunger: &mut Hunger, stats: &Stats) {
+    energy.tick(stats);
+    hunger.tick(stats);
+}
+#[system(for_each)]
+pub fn push_needs_to_integration(
+    #[resource] tick_counter: &Arc<TickCounter>,
+    #[resource] app_state: &Arc<SnapshotState>,
+    person: &Person,
+    energy: &Energy,
+    hunger: &Hunger,
+) {
+    info!(
+        "pushing needs to integration system {} ",
+
+        energy.level(),
+
+    );
+    let registry = &app_state.persons;
+    match registry.entry(person.person_id.0) {
+        Entry::Occupied(mut existing) => {
+            let existing_person = existing.get_mut();
+
+            replace_if_changed(&mut existing_person.energy, energy);
+            replace_if_changed(&mut existing_person.hunger, hunger);
+        }
+        Entry::Vacant(vacant) => {
+            warn!(
+                "Unexpected. No entry in person registry for {}",
+                person.name
+            );
+        }
+    };
+}
 
 #[system(for_each)]
 pub fn push_persons_to_integration(
@@ -110,7 +151,7 @@ pub fn push_persons_to_integration(
 ) {
     let current_tick = tick_counter.value();
     let registry = &app_state.persons;
-    
+
     let skillset_snapshot = SkillSetSnapshot::from_sim(skill_set, global_skill_name_map);
 
     match registry.entry(person.person_id.0) {
@@ -131,7 +172,6 @@ pub fn push_persons_to_integration(
                 changed = true;
                 existing_person.team = person.team.map(|id| id.0)
             }
-
 
             changed |= replace_if_changed(&mut existing_person.stats, stats);
             changed |= replace_if_changed(&mut existing_person.profile_picture, profile_picture);
@@ -155,12 +195,11 @@ pub fn push_persons_to_integration(
     cmd.remove_component::<Dirty>(*entity);
 }
 
-
 #[system(for_each)]
 pub fn push_teams_to_integration(
     #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] app_state: &Arc<SnapshotState>,
-    #[resource] data_last_update: &Arc< DashMap<&'static str, u64>>,
+    #[resource] data_last_update: &Arc<DashMap<&'static str, u64>>,
     entity: &Entity,
     team: &Team,
     _dirty: &Dirty,
