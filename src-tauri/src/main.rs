@@ -16,7 +16,7 @@ use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRe
 use legion::{Entity, Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
-use crate::integrations::systems::{push_company_to_integration_system, push_game_speed_snapshots_system, push_persons_to_integration_system, push_teams_to_integration_system};
+use crate::integrations::systems::{push_company_to_integration_system, push_game_speed_snapshots_system, push_needs_to_integration_system, push_persons_to_integration_system, push_teams_to_integration_system, tick_needs_system};
 use crate::integrations::ui::{assign_person_to_team, new_sim, new_team, refresh_data, resume_sim, start_sim, stop_sim, unassign_team, AppContext};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{PersonId, ProfilePicture};
@@ -272,6 +272,7 @@ fn main() {
                     .add_system(handle_game_speed_manager_queue_system())
                     .add_system(handle_team_manager_queue_system())
                     .add_system(handle_team_assignment_queue_system())
+                    .add_system(tick_needs_system())
                     .build();
 
                 // main sim
@@ -288,6 +289,7 @@ fn main() {
                         .add_system(push_game_speed_snapshots_system())
                         .add_system(push_company_to_integration_system())
                         .add_system(push_teams_to_integration_system())
+                        .add_system(push_needs_to_integration_system())
                         .build();
                 let mut post_integration = Schedule::builder()
                     .add_system(run_snapshot_emitters_system())

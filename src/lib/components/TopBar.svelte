@@ -1,6 +1,7 @@
 <script>
     import {Bell, Calendar, Clock, CreditCard, User, Users} from "lucide-svelte";
     import {onMount} from "svelte";
+    import {invoke} from "@tauri-apps/api/core";
     // Clock
     let currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -39,7 +40,7 @@
         <button class="p-1 hover:bg-slate-700 rounded">
             <Calendar size={16} />
         </button>
-        <button class="flex items-center space-x-1 p-1 hover:bg-slate-700 rounded">
+        <button class="flex items-center space-x-1 p-1 hover:bg-slate-700 rounded" on:click={async () => await invoke('refresh_data')}>
             <User size={16} />
             <span class="text-xs">Admin</span>
         </button>

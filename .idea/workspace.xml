@@ -15,7 +15,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ea490ea8-f131-4fc9-83ea-41393c0e90f7" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/src-tauri/src/integrations/snapshots/needs.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src-tauri/src/integrations/snapshots/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src-tauri/src/integrations/snapshots/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src-tauri/src/integrations/snapshots/person.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src-tauri/src/integrations/snapshots/person.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src-tauri/src/integrations/systems.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src-tauri/src/integrations/systems.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src-tauri/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src-tauri/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src-tauri/src/sim/person/components.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src-tauri/src/sim/person/components.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src-tauri/src/sim/person/needs.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src-tauri/src/sim/person/needs.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src-tauri/src/sim/person/spawner.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src-tauri/src/sim/person/spawner.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/EmployeeDetails.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/EmployeeDetails.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/components/EmployeeInfoPanel.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/EmployeeInfoPanel.svelte" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/models/needs.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/models/needs.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/stores/TabStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/stores/TabStore.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/stores/persons.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/stores/persons.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/game/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/game/+page.svelte" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -84,7 +98,7 @@
     "full.screen.before.presentation.mode": "false",
     "git-widget-placeholder": "develop",
     "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "D:/projects/you-have-to-deliver/src/routes",
+    "last_opened_file_path": "D:/projects/you-have-to-deliver/src/routes/game",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.standard": "true",
     "node.js.detected.package.tslint": "true",
@@ -110,6 +124,7 @@
 }]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="D:\projects\you-have-to-deliver\src\routes\game" />
       <recent name="D:\projects\you-have-to-deliver\src\routes" />
       <recent name="D:\projects\you-have-to-deliver\src\lib\components\backup" />
       <recent name="C:\Work\Project\you-have-to-deliver\src\lib\components" />
@@ -241,7 +256,8 @@
       <workItem from="1748796488307" duration="5445000" />
       <workItem from="1748822739292" duration="29489000" />
       <workItem from="1748873723957" duration="7766000" />
-      <workItem from="1748916455079" duration="29226000" />
+      <workItem from="1748916455079" duration="37770000" />
+      <workItem from="1749029641492" duration="12189000" />
     </task>
     <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
       <option name="closed" value="true" />
@@ -371,7 +387,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/lib/stores/teams.ts</url>
-          <line>26</line>
+          <line>2</line>
           <option name="timeStamp" value="5" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">

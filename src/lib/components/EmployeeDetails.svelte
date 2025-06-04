@@ -1,9 +1,7 @@
 <script lang="ts">
-    import {AlertCircle} from "lucide-svelte";
     import EmployeePotrait from "$lib/components/EmployeePotrait.svelte";
     import StatPanel from "$lib/components/StatPanel.svelte";
-    import StatPanel2 from "$lib/components/StatPanel2.svelte";
-    import type {PersonSnapshot} from "$lib/stores/persons";
+    import type {PersonSnapshot, PersonSnapshotWithTotal} from "$lib/stores/persons";
     import PersonalityMatrixPanel from "$lib/components/PersonalityMatrixPanel.svelte";
     import SkillsPanel from "$lib/components/SkillsPanel.svelte";
     import PerformanceHistory from "$lib/components/PerformanceHistory.svelte";
@@ -11,9 +9,13 @@
     import FinancialHealthPanel from "$lib/components/FinancialHealthPanel.svelte";
     import EmployeeInfoPanel from "$lib/components/EmployeeInfoPanel.svelte";
     import ProjectPanel from "$lib/components/ProjectPanel.svelte";
-    import StatsEchart from "$lib/components/StatsEchart.svelte";
+    import type {Readable, Writable} from "svelte/store";
+    import {activeTab} from "$lib/stores/TabStore";
 
-    export let person: PersonSnapshot;
+
+    export let personStore: Readable<PersonSnapshotWithTotal | null>;
+    $: person = $personStore;
+
     function showCategory(category) {
         // Hide all categories
         document.querySelectorAll('.skill-category').forEach(cat => {
@@ -47,50 +49,52 @@
         });
     }
 </script>
-
-<div class="p-6 bg-game-bg game-bg">
-    <div class="flex items-start justify-between mb-6">
-
-        <div class="flex-row w-full">
-            <div class="">
-                <div class="flex items-start ">
-                    <div class="pr-6 ">
-                        <EmployeePotrait person={person}/>
-                    </div>
-                    <div class=" grid grid-cols-1 gap-6 ">
-                        <FinancialHealthPanel/>
-                        <EmployeeInfoPanel person={person}/>
+{#if person != null}
+    <div class="p-6 bg-game-bg game-bg">
+        <div class="flex items-start justify-between mb-6">
+            <div class="flex-row w-full">
+                <div class="">
+                    <div class="flex items-start ">
+                        <div class="pr-6 ">
+                            <EmployeePotrait person={person}/>
+                        </div>
+                        <div class=" grid grid-cols-1 gap-6 ">
+                            <FinancialHealthPanel/>
+                            <EmployeeInfoPanel personStore={personStore}/>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
 
-</div>
-
-<div class="border-t border-gray-300 my-6"></div>
-
-<div class="grid grid-cols-3 gap-6">
-    <div>
-        <PersonOverviewPanel person={person}/>
-        <PersonalityMatrixPanel personality={person.personality}/>
     </div>
 
-    <div class="col-span-1">
-        <StatPanel stats={person.stats}/>
+    <div class="border-t border-gray-300 my-6"></div>
 
+    <div class="grid grid-cols-3 gap-6">
+        <div>
+            <PersonOverviewPanel person={person}/>
+            <PersonalityMatrixPanel personality={person.personality}/>
+        </div>
+
+        <div class="col-span-1">
+            <StatPanel stats={person.stats}/>
+
+        </div>
+        <div class="col-span-1">
+            <SkillsPanel person={person}/>
+        </div>
+        <div>
+            <PersonalityMatrixPanel personality={person.personality}/>
+        </div>
+        <div>
+            <PerformanceHistory/>
+        </div>
+        <div>
+            <ProjectPanel/>
+        </div>
     </div>
-    <div class="col-span-1">
-        <SkillsPanel person={person}/>
-    </div>
-    <div>
-        <PersonalityMatrixPanel personality={person.personality}/>
-    </div>
-    <div>
-        <PerformanceHistory/>
-    </div>
-    <div>
-        <ProjectPanel/>
-    </div>
-</div>
+{:else }
+    <h2>NOTHING</h2>
+{/if}

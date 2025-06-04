@@ -1,5 +1,6 @@
 use std::fmt;
 use serde::{Deserialize, Serialize};
+use tracing::info;
 use crate::sim::globals::{BASE_ENERGY_DECAY_PER_TICK, BASE_HUNGER_DECAY_PER_TICK};
 use crate::sim::person::stats::Stats;
 
@@ -36,9 +37,10 @@ impl NeedValue {
     pub fn decrease_raw(&mut self, amount:f32) {
         self.value_raw -= amount;
         self.sync_from_raw();
+
     }
     fn sync_from_raw(&mut self){
-        self.value = (self.value as f32 / 1000.0).floor() as u8;
+        self.value = (self.value_raw / 1000.0).floor() as u8;
     }
 
 
@@ -97,6 +99,7 @@ impl Hunger {
         //TODO take stats into account
         let base_decay_raw = BASE_HUNGER_DECAY_PER_TICK as f32 * 1000.0 ;
         let final_decay_raw = base_decay_raw * self.personal_decay_modifier;
+
         self.level.decrease_raw( final_decay_raw)
     }
 
@@ -150,7 +153,11 @@ impl Energy {
         //TODO take stats into account
         let base_decay_raw = BASE_ENERGY_DECAY_PER_TICK as f32 * 1000.0;
         let final_decay_raw = base_decay_raw * self.personal_decay_modifier;
-        self.level.decrease_raw( final_decay_raw)
+        self.level.decrease_raw( final_decay_raw);
+
+        if self.value() == 0{
+            self.level.set_value(100);
+        }
     }
 
     pub fn new() -> Energy{

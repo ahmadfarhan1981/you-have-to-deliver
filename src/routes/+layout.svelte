@@ -1,19 +1,13 @@
 <script lang="ts">
     import "../app.css";
-  let { children } = $props();
-    import { onMount } from 'svelte';
-    import { listen } from '@tauri-apps/api/event';
+    import {onMount} from 'svelte';
+    import {listen} from '@tauri-apps/api/event';
     import {gameSpeed, type GameSpeedSnapshot, gameSpeedUpdateEventName} from '$lib/stores/gameSpeed';
-    import {
-        basePersonArray,
-        personArray,
-        type PersonSnapshot,
-        type PersonSnapshotWithTotal,
-        personsSnapshotEventName
-    } from "$lib/stores/persons";
+    import {basePersonArray, type PersonSnapshotWithTotal, personsSnapshotEventName} from "$lib/stores/persons";
     import {company, type CompanySnapshot, companySnapshotEventName} from "$lib/stores/company";
     import {type TeamSnapshot, teamSnapshotEventName, teamSnapshots} from "$lib/stores/teams";
-    import {invoke} from "@tauri-apps/api/core";
+
+    let { children } = $props();
 
     onMount(() => {
         const unlisten = listen<GameSpeedSnapshot>(gameSpeedUpdateEventName, (event) => {
@@ -27,11 +21,10 @@
             basePersonArray.set(event.payload)
         });
         const company_unlisten = listen<CompanySnapshot>(companySnapshotEventName, (event)=>{
-
             company.set(event.payload)
         } );
         const teams_unlisten = listen<TeamSnapshot[]>(teamSnapshotEventName, (event)=>{
-            console.log(JSON.stringify(event.payload))
+            // console.log(JSON.stringify(event.payload))
             teamSnapshots.set(event.payload)
         } );
 

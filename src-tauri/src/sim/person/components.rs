@@ -16,8 +16,6 @@ pub struct Person {
     pub talent_grade: TalentGrade,
     /// The tick when this person joined the company
     pub joined: u64,
-    pub energy: Energy,
-    pub hunger: Hunger,
 }
 
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq)]

@@ -43,7 +43,7 @@ pub fn generate_employees(
     let per_grade = [
         (Basic, 0),
         (Apt, 0),
-        (Sharp, 2),
+        (Sharp, 1),
         (Gifted, 0),
         (Brilliant, 0),
         (Exceptional, 0),

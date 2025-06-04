@@ -1,5 +1,5 @@
 import {derived, get, writable} from 'svelte/store';
-import type {PersonSnapshot} from '$lib/stores/persons';
+import {personArray2, type PersonSnapshot} from '$lib/stores/persons';
 
 // ─── Types ────────────────────────────────────────────────────────────────
 
@@ -203,4 +203,12 @@ export const tabState = {
 };
 export const activeTab = derived(tabState, $state =>
     $state.tabs.find(t => t.isActive) ?? null
+);
+
+export const activePersonSnapshot = derived(
+    [activeTab, personArray2],
+    ([$activeTab, $personStore]) => {
+        const id= $activeTab?.context?.person?.person_id;
+        return $personStore.find(p=>p.person_id == id ) ?? null;
+    }
 );

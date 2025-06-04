@@ -29,6 +29,7 @@
     });
 
 
+
     // Clock
     let currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
 
@@ -50,7 +51,7 @@
     });
 
 
-    $: people = $basePersonArray.map(person => {
+    $: people =  $basePersonArray.map(person=>{
         const calculatedTotalPoints = Object.values(person.stats).reduce((sum, val) => sum + val, 0);
 
         return {
@@ -60,12 +61,18 @@
         };
     })
     $: showUnassign = true
+    let isOver = false;
     let showTeamModal = false;
     let newTeamName = '';
     let newTeamDescription = '';
 
 </script>
-
+{JSON.stringify($activePersonSnapshot)}
+<!--{JSON.stringify($basePersonArray)}-->
+<!--{JSON.stringify($personArray)}-->
+{JSON.stringify($activeTab?.context?.person?.person_id)}
+{JSON.stringify($activeTab)}
+{JSON.stringify($tabState.tabs)}
 
 <div class="flex h-screen w-full bg-slate-100 font-mono text-sm">
     <!-- Sidebar -->
@@ -86,6 +93,7 @@
 
                 <!-- Company Overview Card -->
                 <CompanyOverview/>
+                <!--{JSON.stringify($teamSnapshotsWithPeople)}-->
                 {#each $teamSnapshotsWithPeople as team}
                     <div class="border-b border-slate-200">
 
@@ -98,6 +106,8 @@
                                     const id = e.dataTransfer.getData('person_id');
 
                                     assignPersonToTeam( Number.parseInt(id), team.id);
+                                    console.log("ONDROP");
+                                    console.log(id);
                                 }}
 
                         >
@@ -130,7 +140,7 @@
                             </div>
                             <!-- Employee Rows -->
                             <!--{#each team.members as person}-->
-                            {#each team.members as person}
+                            {#each $personArray2 as person}
 
                                 <div class="divide-y divide-slate-100" draggable="true"
                                      on:dragstart={(e) => {
@@ -153,14 +163,14 @@
             {:else if $activeTab?.id === "reports"}
                 <ReportDashboard/>
             {:else if $activeTab?.id === "projects"}
-                <ProjectPanel/>
+                <ProjectPanel />
             {:else}
                 <!-- Employee Detail Tab -->
                 {#if $activeTab?.type === "person"}
                     {@const currentTab = $activeTab}
                     {@const person = $activeTab.context.person}
 
-                    {#if $activePersonSnapshot}><EmployeeDetails personStore={activePersonSnapshot}/>{/if}
+                    <EmployeeDetails personStore={activePersonSnapshot}/>
                 {:else}
                     <!-- Empty tab or custom tab content -->
                     <div class="p-6">
@@ -173,6 +183,7 @@
         <button
                 on:click={() => {
               showDrawer = !showDrawer
+              console.log(showDrawer)
             }}
                 class="fixed bottom-4 right-4 z-50 bg-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center shadow-lg hover:bg-blue-700"
                 title="Quick Jump"
