@@ -1,6 +1,6 @@
-use crate::integrations::system_queues::game_speed_manager::GameSpeedManagerCommand;
-use crate::integrations::system_queues::sim_manager::SimManagerCommand;
-use crate::integrations::system_queues::sim_manager::SimManagerCommand::ResetSim;
+use crate::action_queues::game_speed_manager::GameSpeedManagerCommand;
+use crate::action_queues::sim_manager::SimManagerCommand;
+use crate::action_queues::sim_manager::SimManagerCommand::ResetSim;
 use crate::sim::game_speed::components::GameSpeed;
 use crate::sim::resources::global::SimManager;
 use crossbeam::queue::SegQueue;
@@ -9,7 +9,7 @@ use std::fmt;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tracing::{debug, info, trace, warn};
-use crate::integrations::system_queues::team_manager::{TeamAssignmentCommand, TeamManagerCommand};
+use crate::action_queues::team_manager::{TeamAssignmentCommand, TeamManagerCommand};
 
 #[derive(Debug, Default)]
 pub struct UICommandQueues {

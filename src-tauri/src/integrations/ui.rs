@@ -3,12 +3,12 @@ use dashmap::DashMap;
 use std::sync::Arc;
 
 use crate::integrations::queues::{ExposedQueue, SimCommand, UICommandQueues};
-use crate::integrations::system_queues::sim_manager::SimManagerCommand;
+use crate::action_queues::sim_manager::SimManagerCommand;
 use crate::sim::game_speed::components::GameSpeed;
 use tauri::{AppHandle, State};
 use tracing::info;
 use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotEmitRegistry;
-use crate::integrations::system_queues::team_manager::{TeamAssignmentCommand, TeamManagerCommand};
+use crate::action_queues::team_manager::{TeamAssignmentCommand, TeamManagerCommand};
 
 #[derive(Clone)]
 pub struct AppContext {

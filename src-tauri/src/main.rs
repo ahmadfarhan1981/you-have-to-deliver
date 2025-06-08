@@ -9,6 +9,7 @@ mod integrations;
 mod macros;
 mod master_data;
 mod sim;
+mod action_queues;
 
 use crate::sim::resources::global::{AssetBasePath, Dirty, SimManager, TickCounter};
 use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRegistry};
@@ -41,11 +42,11 @@ use crate::integrations::snapshots_emitter::snapshots_emitter::{
     run_snapshot_emitters_system, ExportFrequency, SnapshotCollectionEmitter, SnapshotEmitRegistry,
     SnapshotEmitterConfig, SnapshotFieldEmitter,
 };
-use crate::integrations::system_queues::game_speed_manager::{
+use action_queues::game_speed_manager::{
     decrease_speed, handle_game_speed_manager_queue_system, increase_speed, set_game_speed,
 };
-use crate::integrations::system_queues::sim_manager;
-use crate::integrations::system_queues::sim_manager::{
+use action_queues::sim_manager;
+use action_queues::sim_manager::{
     delete_all_entity_system, handle_new_game_manager_queue_system,
     handle_sim_manager_queue_system, reset_state_system,
 };
@@ -53,13 +54,14 @@ use crate::integrations::system_queues::sim_manager::{
 use crate::sim::company::company::{Company, PlayerControlled};
 use crate::sim::person::skills::SkillId;
 use crate::sim::registries::registry::{GlobalSkillNameMap, Registry};
-use crate::sim::systems::banner::print_banner;
+use sim::utils::banner::print_banner;
 use crate::sim::utils::sim_reset::ResetRequest;
 use crate::sim::utils::term::{bold, green, italic, red};
 use parking_lot::{Mutex, RwLock};
 use crate::integrations::snapshots::company::CompanySnapshot;
 use crate::integrations::snapshots::snapshots::SnapshotState;
-use crate::integrations::system_queues::team_manager::{handle_team_assignment_queue_system, handle_team_manager_queue_system};
+use action_queues::team_manager::{handle_team_assignment_queue_system, handle_team_manager_queue_system};
+use crate::sim::action::action::{decide_action_system, execute_action_system};
 use crate::sim::team::components::TeamId;
 
 fn print_startup_banner() {
@@ -273,6 +275,10 @@ fn main() {
                     .add_system(handle_team_manager_queue_system())
                     .add_system(handle_team_assignment_queue_system())
                     .add_system(tick_needs_system())
+                    .flush()
+                    .add_system(decide_action_system())
+                    .flush()
+                    .add_system(execute_action_system())
                     .build();
 
                 // main sim

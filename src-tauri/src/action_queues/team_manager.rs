@@ -1,7 +1,7 @@
 use crate::integrations::queues::QueueManager;
 use crate::integrations::queues::SimCommand::TeamManager;
-use crate::integrations::system_queues::game_speed_manager::GameSpeedManagerCommand;
-use crate::integrations::system_queues::shared::timed_dispatch;
+use crate::action_queues::game_speed_manager::GameSpeedManagerCommand;
+use crate::action_queues::shared::timed_dispatch;
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{Person, PersonId};
 use crate::sim::registries::registry::Registry;

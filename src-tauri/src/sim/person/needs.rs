@@ -1,13 +1,12 @@
-use std::fmt;
-use serde::{Deserialize, Serialize};
-use tracing::info;
 use crate::sim::globals::{BASE_ENERGY_DECAY_PER_TICK, BASE_HUNGER_DECAY_PER_TICK};
 use crate::sim::person::stats::Stats;
+use serde::{Deserialize, Serialize};
+use std::fmt;
 
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NeedValue{
-    pub value:u8,
+    value:u8,
     value_raw:f32,
 }
 impl Default for NeedValue {
@@ -39,6 +38,17 @@ impl NeedValue {
         self.sync_from_raw();
 
     }
+
+    pub fn increase(&mut self, amount:u16) {
+        self.value_raw += (amount * 1000) as f32;
+        self.sync_from_raw();
+    }
+
+    pub fn decrease(&mut self, amount:u16) {
+        self.value_raw -= (amount * 1000) as f32;
+        self.sync_from_raw();
+
+    }
     fn sync_from_raw(&mut self){
         self.value = (self.value_raw / 1000.0).floor() as u8;
     }
@@ -50,7 +60,7 @@ impl NeedValue {
 pub struct Energy{
     /// Current energy value on a 0-100 scale.
     /// 0 being dead tired and 100 being fully refreshed.
-    level:NeedValue,
+    pub level:NeedValue,
     pub personal_decay_modifier: f32
 }
 impl Default for Energy {
@@ -63,7 +73,7 @@ impl Default for Energy {
 pub struct Hunger{
     /// Current energy value on a 0-100 scale.
     /// 0 being straving and 100 being fully satiated.
-    level:NeedValue,
+    pub level:NeedValue,
     pub personal_decay_modifier: f32
 
 }
@@ -82,7 +92,7 @@ impl Hunger {
             60..=79 => HungerLevel::ComfortablyFull,
             80..=94 => HungerLevel::WellFed,
             95..=100 => HungerLevel::CompletelySatiated,
-            _ => unreachable!("Hunger value out of range"),
+            val => unreachable!("Hunger value out of range {}", val),
         }
     }
 
