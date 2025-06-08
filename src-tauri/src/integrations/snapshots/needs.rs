@@ -1,6 +1,5 @@
-use serde::{Deserialize, Serialize};
-use tracing::info;
 use crate::sim::person::needs::{Energy, Hunger};
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct EnergySnapshot{
@@ -28,7 +27,6 @@ pub struct HungerSnapshot{
 }
 impl From<&Hunger> for HungerSnapshot{
     fn from(value: &Hunger) -> Self {
-        info!("From Hunger {}", value.level().to_string());
         Self{
             level: value.value(),
             description: value.level().to_string(),

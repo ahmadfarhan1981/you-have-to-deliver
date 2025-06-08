@@ -1,5 +1,5 @@
 use crate::integrations::queues::{QueueManager, SimCommand, UICommandQueues};
-use crate::integrations::system_queues::shared::timed_dispatch;
+use crate::action_queues::shared::timed_dispatch;
 use std::ptr::write;
 use std::sync::Arc;
 
@@ -8,7 +8,7 @@ use crate::sim::resources::global::SimManager;
 use crossbeam::queue::SegQueue;
 use legion::system;
 
-use crate::integrations::system_queues::game_speed_manager::GameSpeedManagerCommand::{
+use crate::action_queues::game_speed_manager::GameSpeedManagerCommand::{
     DecreaseGameSpeed, IncreaseGameSpeed, SetGameSpeed,
 };
 use parking_lot::RwLock;

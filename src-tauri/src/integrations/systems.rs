@@ -101,6 +101,7 @@ pub fn push_company_to_integration(
 
 #[system(for_each)]
 pub fn tick_needs(energy: &mut Energy, hunger: &mut Hunger, stats: &Stats) {
+    info!("Ticking {} {}", energy.value(), hunger.value());
     energy.tick(stats);
     hunger.tick(stats);
 }
@@ -112,12 +113,6 @@ pub fn push_needs_to_integration(
     energy: &Energy,
     hunger: &Hunger,
 ) {
-    info!(
-        "pushing needs to integration system {} ",
-
-        energy.level(),
-
-    );
     let registry = &app_state.persons;
     match registry.entry(person.person_id.0) {
         Entry::Occupied(mut existing) => {

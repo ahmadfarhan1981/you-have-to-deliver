@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="AnalysisUIOptions">
-    <option name="ANALYZE_INJECTED_CODE" value="false" />
-  </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="ALL" />
   </component>
@@ -14,397 +11,59 @@
     </cargoProject>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ea490ea8-f131-4fc9-83ea-41393c0e90f7" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src-tauri/src/integrations/snapshots/needs.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src-tauri/src/integrations/snapshots/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src-tauri/src/integrations/snapshots/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src-tauri/src/integrations/snapshots/person.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src-tauri/src/integrations/snapshots/person.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src-tauri/src/integrations/systems.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src-tauri/src/integrations/systems.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src-tauri/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src-tauri/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src-tauri/src/sim/person/components.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src-tauri/src/sim/person/components.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src-tauri/src/sim/person/needs.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src-tauri/src/sim/person/needs.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src-tauri/src/sim/person/spawner.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src-tauri/src/sim/person/spawner.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/components/EmployeeDetails.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/EmployeeDetails.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/components/EmployeeInfoPanel.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/components/EmployeeInfoPanel.svelte" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/models/needs.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/models/needs.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/stores/TabStore.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/stores/TabStore.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/stores/persons.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/stores/persons.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/game/+page.svelte" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/game/+page.svelte" afterDir="false" />
-    </list>
+    <list default="true" id="6400b1a9-b8c2-443f-9ed9-cb5b45f6121e" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ExecutionTargetManager" SELECTED_TARGET="RsBuildProfile:test" />
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="StatPanel" />
-        <option value="EmployeeDetail" />
-        <option value="Tabs" />
-        <option value="SimControl" />
-        <option value="EmployeeTableSectionHeader" />
-        <option value="PersonalityMatrixPanel" />
-        <option value="PersonalityMatrix2" />
-        <option value="PersonalityBar" />
-        <option value="SkillsPanel" />
-        <option value="PerformanceHistory" />
-        <option value="PersonOverviewPanel" />
-        <option value="FinancialHealthPanel" />
-        <option value="EmployeeInfoPanel" />
-        <option value="ProjectPanel" />
-        <option value="ManagersNote" />
-        <option value="StatsEchart" />
-        <option value="CompanyOverview" />
-        <option value="EmployeeList" />
-        <option value="TypeScript File" />
-        <option value="Rust File" />
-      </list>
-    </option>
-  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="MacroExpansionManager">
-    <option name="directoryName" value="7lotgeZ5" />
+    <option name="directoryName" value="lnhMLVZn" />
   </component>
-  <component name="ProblemsViewState">
-    <option name="selectedTabId" value="CurrentFile" />
-  </component>
-  <component name="ProjectColorInfo">{
-  &quot;customColor&quot;: &quot;&quot;,
-  &quot;associatedIndex&quot;: 0
-}</component>
-  <component name="ProjectId" id="2x86w0grIzHgYWccDEgra12LTKf" />
-  <component name="ProjectLevelVcsManager">
-    <ConfirmationsSetting value="2" id="Add" />
-    <ConfirmationsSetting value="2" id="Remove" />
-  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "customColor": "",
+  "associatedIndex": 0
+}]]></component>
+  <component name="ProjectId" id="2yDlJGB2BYIKmRsL1qXX1Hpdj5c" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "Cargo.Test sim::sim_date::sim_date::tests::test_last_day.executor": "Run",
-    "Cargo.Test sim::sim_date::sim_date::tests::test_ordering.executor": "Run",
-    "JavaScript Debug.Svelte.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.rust.reset.selective.auto.import": "true",
-    "full.screen.before.presentation.mode": "false",
     "git-widget-placeholder": "develop",
-    "ignore.virus.scanning.warn.message": "true",
-    "last_opened_file_path": "D:/projects/you-have-to-deliver/src/routes/game",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.standard": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.standard": "",
-    "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
     "org.rust.cargo.project.model.PROJECT_DISCOVERY": "true",
-    "org.rust.cargo.project.model.impl.CargoExternalSystemProjectAware.subscribe.first.balloon": "",
     "org.rust.first.attach.projects": "true",
-    "run.code.analysis.last.selected.profile": "pProject Default",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "ts.external.directory.path": "D:\\projects\\you-have-to-deliver\\node_modules\\typescript\\lib",
+    "settings.editor.selected.configurable": "language.rust.cargo.check",
     "vue.rearranger.settings.migration": "true"
-  },
-  "keyToStringList": {
-    "GitStage.ChangesTree.GroupingKeys": [
-      "directory",
-      "module",
-      "repository"
-    ]
   }
 }]]></component>
-  <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="D:\projects\you-have-to-deliver\src\routes\game" />
-      <recent name="D:\projects\you-have-to-deliver\src\routes" />
-      <recent name="D:\projects\you-have-to-deliver\src\lib\components\backup" />
-      <recent name="C:\Work\Project\you-have-to-deliver\src\lib\components" />
-    </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="D:\projects\you-have-to-deliver\src-tauri\src\integrations\snapshots" />
-      <recent name="D:\projects\you-have-to-deliver\src\lib\models" />
-      <recent name="D:\projects\you-have-to-deliver\src\lib\components" />
-      <recent name="D:\projects\you-have-to-deliver\src\routes\game" />
-      <recent name="D:\projects\you-have-to-deliver\static\images\bg" />
-    </key>
-    <key name="es6.move.members.recent.items">
-      <recent name="D:\projects\you-have-to-deliver\src\lib\models\skill.ts" />
-      <recent name="D:\projects\you-have-to-deliver\src\lib\stores\skillSetSnapshot.ts" />
-      <recent name="D:\projects\you-have-to-deliver\src\lib\models\personality.ts" />
-      <recent name="D:\projects\you-have-to-deliver\src\lib\models\stats.ts" />
-      <recent name="D:\projects\you-have-to-deliver\src\lib\stores\statsSnapshot.ts" />
-    </key>
-  </component>
   <component name="RsExternalLinterProjectSettings">
     <option name="runOnTheFly" value="false" />
-  </component>
-  <component name="RunManager" selected="Cargo.Test sim::sim_date::sim_date::tests::test_ordering">
-    <configuration name="Test sim::sim_date::sim_date::tests::test_last_day" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="buildProfileId" value="test" />
-      <option name="command" value="test --package you-need-to-deliver --bin you-need-to-deliver sim::sim_date::sim_date::tests::test_last_day -- --exact" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$/src-tauri" />
-      <envs />
-      <option name="emulateTerminal" value="true" />
-      <option name="channel" value="DEFAULT" />
-      <option name="requiredFeatures" value="true" />
-      <option name="allFeatures" value="false" />
-      <option name="withSudo" value="false" />
-      <option name="buildTarget" value="REMOTE" />
-      <option name="backtrace" value="SHORT" />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Test sim::sim_date::sim_date::tests::test_ordering" type="CargoCommandRunConfiguration" factoryName="Cargo Command" temporary="true">
-      <option name="command" value="test --package you-need-to-deliver --bin you-need-to-deliver sim::sim_date::sim_date::tests::test_ordering -- --exact" />
-      <option name="workingDirectory" value="file://$PROJECT_DIR$/src-tauri" />
-      <envs />
-      <option name="emulateTerminal" value="true" />
-      <option name="channel" value="DEFAULT" />
-      <option name="requiredFeatures" value="true" />
-      <option name="allFeatures" value="false" />
-      <option name="withSudo" value="false" />
-      <option name="buildTarget" value="REMOTE" />
-      <option name="backtrace" value="SHORT" />
-      <option name="isRedirectInput" value="false" />
-      <option name="redirectInputPath" value="" />
-      <method v="2">
-        <option name="CARGO.BUILD_TASK_PROVIDER" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="Svelte" type="JavascriptDebugType" uri="http://localhost:1420">
-      <method v="2" />
-    </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="Cargo.Test sim::sim_date::sim_date::tests::test_ordering" />
-        <item itemvalue="Cargo.Test sim::sim_date::sim_date::tests::test_last_day" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="RustProjectSettings">
     <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
   </component>
-  <component name="SvelteServiceSettings">
-    <option name="showA11yWarnings" value="false" />
-  </component>
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
-      <changelist id="ea490ea8-f131-4fc9-83ea-41393c0e90f7" name="Changes" comment="" />
-      <created>1747307587868</created>
+      <changelist id="6400b1a9-b8c2-443f-9ed9-cb5b45f6121e" name="Changes" comment="" />
+      <created>1749376951105</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1747307587868</updated>
-      <workItem from="1747307589592" duration="1963000" />
-      <workItem from="1747356094694" duration="197000" />
-      <workItem from="1747356390678" duration="4809000" />
-      <workItem from="1747386614308" duration="12468000" />
-      <workItem from="1747404595052" duration="14525000" />
-      <workItem from="1747440693295" duration="16502000" />
-      <workItem from="1747459989780" duration="5359000" />
-      <workItem from="1747473749493" duration="6112000" />
-      <workItem from="1747488459463" duration="6472000" />
-      <workItem from="1747529856060" duration="27547000" />
-      <workItem from="1747571231312" duration="88000" />
-      <workItem from="1747617074712" duration="50308000" />
-      <workItem from="1747675786229" duration="3839000" />
-      <workItem from="1747732620652" duration="4606000" />
-      <workItem from="1747737896574" duration="8026000" />
-      <workItem from="1747816260022" duration="12794000" />
-      <workItem from="1747910625478" duration="8394000" />
-      <workItem from="1747962506743" duration="5311000" />
-      <workItem from="1748010090154" duration="14274000" />
-      <workItem from="1748050591773" duration="18843000" />
-      <workItem from="1748094684650" duration="1921000" />
-      <workItem from="1748128316283" duration="15723000" />
-      <workItem from="1748146582464" duration="18733000" />
-      <workItem from="1748178975145" duration="10517000" />
-      <workItem from="1748217726178" duration="6685000" />
-      <workItem from="1748225174547" duration="156000" />
-      <workItem from="1748225337063" duration="1576000" />
-      <workItem from="1748228226292" duration="20397000" />
-      <workItem from="1748270289306" duration="1311000" />
-      <workItem from="1748320598490" duration="5899000" />
-      <workItem from="1748334457302" duration="2062000" />
-      <workItem from="1748342045216" duration="7660000" />
-      <workItem from="1748357171466" duration="753000" />
-      <workItem from="1748361743146" duration="4921000" />
-      <workItem from="1748386892570" duration="298000" />
-      <workItem from="1748390084266" duration="26238000" />
-      <workItem from="1748446448661" duration="37000" />
-      <workItem from="1748446503421" duration="7435000" />
-      <workItem from="1748527580185" duration="2954000" />
-      <workItem from="1748530583302" duration="3871000" />
-      <workItem from="1748563518416" duration="8017000" />
-      <workItem from="1748593023444" duration="7443000" />
-      <workItem from="1748618272779" duration="954000" />
-      <workItem from="1748669291482" duration="7695000" />
-      <workItem from="1748680908578" duration="6913000" />
-      <workItem from="1748698903722" duration="2889000" />
-      <workItem from="1748750072039" duration="26946000" />
-      <workItem from="1748796488307" duration="5445000" />
-      <workItem from="1748822739292" duration="29489000" />
-      <workItem from="1748873723957" duration="7766000" />
-      <workItem from="1748916455079" duration="37770000" />
-      <workItem from="1749029641492" duration="12189000" />
+      <updated>1749376951105</updated>
+      <workItem from="1749376952631" duration="35000" />
     </task>
-    <task id="LOCAL-00001" summary="basic sim speed control, basic command pasing from ui.">
-      <option name="closed" value="true" />
-      <created>1747478976311</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1747478976311</updated>
-    </task>
-    <task id="LOCAL-00002" summary="command queue refactoring">
-      <option name="closed" value="true" />
-      <created>1747638154507</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1747638154507</updated>
-    </task>
-    <task id="LOCAL-00003" summary="basic command queue stuff">
-      <option name="closed" value="true" />
-      <created>1747642507652</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1747642507652</updated>
-    </task>
-    <task id="LOCAL-00004" summary="sim command and normal command seems to be working.">
-      <option name="closed" value="true" />
-      <created>1747647853757</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1747647853757</updated>
-    </task>
-    <task id="LOCAL-00005" summary="reset finally working. a bit wonky but working">
-      <option name="closed" value="true" />
-      <created>1747671409090</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1747671409090</updated>
-    </task>
-    <task id="LOCAL-00006" summary="linting stuff">
-      <option name="closed" value="true" />
-      <created>1747674553115</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1747674553115</updated>
-    </task>
-    <task id="LOCAL-00007" summary="sent ticks via emits.">
-      <option name="closed" value="true" />
-      <created>1747967068659</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1747967068659</updated>
-    </task>
-    <task id="LOCAL-00008" summary="person updates via emits, and using dirty">
-      <option name="closed" value="true" />
-      <created>1748023289777</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1748023289777</updated>
-    </task>
-    <task id="LOCAL-00009" summary="person updates via emits, and using dirty">
-      <option name="closed" value="true" />
-      <created>1748023313485</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1748023313485</updated>
-    </task>
-    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
-  </component>
-  <component name="Vcs.Log.Tabs.Properties">
-    <option name="TAB_STATES">
-      <map>
-        <entry key="MAIN">
-          <value>
-            <State />
-          </value>
-        </entry>
-      </map>
-    </option>
-  </component>
-  <component name="VcsManagerConfiguration">
-    <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
-    <option name="CHECK_NEW_TODO" value="false" />
-    <MESSAGE value="basic sim speed control, basic command pasing from ui." />
-    <MESSAGE value="command queue refactoring" />
-    <MESSAGE value="basic command queue stuff" />
-    <MESSAGE value="sim command and normal command seems to be working." />
-    <MESSAGE value="reset finally working. a bit wonky but working" />
-    <MESSAGE value="linting stuff" />
-    <MESSAGE value="sent ticks via emits." />
-    <MESSAGE value="person updates via emits, and using dirty" />
-    <option name="LAST_COMMIT_MESSAGE" value="person updates via emits, and using dirty" />
-    <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src-tauri/src/sim/person/spawner.rs</url>
-          <line>255</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src-tauri/src/sim/game_speed/components.rs</url>
-          <line>4</line>
-          <option name="timeStamp" value="4" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src-tauri/src/integrations/queues.rs</url>
-          <line>21</line>
-          <option name="timeStamp" value="8" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/lib/components/StatusBar.svelte</url>
-          <line>10</line>
-          <option name="timeStamp" value="2" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/lib/stores/teams.ts</url>
-          <line>2</line>
-          <option name="timeStamp" value="5" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/lib/components/StatsEchart.svelte</url>
-          <line>155</line>
-          <option name="timeStamp" value="6" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/src/lib/components/StatsEchart.svelte</url>
-          <line>185</line>
-          <option name="timeStamp" value="7" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
-  </component>
-  <component name="XSLT-Support.FileAssociations.UIState">
-    <expand />
-    <select />
   </component>
 </project>

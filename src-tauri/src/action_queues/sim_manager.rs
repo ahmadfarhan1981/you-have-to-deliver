@@ -1,5 +1,5 @@
 use crate::integrations::queues::{QueueManager, UICommandQueues};
-use crate::integrations::system_queues::shared::timed_dispatch;
+use crate::action_queues::shared::timed_dispatch;
 
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
