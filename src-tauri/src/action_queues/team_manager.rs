@@ -2,7 +2,7 @@ use crate::action_queues::game_speed_manager::GameSpeedManagerCommand;
 use crate::action_queues::shared::timed_dispatch;
 use crate::integrations::queues::QueueManager;
 use crate::integrations::queues::SimCommand::TeamManager;
-use crate::integrations::ui::new_team;
+
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{Person, PersonId};
 use crate::sim::registries::registry::Registry;
@@ -17,6 +17,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tracing::{debug, info, trace, warn};
 use tracing_subscriber::fmt::time::uptime;
+use crate::sim::team::utils::creat_new_team;
 
 pub enum TeamManagerCommand {
     NewTeam {
@@ -52,11 +53,7 @@ pub fn handle_team_manager_queue(
 
     timed_dispatch(queue, dispatch_time_limit, |cmd| match cmd {
         TeamManagerCommand::NewTeam { name, description } => {
-            let id = team_registry.generate_id();
-            let team = Team::new(id, name.clone(), description.clone());
-            info!("Adding new team {}", name);
-            let new_team = commands.push((team, Dirty));
-            team_registry.insert(TeamId(id), new_team);
+            creat_new_team(team_registry, commands, name, description);
         }
         TeamManagerCommand::RemoveTeam { id } => {
             let teamId = TeamId(id);
@@ -93,6 +90,8 @@ pub fn handle_team_manager_queue(
         }
     })
 }
+
+
 
 #[system]
 pub fn handle_team_assignment_queue(
