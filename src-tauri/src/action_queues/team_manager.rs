@@ -1,7 +1,8 @@
-use crate::integrations::queues::QueueManager;
-use crate::integrations::queues::SimCommand::TeamManager;
 use crate::action_queues::game_speed_manager::GameSpeedManagerCommand;
 use crate::action_queues::shared::timed_dispatch;
+use crate::integrations::queues::QueueManager;
+use crate::integrations::queues::SimCommand::TeamManager;
+use crate::integrations::ui::new_team;
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{Person, PersonId};
 use crate::sim::registries::registry::Registry;
@@ -16,7 +17,6 @@ use std::sync::Arc;
 use std::time::Duration;
 use tracing::{debug, info, trace, warn};
 use tracing_subscriber::fmt::time::uptime;
-use crate::integrations::ui::new_team;
 
 pub enum TeamManagerCommand {
     NewTeam {
@@ -31,17 +31,11 @@ pub enum TeamManagerCommand {
     RemoveTeam {
         id: u32,
     },
-
 }
 
-pub enum TeamAssignmentCommand{
-    AddPersonToTeam {
-        person_id: u32,
-        team_id: u32,
-    },
-    UnassignTeam {
-        person_id: u32,
-    },
+pub enum TeamAssignmentCommand {
+    AddPersonToTeam { person_id: u32, team_id: u32 },
+    UnassignTeam { person_id: u32 },
 }
 
 #[system]
@@ -118,7 +112,7 @@ pub fn handle_team_assignment_queue(
         TeamAssignmentCommand::AddPersonToTeam { person_id, team_id } => {
             info!("Adding person {} to team {}", person_id, team_id);
 
-            let (mut team_world, mut person_world) =  world.split::<&mut Team>();
+            let (mut team_world, mut person_world) = world.split::<&mut Team>();
 
             let person_entity = match person_registry.get_entity_from_id(&PersonId(person_id)) {
                 Some(entity) => entity,
@@ -131,7 +125,8 @@ pub fn handle_team_assignment_queue(
                 }
             };
 
-            let mut person = match <&mut Person>::query().get_mut(&mut person_world, person_entity) {
+            let mut person = match <&mut Person>::query().get_mut(&mut person_world, person_entity)
+            {
                 Ok(person) => person,
                 Err(_) => {
                     warn!(
@@ -142,15 +137,15 @@ pub fn handle_team_assignment_queue(
                 }
             };
 
-
             // If the person was on an old team, remove them from it first.
             if let Some(old_team) = person.team {
                 trace!("Found existing team. Removing before adding to new team.");
                 if let Some(team_entity) = team_registry.get_entity_from_id(&old_team) {
-                    if let Ok(mut team_component) = <&mut Team>::query().get_mut(&mut team_world, team_entity) {
+                    if let Ok(mut team_component) =
+                        <&mut Team>::query().get_mut(&mut team_world, team_entity)
+                    {
                         team_component.remove_person(person);
                         commands.add_component(team_entity, Dirty);
-
                     } else {
                         warn!("Can't find existing team component while trying to remove old team. Skipping...");
                     }
@@ -159,27 +154,30 @@ pub fn handle_team_assignment_queue(
                 }
             }
 
-
-
             // Actual assignment
             if let Some(new_team) = team_registry.get_entity_from_id(&TeamId(team_id)) {
-                if let Ok(mut team_component) = <&mut Team>::query().get_mut(&mut team_world, new_team) {
+                if let Ok(mut team_component) =
+                    <&mut Team>::query().get_mut(&mut team_world, new_team)
+                {
                     info!("Im here yo");
                     team_component.add_person(person);
                     commands.add_component(person_entity, Dirty);
                     commands.add_component(new_team, Dirty);
-                }else {
+                } else {
                     info!("No team component found while adding to new team. Skipping...");
                 }
-            }else {
-                info!("No team entity found while adding to new team. Skipping... Registry {:?}", team_registry);
+            } else {
+                info!(
+                    "No team entity found while adding to new team. Skipping... Registry {:?}",
+                    team_registry
+                );
             }
         }
 
-        TeamAssignmentCommand::UnassignTeam { person_id} => {
+        TeamAssignmentCommand::UnassignTeam { person_id } => {
             info!("Unassigning  {} from their assigned team", person_id);
 
-            let (mut team_world, mut person_world) =  world.split::<&mut Team>();
+            let (mut team_world, mut person_world) = world.split::<&mut Team>();
 
             let person_entity = match person_registry.get_entity_from_id(&PersonId(person_id)) {
                 Some(entity) => entity,
@@ -192,7 +190,8 @@ pub fn handle_team_assignment_queue(
                 }
             };
 
-            let mut person = match <&mut Person>::query().get_mut(&mut person_world, person_entity) {
+            let mut person = match <&mut Person>::query().get_mut(&mut person_world, person_entity)
+            {
                 Ok(person) => person,
                 Err(_) => {
                     warn!(
@@ -203,16 +202,16 @@ pub fn handle_team_assignment_queue(
                 }
             };
 
-
             // If the person was on an old team, remove them from it first.
             if let Some(old_team) = person.team {
-                trace!("Found existing team. Removing...");// no need to check, we're just unassigning
+                trace!("Found existing team. Removing..."); // no need to check, we're just unassigning
                 if let Some(team_entity) = team_registry.get_entity_from_id(&old_team) {
-                    if let Ok(mut team_component) = <&mut Team>::query().get_mut(&mut team_world, team_entity) {
+                    if let Ok(mut team_component) =
+                        <&mut Team>::query().get_mut(&mut team_world, team_entity)
+                    {
                         team_component.remove_person(person);
                         commands.add_component(team_entity, Dirty);
                         commands.add_component(person_entity, Dirty);
-
                     } else {
                         warn!("Can't find existing team component while trying to remove old team. Skipping...");
                     }
@@ -221,7 +220,5 @@ pub fn handle_team_assignment_queue(
                 }
             }
         }
-
-
     })
 }

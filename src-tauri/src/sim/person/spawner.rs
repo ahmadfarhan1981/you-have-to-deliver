@@ -288,7 +288,7 @@ fn generate_personality_matrix() -> PersonalityMatrix {
     return matrix;
 }
 
-#[tracing::instrument(level = "debug", skip(cmd, asset_path))]
+#[tracing::instrument(level = "trace", skip(cmd, asset_path))]
 pub fn spawn_person(
     cmd: &mut CommandBuffer,
     tier: TalentGrade,
@@ -312,8 +312,8 @@ pub fn spawn_person(
         joined: current_tick
     };
     let person_clone = person.clone();
-    info!("Created person {}", person.name);
-    info!("{:?}", person);
+    trace!("Created person {}", person.name);
+    trace!("{:?}", person);
     let profile_picture = generate_profile_picture(gender, used_portraits);
     let stats = generate_stats(tier);
     let personality_matrix = generate_personality_matrix();

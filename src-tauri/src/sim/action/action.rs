@@ -76,7 +76,6 @@ pub fn execute_action(
             hunger.level.increase(50);
         }
         ActionType::Idle => {
-
         }
     }
 }

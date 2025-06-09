@@ -46,7 +46,7 @@ impl SnapshotEmitRegistry {
         self.emitters.push(Box::new(emitter));
     }
 
-    #[instrument(skip_all, level = "debug")]
+    #[instrument(skip_all, level = "trace")]
     pub fn maybe_emit_all(&self, tick: u64, last_update_map:  &DashMap<&'static str, u64>, app: &AppHandle) {
         for emitter in &self.emitters {
             let _did_emit = emitter.maybe_emit(tick, last_update_map, app);
@@ -88,25 +88,26 @@ impl<T: Serialize + std::fmt::Debug> SnapshotEmitter for SnapshotFieldEmitter<T>
         let mut always_emit = false;
         match last_update_map.get(self.config.event_name){
             None => {
-                debug!("Last data update time not found. Assume data always needs update");
+                trace!("Last data update time not found. Assume data always needs update {}", self.config.event_name );
                 always_emit = true;
             }
             Some(cell) => { last_update = *cell.value()}
         }
         let  last_sent = self.config.last_sent_tick.load(Ordering::Relaxed);
-        trace!("Event name {}, always emit? {}. last update? {} ", self.config.event_name, always_emit, last_update);
-        if should_emit && ( always_emit || last_sent < last_update  ) {
+        debug!("Event name {}, always emit? {}. last update? {} {}", self.config.event_name, always_emit, last_update, last_sent);
+        if should_emit && ( always_emit || last_sent <= last_update  ) {//use `<=` , some new game scenario will result in last sent == last lets send the update if last sent and last update is the same.
             self.emit( Some(tick), app);
         }
         should_emit
     }
     fn emit(&self, tick: Option<u64>, app: &AppHandle) {
-        trace!("Event name {} emitting..", self.config.event_name );
+        debug!("Event name {} emitting..", self.config.event_name );
         //&& self.config.last_sent_tick.load(Ordering::Relaxed) != tick {
         if let Some(tick) = tick {
             self.config.last_sent_tick.store(tick, Ordering::Relaxed);
         }
         let data: &T = &*self.field.value.load();
+        debug!("Data {:?} ", data );
         // info!("Snapshot field: {:?} {:?} {:?}", self.config.event_name, data,  &*self.field.value.load_full());
         let _ = app.emit(self.config.event_name, data);
     }
@@ -136,7 +137,7 @@ where
         let mut always_emit = false;
         match last_update_map.get(self.config.event_name){
             None => {
-                debug!("{} Last data update time not found. Assume data always needs update", self.config.event_name );
+                trace!("{} Last data update time not found. Assume data always needs update", self.config.event_name );
                 always_emit = true;
             }
             Some(cell) => { last_update = *cell.value()}
@@ -144,7 +145,7 @@ where
 
         let  last_sent = self.config.last_sent_tick.load(Ordering::Relaxed);
         trace!("Event name {}, always emit? {}. last update? {}  map:{:?}", self.config.event_name, always_emit, last_update, last_update_map);
-        if should_emit  && ( always_emit || last_sent < last_update  )  && last_sent!= tick {
+        if should_emit  && ( always_emit || last_sent <= last_update  )  && last_sent!= tick {
            self.emit(Some(tick), app);
         }
         should_emit

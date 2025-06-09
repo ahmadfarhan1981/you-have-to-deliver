@@ -4,12 +4,13 @@
 #![deny(clippy::print_stdout)]
 #![allow(clippy::dbg_macro)]
 
+mod action_queues;
 mod config;
 mod integrations;
 mod macros;
 mod master_data;
 mod sim;
-mod action_queues;
+mod constants;
 
 use crate::sim::resources::global::{AssetBasePath, Dirty, SimManager, TickCounter};
 use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRegistry};
@@ -17,11 +18,18 @@ use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRe
 use legion::{Entity, Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
-use crate::integrations::systems::{push_company_to_integration_system, push_game_speed_snapshots_system, push_needs_to_integration_system, push_persons_to_integration_system, push_teams_to_integration_system, tick_needs_system};
-use crate::integrations::ui::{assign_person_to_team, new_sim, new_team, refresh_data, resume_sim, start_sim, stop_sim, unassign_team, AppContext};
+use crate::integrations::systems::{
+    push_company_to_integration_system, push_game_speed_snapshots_system,
+    push_needs_to_integration_system, push_persons_to_integration_system,
+    push_teams_to_integration_system, tick_needs_system,
+};
+use crate::integrations::ui::{
+    assign_person_to_team, new_sim, new_team, refresh_data, resume_sim, stop_sim,
+    unassign_team, AppContext,
+};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{PersonId, ProfilePicture};
-use crate::sim::person::init::{generate_employees_system, load_global_skills_system};
+use crate::sim::person::init::{generate_employees_system, init_company_system, load_global_skills_system, unset_first_run_flag_system, FirstRun};
 use crate::sim::utils::logging::init_logging;
 use crossbeam::queue::SegQueue;
 use dashmap::{DashMap, DashSet};
@@ -51,18 +59,22 @@ use action_queues::sim_manager::{
     handle_sim_manager_queue_system, reset_state_system,
 };
 
+use crate::integrations::snapshots::company::CompanySnapshot;
+use crate::integrations::snapshots::snapshots::SnapshotState;
+use crate::sim::action::action::{decide_action_system, execute_action_system};
 use crate::sim::company::company::{Company, PlayerControlled};
 use crate::sim::person::skills::SkillId;
 use crate::sim::registries::registry::{GlobalSkillNameMap, Registry};
-use sim::utils::banner::print_banner;
+use crate::sim::team::components::TeamId;
 use crate::sim::utils::sim_reset::ResetRequest;
 use crate::sim::utils::term::{bold, green, italic, red};
+use action_queues::team_manager::{
+    handle_team_assignment_queue_system, handle_team_manager_queue_system,
+};
 use parking_lot::{Mutex, RwLock};
-use crate::integrations::snapshots::company::CompanySnapshot;
-use crate::integrations::snapshots::snapshots::SnapshotState;
-use action_queues::team_manager::{handle_team_assignment_queue_system, handle_team_manager_queue_system};
-use crate::sim::action::action::{decide_action_system, execute_action_system};
-use crate::sim::team::components::TeamId;
+use sim::utils::banner::print_banner;
+use crate::action_queues::sim_manager::test_sim_manager_system;
+use crate::sim::new_game::new_game::{get_company_presets, get_starting_employee_configs, CompanyPreset, CompanyPresetStatic, StartingEmployeesConfig};
 
 fn print_startup_banner() {
     print_banner();
@@ -114,7 +126,7 @@ fn main() {
         },
     };
 
-    let team_snapshots_emitter = SnapshotCollectionEmitter{
+    let team_snapshots_emitter = SnapshotCollectionEmitter {
         map: Arc::clone(&main_snapshot_state.teams),
         config: SnapshotEmitterConfig {
             frequency: ExportFrequency::EveryTick,
@@ -122,7 +134,7 @@ fn main() {
             last_sent_tick: Default::default(),
         },
     };
-    let company_snapshots_emitter:SnapshotFieldEmitter<CompanySnapshot> = SnapshotFieldEmitter {
+    let company_snapshots_emitter: SnapshotFieldEmitter<CompanySnapshot> = SnapshotFieldEmitter {
         field: main_snapshot_state.company.clone(), // Clones the Arc<SnapshotField>, sharing the instance
         config: SnapshotEmitterConfig {
             frequency: ExportFrequency::EveryTick,
@@ -163,6 +175,7 @@ fn main() {
     let reset_request = Arc::new(ResetRequest {
         should_reset: AtomicBool::new(false),
     });
+    let first_run = Arc::new(FirstRun::default());
     let reset = Arc::clone(&reset_request);
 
     let sim_snapshot_registry = Arc::new(snapshot_registry);
@@ -182,22 +195,17 @@ fn main() {
                 let mut world = World::default();
                 let mut resources = Resources::default();
 
-                //default company.
-                world.push((
-                    PlayerControlled,
-                    Dirty,
-                    Company {
-                        name: "Logic Leap Solutions".to_string(),
-                        slogan: "The Next Jump in Software Innovation.".to_string(),
-                    },
-                ));
                 resources.insert(Arc::new(AppContext { app_handle }));
 
                 let data_last_update_map: DashMap<&'static str, u64> = DashMap::new();
                 let data_last_update = Arc::new(data_last_update_map);
                 resources.insert(data_last_update);
                 resources.insert(reset_request);
+                resources.insert(Arc::clone(&first_run));
                 resources.insert(Arc::clone(&sim_manager));
+
+                resources.insert(CompanyPreset::default());
+                resources.insert(StartingEmployeesConfig::default());
 
                 //command queues related
                 resources.insert(queue_manager);
@@ -225,15 +233,18 @@ fn main() {
                     "Team registry",
                 )));
 
-
                 resources.insert(sim_snapshot_registry);
                 resources.insert(Arc::<GlobalSkillNameMap>::new(GlobalSkillNameMap::default()));
 
                 // Startup schedule, runs once on startup. add run once systems here.
                 let mut startup = Schedule::builder()
+                    .add_system(init_company_system())
+                    .flush()
                     .add_system(load_global_skills_system())
                     .flush()
                     .add_system(generate_employees_system())
+                    .flush()
+                    .add_system(unset_first_run_flag_system())
                     .build();
 
                 // processes the command dispatch queues,  dispatch then sends to the resource profile specific queues.
@@ -279,6 +290,7 @@ fn main() {
                     .add_system(decide_action_system())
                     .flush()
                     .add_system(execute_action_system())
+                    .add_system(test_sim_manager_system())
                     .build();
 
                 // main sim
@@ -305,26 +317,32 @@ fn main() {
                     SpinSleeper::new(0).with_spin_strategy(spin_sleep::SpinStrategy::YieldThread); // prevents CPU burn
                 let state = Arc::clone(&sim_manager);
 
-                //Tick the startup schedule
-                startup.execute(&mut world, &mut resources);
+
 
                 loop {
+
+
                     sim_manager_dispatch_schedule.execute(&mut world, &mut resources);
                     sim_manager_reset_schedule.execute(&mut world, &mut resources);
                     if reset.should_reset.load(Ordering::Relaxed) {
                         sim_manager_delete_world_entity_schedule
                             .execute(&mut world, &mut resources);
                         reset_state_schedule.execute(&mut world, &mut resources);
-                        startup.execute(&mut world, &mut resources);
+                        // startup.execute(&mut world, &mut resources);
 
                         pre_integration.execute(&mut world, &mut resources);
                         integration_schedule.execute(&mut world, &mut resources);
                         post_integration.execute(&mut world, &mut resources);
+
                     }
 
                     sim_manager_schedule.execute(&mut world, &mut resources);
 
                     if state.is_running() {
+                        if(first_run.is_first_run()){
+                            //Tick the startup schedule
+                            startup.execute(&mut world, &mut resources);
+                        }
                         let tick_start = Instant::now();
 
                         // Process SimCommand queue
@@ -384,14 +402,15 @@ fn main() {
             set_game_speed,
             increase_speed,
             decrease_speed,
-            start_sim,
             stop_sim,
             resume_sim,
             new_sim,
             new_team,
             assign_person_to_team,
             unassign_team,
-            refresh_data
+            refresh_data,
+            get_starting_employee_configs,
+            get_company_presets
         ])
         .run(tauri::generate_context!())
         .expect("error running tauri app");

@@ -9,14 +9,11 @@ use tauri::{AppHandle, State};
 use tracing::info;
 use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotEmitRegistry;
 use crate::action_queues::team_manager::{TeamAssignmentCommand, TeamManagerCommand};
+use crate::sim::new_game::new_game::{CompanyPresetStatic, CompanyPreset, StartingEmployeesConfig};
 
 #[derive(Clone)]
 pub struct AppContext {
     pub app_handle: AppHandle,
-}
-#[tauri::command]
-pub fn start_sim(queues: State<'_, Arc<UICommandQueues>>) {
-    queues.control.push(SimManagerCommand::StartSim)
 }
 #[tauri::command]
 pub fn stop_sim(queues: State<'_, Arc<UICommandQueues>>) {
@@ -29,8 +26,8 @@ pub fn resume_sim(queues: State<'_, Arc<UICommandQueues>>) {
 }
 
 #[tauri::command]
-pub fn new_sim(queues: State<'_, Arc<UICommandQueues>>) {
-    queues.control.push(SimManagerCommand::ResetSim)
+pub fn new_sim(queues: State<'_, Arc<UICommandQueues>>, company: CompanyPreset, employee:StartingEmployeesConfig) {
+    queues.control.push(SimManagerCommand::StartSim{company, employee});
 }
 
 #[tauri::command]

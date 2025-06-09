@@ -8,8 +8,12 @@
         type StatsSnapshot,
         type StatWithValue
     } from "$lib/models/stats";
+    import type {Readable} from "svelte/store";
+    import type {PersonSnapshot} from "$lib/stores/persons";
 
-    export let statsSnapshot: StatsSnapshot;
+    export let personStore:Readable<PersonSnapshot>;
+    let statsSnapshot:StatsSnapshot;
+    $: statsSnapshot = $personStore.stats;
     interface RadarIndicator {
         name: string;
         max: number;
@@ -204,17 +208,19 @@
     // Function to toggle between views
     function toggleView(): void {
         isDetailed = !isDetailed;
-        updateChart();
+        // updateChart();
     }
 
     // Update chart when data changes
     function updateChart(): void {
-        if (chart) {
+        if (chart && option) { // Ensure option is also ready
             chart.setOption(option, true); // true = notMerge for complete refresh
         }
     }
 
-    $: if (chart && isDetailed !== undefined) {
+    // This reactive block will now trigger updateChart whenever 'option' changes,
+    // which includes changes originating from 'personStore' or 'isDetailed'.
+    $: if (chart && option) {
         updateChart();
     }
 

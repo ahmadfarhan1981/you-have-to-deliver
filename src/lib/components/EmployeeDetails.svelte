@@ -79,7 +79,7 @@
         </div>
 
         <div class="col-span-1">
-            <StatPanel stats={person.stats}/>
+            <StatPanel personStore={personStore}/>
 
         </div>
         <div class="col-span-1">

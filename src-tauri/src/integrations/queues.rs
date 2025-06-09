@@ -1,6 +1,5 @@
 use crate::action_queues::game_speed_manager::GameSpeedManagerCommand;
-use crate::action_queues::sim_manager::SimManagerCommand;
-use crate::action_queues::sim_manager::SimManagerCommand::ResetSim;
+use crate::action_queues::team_manager::{TeamAssignmentCommand, TeamManagerCommand};
 use crate::sim::game_speed::components::GameSpeed;
 use crate::sim::resources::global::SimManager;
 use crossbeam::queue::SegQueue;
@@ -9,7 +8,7 @@ use std::fmt;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tracing::{debug, info, trace, warn};
-use crate::action_queues::team_manager::{TeamAssignmentCommand, TeamManagerCommand};
+use crate::action_queues::sim_manager::SimManagerCommand;
 
 #[derive(Debug, Default)]
 pub struct UICommandQueues {
@@ -30,7 +29,9 @@ impl fmt::Debug for SimCommand {
             SimCommand::GameSpeed(_) => write!(f, "SimCommand::GameSpeed(...)"),
             SimCommand::SimManager(_) => write!(f, "SimCommand::SimManager(...)"),
             SimCommand::TeamManager(_) => write!(f, "SimCommand::TeamManager(...)"),
-            SimCommand::TeamAssignment(_) => {write!(f, "SimCommand::TeamAssignment(...)")}
+            SimCommand::TeamAssignment(_) => {
+                write!(f, "SimCommand::TeamAssignment(...)")
+            }
         }
     }
 }
@@ -47,7 +48,6 @@ impl<T> SystemCommandQueue<T> {
     }
 }
 
-
 pub struct QueueManager {
     dispatch: ExposedQueue<SimCommand>, // dispatch queue is an arc because it will be shared by the integration to to the frontend.
     sim_manager_dispatch: ExposedQueue<SimManagerCommand>,
@@ -59,7 +59,6 @@ pub struct QueueManager {
 }
 
 impl QueueManager {
-
     pub fn print_summary(&self) {
         info!("{}", self.get_summary_string());
     }
@@ -103,7 +102,7 @@ impl QueueManager {
                     SimCommand::GameSpeed(cmd) => self.game_speed_manager.queue.push(cmd),
                     SimCommand::SimManager(cmd) => self.sim_manager.queue.push(cmd),
                     SimCommand::TeamManager(cmd) => self.team_manager.queue.push(cmd),
-                    SimCommand::TeamAssignment(cmd) => {self.team_assignment.queue.push(cmd)},
+                    SimCommand::TeamAssignment(cmd) => self.team_assignment.queue.push(cmd),
                 }
             } else {
                 trace!("{} items dispatched", count);
@@ -134,10 +133,17 @@ impl QueueManager {
                 count += 1;
                 info!("Sim manager command: {:?}", command);
                 match command {
-                    SimManagerCommand::ResetSim => self
-                        .new_game_manager
-                        .queue
-                        .push(SimManagerCommand::ResetSim),
+                    SimManagerCommand::StartSim { company, employee } => {
+                        self.new_game_manager
+                            .queue
+                            .push(SimManagerCommand::StartSim { company, employee });
+                    }
+
+                    SimManagerCommand::ResetSim { employee, company } => {
+                        self.new_game_manager
+                            .queue
+                            .push(SimManagerCommand::ResetSim { company, employee });
+                    }
                     _ => {
                         self.sim_manager.queue.push(command);
                     }
