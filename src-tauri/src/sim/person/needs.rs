@@ -3,6 +3,22 @@ use crate::sim::person::stats::Stats;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+/// A wrapper for needs.
+/// Useful for passing around needs values. Not an ECS component.
+pub struct Needs{
+    pub energy: Energy,
+    pub hunger: Hunger,
+}
+impl  From<(Energy, Hunger)> for Needs{
+    fn from(value: (Energy, Hunger)) -> Self {
+        let (energy, hunger) = value;
+        Self{
+            energy,
+            hunger,
+        }
+    }
+}
+
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct NeedValue{

@@ -27,7 +27,10 @@ use std::sync::atomic::Ordering;
 use std::sync::mpsc::channel;
 use std::sync::Arc;
 use tracing::{debug, info, warn};
+use tracing::field::debug;
 use tracing_subscriber::registry;
+use crate::constants::COMPANY_SNAPSHOT_EVENT_NAME;
+use crate::sim::action::action::ActionIntent;
 
 #[system]
 pub fn push_game_speed_snapshots(
@@ -59,14 +62,16 @@ pub fn push_game_speed_snapshots(
 
 #[system(for_each)]
 pub fn push_company_to_integration(
-    // #[resource] tick_counter: &Arc<TickCounter>,
+    #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] app_state: &Arc<SnapshotState>,
+    #[resource] last_update_map: &Arc<DashMap<&'static str, u64>>,
     entity: &Entity,
     company: &Company,                         // Live company data from ECS
     _player_controlled_tag: &PlayerControlled, // used for query filtering
     _dirty: &Dirty,
     cmd: &mut CommandBuffer,
 ) {
+    info!("Company '{:?}' snapshot updated.", company);
     // Use this method as the reference implementation for all push_x_to_integration methods
 
     // 1. Load the current Arc<CompanySnapshot>. This is an Arc pointing to the snapshot data.
@@ -75,7 +80,7 @@ pub fn push_company_to_integration(
     // 2. Clone the data *inside* the Arc to get a mutable CompanySnapshot.
     //    This `mutable_snapshot_data` will be compared and potentially updated by `replace_if_changed`.
     let mut mutable_snapshot_data = (**current_arc_snapshot).clone();
-
+    info!("{:?} -- Snaphot: {:?} data: {:?}", COMPANY_SNAPSHOT_EVENT_NAME, mutable_snapshot_data, company);
     // 3. Call `replace_if_changed`.
     //    - `&mut mutable_snapshot_data`: the snapshot to potentially update.
     //    - `company.clone()`: creates an owned `Company` instance from the `&Company` reference.
@@ -83,6 +88,7 @@ pub fn push_company_to_integration(
     //      `CompanySnapshot` has `From<Company>`.
     let changed =
         replace_if_changed::<CompanySnapshot, Company>(&mut mutable_snapshot_data, &company);
+
 
     if changed {
         // If `changed` is true, `mutable_snapshot_data` now holds the new, updated snapshot.
@@ -92,6 +98,7 @@ pub fn push_company_to_integration(
             .company
             .value
             .store(Arc::new(Arc::new(mutable_snapshot_data)));
+        last_update_map.insert(COMPANY_SNAPSHOT_EVENT_NAME, tick_counter.value());
         debug!("Company '{}' snapshot updated.", company.name);
     } else {
         debug!("Company '{}' snapshot unchanged.", company.name);
@@ -101,7 +108,6 @@ pub fn push_company_to_integration(
 
 #[system(for_each)]
 pub fn tick_needs(energy: &mut Energy, hunger: &mut Hunger, stats: &Stats) {
-    info!("Ticking {} {}", energy.value(), hunger.value());
     energy.tick(stats);
     hunger.tick(stats);
 }
@@ -129,6 +135,36 @@ pub fn push_needs_to_integration(
         }
     };
 }
+
+#[system(for_each)]
+pub fn push_intents_and_goals_to_integration(
+    #[resource] tick_counter: &Arc<TickCounter>,
+    #[resource] app_state: &Arc<SnapshotState>,
+    entity: &Entity,
+    person: &Person,
+    action: Option<&ActionIntent>,
+
+){
+    let registry = &app_state.persons;
+    match registry.entry(person.person_id.0) {
+        Entry::Occupied(mut existing) => {
+            match action {
+                None => {}
+                Some(_) => {}
+            }
+        }
+        Entry::Vacant(vacant) => {
+            warn!(
+                "Unexpected. No entry in person registry for {}",
+                person.name
+            );
+        }
+    };
+}
+
+
+
+
 
 #[system(for_each)]
 pub fn push_persons_to_integration(

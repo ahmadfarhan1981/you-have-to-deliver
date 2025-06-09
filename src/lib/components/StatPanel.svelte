@@ -1,15 +1,18 @@
 <script lang="ts">
     import StatsEchart from "$lib/components/StatsEchart.svelte";
     import {stats_definition, type StatsSnapshot} from "$lib/models/stats";
+    import type {Readable} from "svelte/store";
+    import type {PersonSnapshot} from "$lib/stores/persons";
 
-    export let stats: StatsSnapshot;
+    export let personStore:Readable<PersonSnapshot>;
+    $: stats = $personStore.stats;
     $: showDetails = false;
 
 </script>
 
 <div class="border border-slate-200 rounded-lg p-6 bg-white shadow-sm mb-6">
     <h3 class="text-lg font-bold mb-4">Skills & Attributes</h3>
-    <div class="h-[300px] w-[300px]"><StatsEchart statsSnapshot={stats} /></div>
+    <div class="h-[300px] w-[300px]"><StatsEchart personStore={personStore} /></div>
     <!-- Slide-down panel -->
     <!-- Toggle Button -->
     <button

@@ -1,5 +1,5 @@
-use crate::integrations::queues::{QueueManager, UICommandQueues};
 use crate::action_queues::shared::timed_dispatch;
+use crate::integrations::queues::{QueueManager, UICommandQueues};
 
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
@@ -14,40 +14,37 @@ use std::fmt;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
-
+use crate::sim::new_game::new_game::{CompanyPreset, CompanyPresetStatic, StartingEmployeesConfig};
+use crate::sim::person::init::FirstRun;
 use crate::sim::registries::registry::Registry;
+use arc_swap::ArcSwap;
 use parking_lot::RwLock;
 use std::time::Duration;
 use tracing::field::debug;
 use tracing::{debug, error, info, trace, warn};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub enum SimManagerCommand {
     //Sim manager commands
-    StartSim,
+    StartSim {
+        company: CompanyPreset,
+        employee: StartingEmployeesConfig,
+    },
     #[default]
     StopSim,
-    ResetSim,
+    ResetSim {
+        company: CompanyPreset,
+        employee: StartingEmployeesConfig,
+    },
     ResumeSim,
 }
-impl fmt::Debug for SimManagerCommand {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            SimManagerCommand::StartSim => {
-                write!(f, "StartSim")
-            }
-            SimManagerCommand::StopSim => {
-                write!(f, "StopSim")
-            }
-            SimManagerCommand::ResetSim => {
-                write!(f, "ResetSim")
-            }
-            SimManagerCommand::ResumeSim => {
-                write!(f, "ResumeSim")
-            }
-        }
-    }
-}
+
+// #[derive(Default, Debug)]
+// pub enum NewGameCommand {
+//     #[default]
+//     StartSim{company:CompanyPreset,employee:StartingEmployeesConfig},
+//     ResetSim{company:CompanyPreset,employee:StartingEmployeesConfig},
+// }
 
 #[system]
 pub fn handle_sim_manager_queue(
@@ -59,18 +56,18 @@ pub fn handle_sim_manager_queue(
     let dispatch_time_limit = Duration::from_millis(5);
 
     timed_dispatch(queue, dispatch_time_limit, |cmd| match cmd {
-        SimManagerCommand::StartSim => {
-            sim_manager.resume_sim();
-        }
         SimManagerCommand::StopSim => {
             debug!("Sim manager stopped");
             sim_manager.pause_sim();
         }
         SimManagerCommand::ResumeSim => sim_manager.resume_sim(),
 
-        SimManagerCommand::ResetSim => {
+        SimManagerCommand::ResetSim { .. } => {
             error!("Unexpected item in queue. ResetSim should be handled by new game queue")
             //reset is handled by new game manager queue
+        }
+        SimManagerCommand::StartSim { .. } => {
+            error!("Unexpected item in queue. StartSim should be handled by new game queue")
         }
     });
 }
@@ -104,6 +101,8 @@ pub fn handle_new_game_manager_queue(
     #[resource] queue_manager: &QueueManager,
     #[resource] sim_manager: &Arc<SimManager>,
     #[resource] tick_counter: &Arc<TickCounter>,
+    #[resource] first_run: &Arc<FirstRun>,
+    #[resource] last_update_map: &Arc<dashmap::DashMap<&'static str, u64>>,
     #[resource] game_speed: &Arc<RwLock<GameSpeedManager>>,
     #[resource] used_profile_picture_registry: &UsedProfilePictureRegistry,
     #[resource] person_registry: &Arc<Registry<PersonId, Entity>>,
@@ -116,39 +115,46 @@ pub fn handle_new_game_manager_queue(
     let dispatch_time_limit = Duration::from_millis(5);
 
     timed_dispatch(queue, dispatch_time_limit, |cmd| match cmd {
-        SimManagerCommand::ResetSim => {
-            info!("Resetting simulation...");
-
-            debug!("Stopping sim...");
-            if sim_manager.is_running() {
-                sim_manager.pause_sim()
-            }
-            game_speed.write().set(GameSpeed::Normal);
-
-            // debug!("Clearing entities...");
-            //
-            reset_request.should_reset.store(true, Ordering::Relaxed);
-
-            debug!("Clearing resources...");
-
-            debug!("Clearing command queue...");
-            //dispatch queues
-            command_queues.runtime.clear();
-            command_queues.control.clear();
-
-            //subsystem queues
-            while queue_manager.sim_manager.queue.pop().is_some() {}
-            while queue_manager.game_speed_manager.queue.pop().is_some() {}
-            while queue_manager.sim_manager.queue.pop().is_some() {}
-
-            debug!("Resetting tick counter...");
-            tick_counter.reset();
-
-            debug!("Resetting registries...");
-            used_profile_picture_registry.used_profile_pictures.clear();
-            person_registry.clear();
+        SimManagerCommand::ResetSim { employee, company } => {
+            sim_manager.reset_sim(
+                queue_manager,
+                tick_counter,
+                game_speed,
+                used_profile_picture_registry,
+                person_registry,
+                reset_request,
+                command_queues,
+                first_run,
+                last_update_map,
+                Some(company),
+                Some(employee),
+            );
         }
-
-        _ => {}
+        SimManagerCommand::StartSim { company, employee } => {
+            sim_manager.reset_sim(
+                queue_manager,
+                tick_counter,
+                game_speed,
+                used_profile_picture_registry,
+                person_registry,
+                reset_request,
+                command_queues,
+                first_run,
+                last_update_map,
+                Some(company),
+                Some(employee),
+            );
+            info!("Sim Manager : {:?}", sim_manager)
+        }
+        cmd => {
+            error!("Unexpected item in game manager queue {:?}", cmd);
+        }
     });
+}
+
+#[system]
+pub fn test_sim_manager(#[resource] sim_manager: &Arc<SimManager>){
+
+    info!("Sim manager: {:?}", sim_manager);
+
 }
