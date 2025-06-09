@@ -2,6 +2,7 @@
     import {onMount} from "svelte";
     import {invoke} from "@tauri-apps/api/core";
     import {goto} from "$app/navigation";
+    import SelectableButton from "$lib/components/SelectableButton.svelte";
 
     // let companyName = "";
     let difficulty = "Standard";
@@ -173,24 +174,22 @@
     <div>
         <label class="block text-xs text-slate-400 mb-1">Difficulty</label>
         <div class="grid grid-cols-3 gap-2">
-            <button
-                    class="px-3 py-2 {difficulty === 'Casual' ? 'bg-green-900 border-green-700 text-green-400' : 'bg-slate-900 border-slate-700'} border rounded text-center hover:bg-slate-700"
-                    on:click={() => difficulty = 'Casual'}
-            >
-                Casual
-            </button>
-            <button
-                    class="px-3 py-2 {difficulty === 'Standard' ? 'bg-green-900 border-green-700 text-green-400' : 'bg-slate-900 border-slate-700'} border rounded text-center hover:bg-slate-700"
-                    on:click={() => difficulty = 'Standard'}
-            >
-                Standard
-            </button>
-            <button
-                    class="px-3 py-2 {difficulty === 'Expert' ? 'bg-green-900 border-green-700 text-green-400' : 'bg-slate-900 border-slate-700'} border rounded text-center hover:bg-slate-700"
-                    on:click={() => difficulty = 'Expert'}
-            >
-                Expert
-            </button>
+            <SelectableButton
+                    text="Casual"
+                    selected={difficulty === 'Casual'}
+                    onclick={() => difficulty = 'Casual'}
+            />
+            <SelectableButton
+                    text="Standard"
+                    selected={difficulty === 'Standard'}
+                    onclick={() => difficulty = 'Standard'}
+
+            />
+            <SelectableButton
+                    text="Expert"
+                    selected={difficulty === 'Expert'}
+                    onclick={() => difficulty = 'Expert'}
+            />
         </div>
     </div>
 

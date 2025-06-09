@@ -144,7 +144,6 @@ pub fn handle_new_game_manager_queue(
                 Some(company),
                 Some(employee),
             );
-            info!("Sim Manager : {:?}", sim_manager)
         }
         cmd => {
             error!("Unexpected item in game manager queue {:?}", cmd);
@@ -154,7 +153,6 @@ pub fn handle_new_game_manager_queue(
 
 #[system]
 pub fn test_sim_manager(#[resource] sim_manager: &Arc<SimManager>){
-
-    info!("Sim manager: {:?}", sim_manager);
+    // info!("Sim manager: {:?}", sim_manager);
 
 }
