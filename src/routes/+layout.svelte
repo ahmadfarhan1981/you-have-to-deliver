@@ -6,6 +6,7 @@
     import {basePersonArray, type PersonSnapshotWithTotal, personsSnapshotEventName} from "$lib/stores/persons";
     import {company, type CompanySnapshot, companySnapshotEventName} from "$lib/stores/company";
     import {type TeamSnapshot, teamSnapshotEventName, teamSnapshots} from "$lib/stores/teams";
+        import {Toaster} from "svelte-hot-french-toast"
 
     let { children } = $props();
 
@@ -40,4 +41,5 @@
 
 
 </script>
+<Toaster />
 {@render children()}

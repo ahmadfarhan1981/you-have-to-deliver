@@ -27,6 +27,7 @@
     "@tauri-apps/cli": "^2",
     "svelte": "^5.33.14",
     "svelte-check": "^4.0.0",
+    "svelte-hot-french-toast": "^2.0.0",
     "typescript": "~5.6.2",
     "vite": "^6.3.5"
   }

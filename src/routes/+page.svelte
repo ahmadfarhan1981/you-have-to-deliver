@@ -5,6 +5,7 @@
     import {goto} from "$app/navigation";
     import {gameSpeed} from "$lib/stores/gameSpeed.js";
     import NewGamePanel from "$lib/components/NewGamePanel.svelte";
+    import { Toaster, toast } from "svelte-hot-french-toast";
 
     // State management
     let selectedMenu = "New Game";
@@ -48,11 +49,11 @@
         return () => {
             clearInterval(cursorInterval);
         };
+
     });
 
 
 </script>
-
 <div class="grid-bg min-h-screen flex flex-col">
     <div class="flex-1 flex items-center justify-center">
         <div class="max-w-4xl w-full mx-auto p-6">
@@ -120,8 +121,22 @@
                         </button>
                         <button
                                 class="px-3 py-2 border-2"
-                                on:click={async () => await invoke('assign_person_to_team',{teamId:1, personId:1})}
-                        >add
+                                on:click={() => toast.info("Woohooo",{
+                                    style: "background-color: #1e293b; /* bg-slate-800 */\n"+
+                                            "         border-width: 1px;         /* border */\n"+
+                                            "         border-style: solid;       /* border */\n"+
+                                            "         border-color: #334155;     /* border-slate-700 */\n"+
+                                            "         border-radius: 0.25rem;    /* rounded */\n"+
+                                            "         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace; /* font-mono */\n"+
+                                            "         font-size: 0.875rem;       /* text-sm (14px) */\n"+
+                                            "         line-height: 1.25rem;      /* text-sm (20px) */\n"+
+                                            "         color: white;              /* To ensure text is visible on dark background */\n"+
+                                            "         padding: 0.75rem 1rem;"
+                                })}
+                        >Toast
+                        </button>
+                        <button on:click={() => toast('My first toast')}>
+                            Give me a toast
                         </button>
                         <button
                                 class="px-3 py-2 border-2" on:click={async () => await invoke('refresh_data')}
@@ -376,4 +391,17 @@
             opacity: 0;
         }
     }
+
+     .my-custom-toast-style {
+         background-color: #1e293b; /* bg-slate-800 */
+         border-width: 1px;         /* border */
+         border-style: solid;       /* border */
+         border-color: #334155;     /* border-slate-700 */
+         border-radius: 0.25rem;    /* rounded */
+         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; /* font-mono */
+         font-size: 0.875rem;       /* text-sm (14px) */
+         line-height: 1.25rem;      /* text-sm (20px) */
+         color: white;              /* To ensure text is visible on dark background */
+         padding: 0.75rem 1rem;     /* Optional: Add some padding for better appearance */
+     }
 </style>
