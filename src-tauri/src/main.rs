@@ -29,7 +29,7 @@ use crate::integrations::ui::{
 };
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{PersonId, ProfilePicture};
-use crate::sim::person::init::{generate_employees_system, init_company_system, load_global_skills_system, unset_first_run_flag_system, FirstRun};
+use crate::sim::person::init::{emit_done_setup_event_system, generate_employees_system, init_company_system, load_global_skills_system, unset_first_run_flag_system, FirstRun};
 use crate::sim::utils::logging::init_logging;
 use crossbeam::queue::SegQueue;
 use dashmap::{DashMap, DashSet};
@@ -245,7 +245,10 @@ fn main() {
                     .add_system(generate_employees_system())
                     .flush()
                     .add_system(unset_first_run_flag_system())
+                    .flush()
+                    .add_system(emit_done_setup_event_system())
                     .build();
+
 
                 // processes the command dispatch queues,  dispatch then sends to the resource profile specific queues.
                 // sim manager runs outside the suspended kill switch

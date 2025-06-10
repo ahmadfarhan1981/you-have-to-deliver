@@ -22,7 +22,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use tracing::{info, trace};
 use tracing_subscriber::fmt::writer::WithFilter;
 use crate::action_queues::game_speed_manager::GameSpeedManagerCommand::SetGameSpeed;
+use crate::integrations::events::{emit_app_event, AppEventType};
 use crate::integrations::snapshots::snapshots::SnapshotState;
+use crate::sim::calendar::components::EventType;
 use crate::sim::company::company::{Company, PlayerControlled};
 use crate::sim::new_game::new_game::StartingEmployeesConfig;
 
@@ -52,6 +54,13 @@ impl FirstRun{
 pub fn unset_first_run_flag(#[resource] first: &Arc<FirstRun>)
 {
     first.first.store(false, Ordering::Relaxed)
+}
+
+#[system]
+pub fn emit_done_setup_event(#[resource] app_context: &Arc<AppContext>)
+{
+    info!("emit_done_setup_event");
+    emit_app_event(&app_context.app_handle, AppEventType::InitDone)
 }
 
 #[system]
