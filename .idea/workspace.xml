@@ -23,6 +23,8 @@
         <option value="NewGamePanel" />
         <option value="SelectableButton" />
         <option value="Rust File" />
+        <option value="+page.svelte" />
+        <option value="+layout.svelte" />
       </list>
     </option>
   </component>
@@ -94,7 +96,8 @@
       <workItem from="1749376952631" duration="901000" />
       <workItem from="1749377874122" duration="14332000" />
       <workItem from="1749457926524" duration="9636000" />
-      <workItem from="1749476394585" duration="11444000" />
+      <workItem from="1749476394585" duration="12117000" />
+      <workItem from="1749517081121" duration="3593000" />
     </task>
     <task id="LOCAL-00001" summary="basic action">
       <option name="closed" value="true" />
