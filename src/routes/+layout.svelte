@@ -7,6 +7,11 @@
     import {company, type CompanySnapshot, companySnapshotEventName} from "$lib/stores/company";
     import {type TeamSnapshot, teamSnapshotEventName, teamSnapshots} from "$lib/stores/teams";
         import {Toaster} from "svelte-hot-french-toast"
+    import {
+        cleanupTauriNotificationListeners,
+        initializeTauriNotificationListeners
+    } from "$lib/utils/eventNotificationListener";
+
 
     let { children } = $props();
 
@@ -28,6 +33,7 @@
             // console.log(JSON.stringify(event.payload))
             teamSnapshots.set(event.payload)
         } );
+        initializeTauriNotificationListeners();
 
         return () => {
             // Make sure to unsubscribe when the component is destroyed
@@ -35,6 +41,8 @@
             person_unlisten.then(fn=>fn());
             company_unlisten.then(fn=>fn())
             teams_unlisten.then(fn=>fn())
+
+            cleanupTauriNotificationListeners();
 
         };
     });
