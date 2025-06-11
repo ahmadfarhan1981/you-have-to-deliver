@@ -2,6 +2,8 @@
 import {writable} from 'svelte/store';
 import {listen, type UnlistenFn} from '@tauri-apps/api/event';
 import {toast} from 'svelte-hot-french-toast';
+import {goto} from "$app/navigation";
+import {invoke} from "@tauri-apps/api/core";
 
 // Define the single, generic payload interface for the frontend
 interface UINotificationPayload {
@@ -70,6 +72,10 @@ ${event.payload.message}`
                     break;
             }
             // You can also access event.payload.context_id here if needed for deeper UI interaction
+            if (eventName == "init_done"){
+                invoke('resume_sim')
+                goto("/game");
+            }
         });
         unlistenFunctions.push(unlisten);
     }

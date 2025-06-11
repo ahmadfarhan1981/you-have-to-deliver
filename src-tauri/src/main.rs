@@ -73,7 +73,8 @@ use action_queues::team_manager::{
 };
 use parking_lot::{Mutex, RwLock};
 use sim::utils::banner::print_banner;
-use crate::action_queues::sim_manager::test_sim_manager_system;
+use crate::action_queues::sim_manager::{reset_snapshot_system, test_sim_manager_system};
+use crate::integrations::events::{emit_app_event, AppEventType};
 use crate::sim::new_game::new_game::{get_company_presets, get_starting_employee_configs, CompanyPreset, CompanyPresetStatic, StartingEmployeesConfig};
 
 fn print_startup_banner() {
@@ -245,8 +246,8 @@ fn main() {
                     .add_system(generate_employees_system())
                     .flush()
                     .add_system(unset_first_run_flag_system())
-                    .flush()
-                    .add_system(emit_done_setup_event_system())
+                    // .flush()
+                    // .add_system(emit_done_setup_event_system())
                     .build();
 
 
@@ -279,7 +280,11 @@ fn main() {
 
                 let mut reset_state_schedule =
                     Schedule::builder() // sim manager schedule, runs outside the killswitch
+                        .add_system(reset_snapshot_system())
+                        .flush()
                         .add_system(reset_state_system())
+                        .flush()
+                        .add_system(emit_done_setup_event_system())
                         .build();
 
                 /// subsystem command system:

@@ -22,6 +22,7 @@ use parking_lot::RwLock;
 use std::time::Duration;
 use tracing::field::debug;
 use tracing::{debug, error, info, trace, warn};
+use crate::integrations::snapshots::snapshots::SnapshotState;
 
 #[derive(Default, Debug)]
 pub enum SimManagerCommand {
@@ -95,6 +96,12 @@ pub fn delete_all_entity(
 #[system]
 pub fn reset_state(#[resource] reset_request: &mut Arc<ResetRequest>) {
     reset_request.should_reset.store(false, Ordering::Relaxed);
+}
+
+#[system]
+pub fn reset_snapshot(#[resource] app_state: &Arc<SnapshotState>){
+    app_state.persons.clear();
+    app_state.teams.clear();
 }
 #[system]
 pub fn handle_new_game_manager_queue(
