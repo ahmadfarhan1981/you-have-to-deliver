@@ -13,3 +13,4 @@ pub mod sim_date;
 pub mod systems;
 pub mod team;
 pub mod utils;
+mod locations;
