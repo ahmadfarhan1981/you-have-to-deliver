@@ -30,7 +30,9 @@ use tracing::{debug, info, warn};
 use tracing::field::debug;
 use tracing_subscriber::registry;
 use crate::constants::COMPANY_SNAPSHOT_EVENT_NAME;
+use crate::integrations::snapshots::debug_display::DebugDisplayEntrySnapshot;
 use crate::sim::action::action::ActionIntent;
+use crate::sim::utils::debugging::DebugDisplayComponent;
 
 #[system]
 pub fn push_game_speed_snapshots(
@@ -260,4 +262,61 @@ pub fn push_teams_to_integration(
         }
     };
     cmd.remove_component::<Dirty>(*entity);
+}
+
+
+
+#[system(for_each)]
+pub fn push_debug_displays_to_integration(
+    #[resource] app_state: &Arc<SnapshotState>,
+    person :&Person,
+    debug_display_component: &DebugDisplayComponent,
+) {
+    // let current_tick = tick_counter.value();
+    let debug_display_registry = &app_state.debug_display;
+
+    let mut entries: Vec<DebugDisplayEntrySnapshot> = debug_display_component.entries.iter().map(|(key, val)| { DebugDisplayEntrySnapshot::new(key.clone(), val.clone())}).collect();
+    entries.sort_by(|a, b| a.label.cmp(&b.label));
+    // info!("{:?}", entries);
+
+    match debug_display_registry.entry(person.person_id.0) {
+        Entry::Occupied(mut existing) => {
+            let existing_debug_displays = existing.get_mut();
+            *existing_debug_displays = entries;
+
+        }
+        Entry::Vacant(vacant) => {
+            vacant.insert( entries );
+        }
+    };
+
+    // print_all_debug_displays(&app_state.debug_display);
+
+
+
+
+
+}
+
+pub fn print_all_debug_displays(registry: &DashMap<u32, Vec<DebugDisplayEntrySnapshot>>) {
+    if registry.is_empty() {
+        info!("Debug display registry is empty.");
+        return;
+    }
+
+    info!("--- All Debug Displays ---");
+    for entry in registry.iter() {
+        let person_id = entry.key();
+        let display_entries = entry.value();
+
+        info!("Person ID: {}", person_id);
+        if display_entries.is_empty() {
+            info!("  No debug entries for this person.");
+        } else {
+            for debug_entry in display_entries.iter() {
+                info!("  - {}: {}", debug_entry.label, debug_entry.value);
+            }
+        }
+    }
+    info!("--- End of Debug Displays ---");
 }

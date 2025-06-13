@@ -19,11 +19,7 @@ use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRe
 use legion::{Entity, Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
-use crate::integrations::systems::{
-    push_company_to_integration_system, push_game_speed_snapshots_system,
-    push_needs_to_integration_system, push_persons_to_integration_system,
-    push_teams_to_integration_system, tick_needs_system,
-};
+use crate::integrations::systems::{push_company_to_integration_system, push_debug_displays_to_integration_system, push_game_speed_snapshots_system, push_needs_to_integration_system, push_persons_to_integration_system, push_teams_to_integration_system, tick_needs_system};
 use crate::integrations::ui::{
     assign_person_to_team, new_sim, new_team, refresh_data, resume_sim, stop_sim,
     unassign_team, AppContext,
@@ -78,6 +74,7 @@ use crate::action_queues::sim_manager::{reset_snapshot_system, test_sim_manager_
 use crate::integrations::events::{emit_app_event, AppEventType};
 use crate::sim::ai::consideration::goal_selection_system;
 use crate::sim::new_game::new_game::{get_company_presets, get_starting_employee_configs, CompanyPreset, CompanyPresetStatic, StartingEmployeesConfig};
+use crate::sim::utils::debugging::clear_debug_display_system;
 
 fn print_startup_banner() {
     print_banner();
@@ -129,6 +126,14 @@ fn main() {
         },
     };
 
+    let debug_display_snapshots_emitter = SnapshotCollectionEmitter {
+        map: Arc::clone(&main_snapshot_state.debug_display),
+        config: SnapshotEmitterConfig {
+            frequency: ExportFrequency::EveryTick,
+            event_name: "debug_display_snapshot",
+            last_sent_tick: Default::default(),
+        },
+    };
     let team_snapshots_emitter = SnapshotCollectionEmitter {
         map: Arc::clone(&main_snapshot_state.teams),
         config: SnapshotEmitterConfig {
@@ -149,6 +154,7 @@ fn main() {
     snapshot_registry.register(game_speed_snapshots_emitter);
     snapshot_registry.register(person_snapshots_emitter);
     snapshot_registry.register(team_snapshots_emitter);
+    snapshot_registry.register(debug_display_snapshots_emitter);
 
     let gsm = GameSpeedManager {
         game_speed: GameSpeed::Normal,
@@ -305,6 +311,7 @@ fn main() {
 
                 // main sim
                 let mut sim_schedule = Schedule::builder() // Main game loop, add systems that runs per frame here.
+                    .add_system(clear_debug_display_system())
                     .add_system(increase_sim_tick_system())
                     .add_system(print_person_system())
                     .add_system(goal_selection_system())
@@ -319,6 +326,7 @@ fn main() {
                         .add_system(push_company_to_integration_system())
                         .add_system(push_teams_to_integration_system())
                         .add_system(push_needs_to_integration_system())
+                        .add_system(push_debug_displays_to_integration_system())
                         .build();
                 let mut post_integration = Schedule::builder()
                     .add_system(run_snapshot_emitters_system())

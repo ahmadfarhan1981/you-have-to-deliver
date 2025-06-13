@@ -11,6 +11,11 @@
         cleanupTauriNotificationListeners,
         initializeTauriNotificationListeners
     } from "$lib/utils/eventNotificationListener";
+    import {
+        type AllPersonDebugDisplays,
+        personDebugDisplays,
+        personDebugSnapshotEventName
+    } from "$lib/stores/debugDisplay";
 
 
     let { children } = $props();
@@ -33,6 +38,12 @@
             // console.log(JSON.stringify(event.payload))
             teamSnapshots.set(event.payload)
         } );
+
+        const unlistenDebugDisplays = listen<AllPersonDebugDisplays>(personDebugSnapshotEventName, (event) => {
+            console.log("debug snapshot", event.payload)
+            personDebugDisplays.set(event.payload);
+        });
+
         initializeTauriNotificationListeners();
 
         return () => {
@@ -41,6 +52,7 @@
             person_unlisten.then(fn=>fn());
             company_unlisten.then(fn=>fn())
             teams_unlisten.then(fn=>fn())
+            unlistenDebugDisplays.then(fn => fn());
 
             cleanupTauriNotificationListeners();
 

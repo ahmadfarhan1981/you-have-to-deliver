@@ -11,6 +11,8 @@
     import ProjectPanel from "$lib/components/ProjectPanel.svelte";
     import type {Readable, Writable} from "svelte/store";
     import {activeTab} from "$lib/stores/TabStore";
+    import DebugDisplay from "$lib/components/plain/DebugDisplay.svelte";
+    import ValueBar from "$lib/components/ValueBar.svelte";
 
 
     export let personStore: Readable<PersonSnapshotWithTotal | null>;
@@ -73,6 +75,13 @@
     <div class="border-t border-gray-300 my-6"></div>
 
     <div class="grid grid-cols-3 gap-6">
+        <div>
+            <DebugDisplay personId={$personStore.person_id}/>
+        </div>
+        <div>
+            <ValueBar value={$personStore.energy.level}/>
+            <ValueBar value={$personStore.hunger.level}/>
+        </div>
         <div>
             <PersonOverviewPanel person={person}/>
             <PersonalityMatrixPanel personality={person.personality}/>

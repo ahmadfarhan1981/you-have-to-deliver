@@ -5,3 +5,4 @@ pub mod snapshots;
 pub mod term;
 mod id;
 pub mod banner;
+pub mod debugging;

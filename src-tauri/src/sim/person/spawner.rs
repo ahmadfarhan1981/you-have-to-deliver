@@ -24,6 +24,7 @@ use crate::sim::systems::global::UsedProfilePictureRegistry;
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 use crate::sim::person::needs::{Energy, Hunger};
+use crate::sim::utils::debugging::DebugDisplayComponent;
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: i16, max: i16) -> i16 {
     let normal = Normal::new(mean, std_dev).unwrap();
@@ -318,7 +319,7 @@ pub fn spawn_person(
     let stats = generate_stats(tier);
     let personality_matrix = generate_personality_matrix();
     let skillset = assign_skills( &stats, &global_skills);
-    let entity = cmd.push((person, stats, profile_picture, personality_matrix, skillset.clone(), Energy::default(), Hunger::default(), Dirty));
+    let entity = cmd.push((person, stats, profile_picture, personality_matrix, skillset.clone(), Energy::default(), Hunger::default(), Dirty, DebugDisplayComponent::default()));
     person_registry.insert(id, entity);
 
     (id, entity,person_clone, stats,  profile_picture, personality_matrix, skillset.clone())

@@ -32,8 +32,13 @@ export type PersonSnapshot = {
     energy: Energy;
     hunger: Hunger;
 
-
 };
+
+// export type DebugDisplay = {
+//     label: string;
+//     value: string;
+// }
+
 export type TalentGrade =
     | "Basic"
     | "Apt"
