@@ -1,6 +1,7 @@
 // src/ai/goap.rs
 use std::collections::HashMap;
 use legion::Entity;
+use crate::sim::ai::consideration::{GoalDefinition, GoalName};
 
 // --- Employee GOAP Facts (Legion Component) ---
 // This represents the employee's current beliefs about themselves and the world
@@ -71,8 +72,10 @@ impl EmployeeGoapFacts {
 
 // --- Current Goal (Legion Component) ---
 // The target EmployeeGoapFacts that the employee is currently trying to achieve.
+// #[derive(Clone, Debug, PartialEq, Eq, Default)]
+// pub struct CurrentGoal(pub EmployeeGoapFacts);
 #[derive(Clone, Debug, PartialEq, Eq, Default)]
-pub struct CurrentGoal(pub EmployeeGoapFacts);
+pub struct CurrentGoal(pub GoalName);
 
 // --- Current Plan (Legion Component) ---
 // A sequence of game actions to achieve the current goal.

@@ -8,6 +8,7 @@ use dashmap::DashMap;
 use serde::Serialize;
 use std::hash::Hash;
 use std::sync::Arc;
+use crate::integrations::snapshots::debug_display::DebugDisplayEntrySnapshot;
 
 /// this is tha main integration state
 #[derive(Debug)]
@@ -17,6 +18,7 @@ pub struct SnapshotState {
     pub persons: Arc<DashMap<u32, PersonSnapshot>>,
     pub company: Arc<SnapshotField<CompanySnapshot>>,
     pub teams : Arc<DashMap<u32, TeamSnapshot>>,
+    pub debug_display: Arc<DashMap<u32, Vec<DebugDisplayEntrySnapshot>>>,
 
 }
 
@@ -28,6 +30,7 @@ impl Default for SnapshotState {
             persons: Arc::new(DashMap::new()),
             company: Arc::new(SnapshotField::from(CompanySnapshot::default())),
             teams: Arc::new(DashMap::<u32, TeamSnapshot>::new()),
+            debug_display: Arc::new(DashMap::<u32, Vec<DebugDisplayEntrySnapshot>>::new()),
         }
     }
 }

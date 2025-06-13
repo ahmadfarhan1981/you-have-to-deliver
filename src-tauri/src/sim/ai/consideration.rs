@@ -4,13 +4,15 @@ use std::default::Default;
 use legion::{system, Entity, IntoQuery};
 use legion::world::SubWorld;
 use tracing::info;
+use crate::integrations::snapshots::debug_display::DebugDisplayEntrySnapshot;
 use crate::sim::person::components::Person;
+use crate::sim::utils::debugging::DebugDisplayComponent;
 
 // --- Score Context (The "all parameters" struct for Considerations) ---
 // This bundles all the data a Consideration might need to calculate a score.
 pub struct ScoreContext<'a> {
     pub goap_facts: &'a EmployeeGoapFacts, // For GOAP-related facts (e.g., task progress)
-    pub needs: Needs
+    pub needs: Needs,
 }
 
 // --- Consideration Trait ---
@@ -84,10 +86,27 @@ impl Consideration for DefaultConsideration {
 // }
 
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)] // Add necessary derives
+pub enum GoalName {
+    Rest,
+    Eat,
+    #[default]
+    DoNothing,
+    // Add other goal names here as you define them
+    // CompleteAssignedTask,
+    // Socialize,
+}
+
+// Optional: Implement Display for easier printing or conversion to string if needed
+impl std::fmt::Display for GoalName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{:?}", self) // Simple debug print, customize as needed
+    }
+}
 // --- Goal Definition (Global Data / Resource) ---
 // Defines a potential goal, its target GOAP state, and how its utility is scored.
 pub struct GoalDefinition {
-    pub name: &'static str,
+    pub name: GoalName,
     pub goap_target_facts: EmployeeGoapFacts, // The desired GOAP state
     pub considerations: Vec<(Box<dyn Consideration>, f32)>, // Considerations and their weights
 }
@@ -117,7 +136,7 @@ impl GoalDefinition {
 pub fn get_all_goal_definitions() -> Vec<GoalDefinition> {
     vec![
         GoalDefinition {
-            name: "Rest",
+            name: GoalName::Rest,
             goap_target_facts: EmployeeGoapFacts::default(), // No specific fact change needed for rest (could be `at_home = true`)
             considerations: vec![
                 (Box::new(EnergyConsideration), 1.0), // High weight for low energy
@@ -125,7 +144,7 @@ pub fn get_all_goal_definitions() -> Vec<GoalDefinition> {
             ],
         },
         GoalDefinition {
-            name: "Eat",
+            name: GoalName::Eat,
             goap_target_facts: EmployeeGoapFacts { has_food: false, ..Default::default() }, // Goal is to consume food
             considerations: vec![
                 (Box::new(HungerConsideration), 1.0), // High weight for hunger
@@ -133,7 +152,7 @@ pub fn get_all_goal_definitions() -> Vec<GoalDefinition> {
             ],
         },
         GoalDefinition {
-            name: "Do nothing",
+            name: GoalName::DoNothing,
             goap_target_facts: EmployeeGoapFacts::default(), // No specific fact change needed for rest (could be `at_home = true`)
             considerations: vec![
                 (Box::new(DefaultConsideration), 1.0), // High weight for low energy
@@ -169,6 +188,7 @@ pub fn get_all_goal_definitions() -> Vec<GoalDefinition> {
 #[read_component(Energy)]
 #[read_component(Hunger)]
 #[read_component(Person)]
+#[write_component(DebugDisplayComponent)]
 #[write_component(CurrentGoal)]
 pub fn goal_selection(
     world: &mut SubWorld,
@@ -176,10 +196,10 @@ pub fn goal_selection(
 ) {
     info!("Goal selection");
     let all_goal_definitions = get_all_goal_definitions();
-    let mut query = <(Entity, &Person, Option<&EmployeeGoapFacts>, &Energy, &Hunger, Option<&mut CurrentGoal>)>::query();
+    let mut query = <(Entity, &Person, Option<&EmployeeGoapFacts>, &Energy, &Hunger, Option<&mut CurrentGoal>, &mut DebugDisplayComponent)>::query();
 
 
-    for (entity, person, goap_facts, energy, hunger, current_goal_option) in query.iter_mut(world) {
+    for (entity, person, goap_facts, energy, hunger, current_goal_option, debug_display) in query.iter_mut(world) {
 
         let needs = Needs{
             energy: energy.clone(),
@@ -195,20 +215,20 @@ pub fn goal_selection(
             needs,
         };
 
-        let mut best_goal_name: Option<&'static str> = None;
+        let mut best_goal_name: Option<GoalName> = None;
         let mut highest_utility: f32 = -1.0; // Utility scores are 0-1, so -1 ensures any valid score is chosen
 
         for goal_def in all_goal_definitions.iter() {
             let utility = goal_def.calculate_utility(&context);
-
+            debug_display.entries.push(("Goal ".to_string() + &goal_def.name.to_string(), utility.to_string() ));
             // Simple highest utility wins (could add stickiness later)
             if utility > highest_utility {
                 highest_utility = utility;
-                best_goal_name = Some(goal_def.name);
+                best_goal_name = Some(goal_def.name.clone());
                 //current_goal.0 = goal_def.goap_target_facts.clone(); // Update the GOAP target facts
             }
         }
-        info!("Employee {:?} selected Goal: {:?} (Utility: {:.2})", person, best_goal_name, highest_utility);
+        // info!("Employee {:?} selected Goal: {:?} (Utility: {:.2})", person, best_goal_name, highest_utility);
         // println!("  Target GOAP Facts: {:?}", current_goal.0.get_active_facts());
     }
 }
