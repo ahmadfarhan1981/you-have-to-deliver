@@ -1,2 +1,3 @@
 pub mod goal;
-mod consideration;
+pub mod consideration;
+pub mod goap;

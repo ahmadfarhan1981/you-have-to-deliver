@@ -1,6 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-#![allow(warnings)]
+#![allow(dead_code)]  // For "never used"
+#![allow(unused)]     // For both "never used" and "never constructed"
 #![deny(clippy::print_stdout)]
 #![allow(clippy::dbg_macro)]
 
@@ -75,6 +76,7 @@ use parking_lot::{Mutex, RwLock};
 use sim::utils::banner::print_banner;
 use crate::action_queues::sim_manager::{reset_snapshot_system, test_sim_manager_system};
 use crate::integrations::events::{emit_app_event, AppEventType};
+use crate::sim::ai::consideration::goal_selection_system;
 use crate::sim::new_game::new_game::{get_company_presets, get_starting_employee_configs, CompanyPreset, CompanyPresetStatic, StartingEmployeesConfig};
 
 fn print_startup_banner() {
@@ -305,6 +307,7 @@ fn main() {
                 let mut sim_schedule = Schedule::builder() // Main game loop, add systems that runs per frame here.
                     .add_system(increase_sim_tick_system())
                     .add_system(print_person_system())
+                    .add_system(goal_selection_system())
                     .build();
 
                 //integration, handles generating snapshots

@@ -293,7 +293,6 @@ mod tests {
     }
 
     #[test]
-    #[test]
     fn get_neighbors_with_costs_test() {
         let mut graph = LocationGraph::new();
         let loc_a = LocationId::from("loc_a");
