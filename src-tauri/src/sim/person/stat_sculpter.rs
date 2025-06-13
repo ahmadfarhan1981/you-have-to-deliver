@@ -139,7 +139,7 @@ pub fn sculpt_contrasting_pair(stats: &mut Stats) {
     let amount = 12f32;
     let total_points = stats.total();
 
-    let mut a = random_stat();
+    let a = random_stat();
     let mut b = random_stat();
     while same_group(a, b) || a == b {
         b = random_stat();

@@ -142,7 +142,7 @@ impl From<&SkillDef> for GlobalSkill {
 
 
 #[derive(Clone)]
-struct SkillLink {
+pub struct SkillLink {
     target: SkillId,
     factor: u8,
 }

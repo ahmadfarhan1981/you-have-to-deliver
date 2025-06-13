@@ -224,3 +224,4 @@ impl fmt::Display for HungerLevel {
         write!(f, "{}", s)
     }
 }
+

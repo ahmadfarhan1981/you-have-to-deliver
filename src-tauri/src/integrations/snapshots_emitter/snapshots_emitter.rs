@@ -12,7 +12,7 @@ use tracing::{debug, info, instrument, trace};
 use tracing::field::debug;
 use crate::integrations::snapshots::snapshots::SnapshotField;
 
-trait SnapshotEmitter {
+pub trait SnapshotEmitter {
     fn maybe_emit(&self, tick: u64, last_update_map:  &DashMap<&'static str, u64>, app: &AppHandle) -> bool;
     fn emit(&self, tick: Option<u64>, app: &AppHandle);
 }

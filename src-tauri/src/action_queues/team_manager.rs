@@ -56,12 +56,12 @@ pub fn handle_team_manager_queue(
             creat_new_team(team_registry, commands, name, description);
         }
         TeamManagerCommand::RemoveTeam { id } => {
-            let teamId = TeamId(id);
-            match team_registry.get_entity_from_id(&teamId) {
+            let team_id = TeamId(id);
+            match team_registry.get_entity_from_id(&team_id) {
                 None => {
                     warn!(
                         "Team with ID:{:?} not found for deleting. Skipping...",
-                        teamId
+                        team_id
                     )
                 }
                 Some(entity) => {
