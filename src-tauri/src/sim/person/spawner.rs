@@ -1,14 +1,24 @@
 use super::components::Person;
 use super::stats::{StatType, Stats, StatsConfig};
 use crate::sim::person::components::{Gender, PersonId, ProfilePicture, ProfilePictureCategory};
+use crate::sim::person::needs::{Energy, Hunger};
 use crate::sim::person::personality_matrix::{PersonalityAxis, PersonalityMatrix};
+use crate::sim::person::skills::{GlobalSkill, SkillSet};
+use crate::sim::person::stat_sculpter::{
+    sculpt_axis_bias, sculpt_blindspot, sculpt_contrasting_pair, sculpt_monofocus,
+};
+use crate::sim::registries::registry::Registry;
 use crate::sim::resources::global::{AssetBasePath, Dirty};
+use crate::sim::systems::global::UsedProfilePictureRegistry;
+use crate::sim::utils::debugging::DebugDisplayComponent;
 use dashmap::DashSet;
 use legion::systems::CommandBuffer;
 use legion::Entity;
+use rand::prelude::*;
 use rand::seq::IteratorRandom;
 use rand::{rng, Rng};
 use rand_distr::{Distribution, Normal};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
 use std::fmt::{Display, Formatter};
@@ -17,14 +27,7 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, trace};
-use crate::sim::person::skills::{GlobalSkill, SkillSet};
-use crate::sim::person::stat_sculpter::{sculpt_axis_bias, sculpt_blindspot, sculpt_contrasting_pair, sculpt_monofocus};
-use crate::sim::registries::registry::Registry;
-use crate::sim::systems::global::UsedProfilePictureRegistry;
-use rand::prelude::*;
-use serde::{Deserialize, Serialize};
-use crate::sim::person::needs::{Energy, Hunger};
-use crate::sim::utils::debugging::DebugDisplayComponent;
+use crate::sim::ai::goap::CurrentGoal;
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: i16, max: i16) -> i16 {
     let normal = Normal::new(mean, std_dev).unwrap();
@@ -208,7 +211,7 @@ fn generate_stats(tier: TalentGrade) -> Stats {
     let mut stats = config.into();
     let mut choices = (1..=4).collect::<Vec<_>>();
 
-    match choices.choose(&mut rng()){
+    match choices.choose(&mut rng()) {
         None => {}
         Some(&1) => {
             sculpt_monofocus(&mut stats);
@@ -225,9 +228,7 @@ fn generate_stats(tier: TalentGrade) -> Stats {
         _ => {}
     }
 
-
-
-     sculpt_blindspot(&mut stats);
+    sculpt_blindspot(&mut stats);
     stats
 }
 
@@ -297,8 +298,16 @@ pub fn spawn_person(
     used_portraits: &UsedProfilePictureRegistry,
     person_registry: &Arc<Registry<PersonId, Entity>>,
     global_skills: &Vec<GlobalSkill>,
-    current_tick:u64,
-) -> (PersonId, Entity, Person, Stats, ProfilePicture, PersonalityMatrix, SkillSet) {
+    current_tick: u64,
+) -> (
+    PersonId,
+    Entity,
+    Person,
+    Stats,
+    ProfilePicture,
+    PersonalityMatrix,
+    SkillSet,
+) {
     debug!("Spawning person");
     let id = PersonId(person_registry.generate_id());
 
@@ -310,7 +319,7 @@ pub fn spawn_person(
         person_id: id.clone(),
         team: None,
         talent_grade: tier,
-        joined: current_tick
+        joined: current_tick,
     };
     let person_clone = person.clone();
     trace!("Created person {}", person.name);
@@ -318,11 +327,30 @@ pub fn spawn_person(
     let profile_picture = generate_profile_picture(gender, used_portraits);
     let stats = generate_stats(tier);
     let personality_matrix = generate_personality_matrix();
-    let skillset = assign_skills( &stats, &global_skills);
-    let entity = cmd.push((person, stats, profile_picture, personality_matrix, skillset.clone(), Energy::default(), Hunger::default(), Dirty, DebugDisplayComponent::default()));
+    let skillset = assign_skills(&stats, &global_skills);
+    let entity = cmd.push((
+        person,
+        stats,
+        profile_picture,
+        personality_matrix,
+        skillset.clone(),
+        Energy::default(),
+        Hunger::default(),
+        Dirty,
+        DebugDisplayComponent::default(),
+        CurrentGoal::default(),
+    ));
     person_registry.insert(id, entity);
 
-    (id, entity,person_clone, stats,  profile_picture, personality_matrix, skillset.clone())
+    (
+        id,
+        entity,
+        person_clone,
+        stats,
+        profile_picture,
+        personality_matrix,
+        skillset.clone(),
+    )
 }
 
 fn assign_skills(stats: &Stats, all_skills: &[GlobalSkill]) -> SkillSet {

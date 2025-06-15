@@ -12,6 +12,7 @@ mod macros;
 mod master_data;
 mod sim;
 mod constants;
+mod db;
 
 use crate::sim::resources::global::{AssetBasePath, Dirty, SimManager, TickCounter};
 use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRegistry};
@@ -20,10 +21,7 @@ use legion::{Entity, Resources, Schedule, World};
 use sim::systems::global::print_person_system;
 
 use crate::integrations::systems::{push_company_to_integration_system, push_debug_displays_to_integration_system, push_game_speed_snapshots_system, push_needs_to_integration_system, push_persons_to_integration_system, push_teams_to_integration_system, tick_needs_system};
-use crate::integrations::ui::{
-    assign_person_to_team, new_sim, new_team, refresh_data, resume_sim, stop_sim,
-    unassign_team, AppContext,
-};
+use crate::integrations::ui::{assign_person_to_team, exit_app, list_save_slots, new_sim, new_team, refresh_data, resume_sim, stop_sim, test_save_slots, unassign_team, AppContext};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{PersonId, ProfilePicture};
 use crate::sim::person::init::{emit_done_setup_event_system, generate_employees_system, init_company_system, load_global_skills_system, unset_first_run_flag_system, FirstRun};
@@ -69,8 +67,10 @@ use action_queues::team_manager::{
     handle_team_assignment_queue_system, handle_team_manager_queue_system,
 };
 use parking_lot::{Mutex, RwLock};
+use tauri::path::BaseDirectory;
 use sim::utils::banner::print_banner;
 use crate::action_queues::sim_manager::{reset_snapshot_system, test_sim_manager_system};
+use crate::db::init::SavesDirectory;
 use crate::integrations::events::{emit_app_event, AppEventType};
 use crate::sim::ai::consideration::goal_selection_system;
 use crate::sim::new_game::new_game::{get_company_presets, get_starting_employee_configs, CompanyPreset, CompanyPresetStatic, StartingEmployeesConfig};
@@ -101,6 +101,10 @@ fn main() {
     info!("Starting...");
 
     debug!("Debug log is {ENABLED}. Logs will be verbose. Use {log_settings} environment variable for normal operations.",ENABLED= red(&bold("ENABLED")), log_settings= green(&italic("RUST_LOG=info")));
+
+
+
+
     let snapshot_state = SnapshotState::default();
     let ui_snapshot_state = Arc::new(snapshot_state);
     let sim_snapshot_state = Arc::clone(&ui_snapshot_state); // Clone for ECS thread
@@ -198,6 +202,26 @@ fn main() {
             let path = app
                 .path()
                 .resolve("assets", tauri::path::BaseDirectory::Resource)?;
+
+
+            info!("Connecting to the game db file...");
+            info!("Setup");
+            let app_handle = app.handle().clone();
+
+            // Resolve the saves directory path
+            let saves_dir_path = app
+                .path()
+                .resolve("saves", tauri::path::BaseDirectory::AppData)
+                .expect("Failed to resolve saves directory path"); // Handle this error robustly
+
+            // Ensure the directory exists
+            if !saves_dir_path.exists() {
+                std::fs::create_dir_all(&saves_dir_path)
+                    .expect("Failed to create saves directory");
+            }
+
+            // Manage the path so commands can access it via tauri::State
+            app.manage(SavesDirectory(saves_dir_path));
 
             // === Sim thread ===
             thread::spawn(move || {
@@ -429,7 +453,10 @@ fn main() {
             unassign_team,
             refresh_data,
             get_starting_employee_configs,
-            get_company_presets
+            get_company_presets,
+            list_save_slots,
+            test_save_slots,
+            exit_app
         ])
         .run(tauri::generate_context!())
         .expect("error running tauri app");

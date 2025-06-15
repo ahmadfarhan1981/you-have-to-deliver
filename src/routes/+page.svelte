@@ -6,16 +6,16 @@
     import {gameSpeed} from "$lib/stores/gameSpeed.js";
     import NewGamePanel from "$lib/components/NewGamePanel.svelte";
     import { Toaster, toast } from "svelte-hot-french-toast";
+    import RecentGamePanel from "$lib/components/RecentGamePanel.svelte";
+    import MainMenuWelcomPanel from "$lib/components/MainMenuWelcomPanel.svelte";
+    import LoadGamePanel from "$lib/components/LoadGamePanel.svelte";
+    import SettingsPanel from "$lib/components/SettingsPanel.svelte";
+    import TutorialPanel from "$lib/components/TutorialPanel.svelte";
+    import ExitGamePanel from "$lib/components/ExitGamePanel.svelte";
 
     // State management
     let selectedMenu = "New Game";
 
-    // Recent games data
-    const recentGames = [
-        {name: "TechGiants Inc.", day: 42, quarter: "Q2", year: 2025, timeAgo: "2 hours ago"},
-        {name: "Startup Hustle", day: 156, quarter: "Q4", year: 2024, timeAgo: "Yesterday"},
-        {name: "CodeCraft Solutions", day: 78, quarter: "Q3", year: 2025, timeAgo: "3 days ago"}
-    ];
 
     // Menu options
     const menuOptions = [
@@ -38,26 +38,12 @@
         // Load the saved game state and navigate to game screen
     }
 
-    // Terminal cursor blinking effect
-    let showCursor = true;
-
-    onMount(() => {
-        const cursorInterval = setInterval(() => {
-            showCursor = !showCursor;
-        }, 500);
-
-        return () => {
-            clearInterval(cursorInterval);
-        };
-
-    });
-
 
 </script>
-<div class="grid-bg min-h-screen flex flex-col">
-    <div class="flex-1 flex items-center justify-center">
-        <div class="max-w-4xl w-full mx-auto p-6">
-            <div class="bg-slate-900 border border-slate-700 rounded-lg shadow-2xl overflow-hidden">
+<div class="grid-bg min-h-screen flex flex-col ">
+    <div class="flex-1 flex items-center justify-center ">
+        <div class="  w-[90%] mx-auto p-6 ">
+            <div class="bg-slate-900 border border-slate-700 rounded-lg shadow-2xl overflow-hidden w-full">
                 <!-- Header Bar -->
                 <div class="bg-slate-800 px-4 py-2 flex items-center justify-between border-b border-slate-700">
                     <div class="flex items-center">
@@ -79,71 +65,7 @@
                     </div>
 
                     <!-- Terminal-style welcome message -->
-                    <div class="bg-slate-800 border border-slate-700 rounded p-4 mb-8 font-mono text-sm">
-                        <div class="text-green-400 mb-1">$ ./welcome.sh</div>
-                        <div class="text-slate-300">Welcome to DevCorp Simulation v1.0.42</div>
-                        <div class="text-slate-300">Initializing corporate simulation environment...</div>
-                        <div class="text-green-400 mt-1">$ _
-                            {#if showCursor}<span class="terminal-cursor"></span>{/if}
-                        </div>
-                        <div class="text-green-400 mt-1">{$gameSpeed.game_speed} {$gameSpeed.tick.tick}
-                            Tick, {$gameSpeed.tick.quarter_tick} day tick , {$gameSpeed.tick.day}
-                            Day, {$gameSpeed.tick.week} Week
-                        </div>
-                        <button
-                                class="px-3 py-2 border-2" on:click={async () => await invoke('new_sim',{company:companyPresets[selectedCompanyIndex], employee:employeeConfigs[selectedEmployeeConfigIndex] })}
-                        >Reset sim
-                        </button>
-                        <button
-                                class="px-3 py-2 border-2" on:click={async () => goto("/game")}
-                        >Goto game page
-                        </button>
-                        <button
-                                class="px-3 py-2 border-2" on:click={async () => {await invoke('resume_sim');} }
-                        >Start
-                        </button>
-                        <button
-                                class="px-3 py-2 border-2" on:click={async () => await invoke('increase_speed')}
-                        >+
-                        </button>
-                        <button
-                                class="px-3 py-2 border-2" on:click={async ()=> await invoke('decrease_speed')}
-                        >-
-                        </button>
-                        <button
-                                class="px-3 py-2 border-2" on:click={async () => await invoke('stop_sim')}
-                        >Stop
-                        </button>
-                        <button
-                                class="px-3 py-2 border-2"
-                                on:click={async () => await invoke('new_team',{teamName:"new team name", description:"This is a team"})}
-                        >New team
-                        </button>
-                        <button
-                                class="px-3 py-2 border-2"
-                                on:click={() => toast.info("Woohooo",{
-                                    style: "background-color: #1e293b; /* bg-slate-800 */\n"+
-                                            "         border-width: 1px;         /* border */\n"+
-                                            "         border-style: solid;       /* border */\n"+
-                                            "         border-color: #334155;     /* border-slate-700 */\n"+
-                                            "         border-radius: 0.25rem;    /* rounded */\n"+
-                                            "         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace; /* font-mono */\n"+
-                                            "         font-size: 0.875rem;       /* text-sm (14px) */\n"+
-                                            "         line-height: 1.25rem;      /* text-sm (20px) */\n"+
-                                            "         color: white;              /* To ensure text is visible on dark background */\n"+
-                                            "         padding: 0.75rem 1rem;"
-                                })}
-                        >Toast
-                        </button>
-                        <button on:click={() => toast('My first toast')}>
-                            Give me a toast
-                        </button>
-                        <button
-                                class="px-3 py-2 border-2" on:click={async () => await invoke('refresh_data')}
-                        >refresh
-                        </button>
-
-                    </div>
+                    <MainMenuWelcomPanel />
 
                     <!-- Menu Options -->
                     <div class="grid grid-cols-5 gap-6">
@@ -164,23 +86,7 @@
                             </div>
 
                             <!-- Recent Games -->
-                            <div class="mt-8">
-                                <div class="text-xs uppercase text-slate-500 font-bold mb-2">Recent Games</div>
-                                <div class="space-y-2">
-                                    {#each recentGames as game}
-                                        <div
-                                                class="px-3 py-2 bg-slate-800 rounded border border-slate-700 hover:bg-slate-700 cursor-pointer"
-                                                on:click={() => loadGame(game)}
-                                        >
-                                            <div class="font-medium">{game.name}</div>
-                                            <div class="flex justify-between text-xs text-slate-400">
-                                                <span>Day {game.day} • {game.quarter} {game.year}</span>
-                                                <span>{game.timeAgo}</span>
-                                            </div>
-                                        </div>
-                                    {/each}
-                                </div>
-                            </div>
+                            <RecentGamePanel />
                         </div>
 
                         <!-- Right Column - Game Info -->
@@ -188,147 +94,15 @@
                             {#if selectedMenu === "New Game"}
                                 <NewGamePanel />
                             {:else if selectedMenu === "Load Game"}
-                                <div class="text-lg font-bold mb-3">Load Game</div>
-                                <div class="text-sm text-slate-300 mb-4">
-                                    Continue where you left off with one of your existing companies.
-                                </div>
-
-                                <div class="space-y-3 mb-6">
-                                    {#each recentGames as game}
-                                        <div class="p-4 bg-slate-900 border border-slate-700 rounded hover:bg-slate-700 cursor-pointer">
-                                            <div class="font-medium text-lg">{game.name}</div>
-                                            <div class="text-sm text-slate-400 mt-1">Day {game.day}
-                                                • {game.quarter} {game.year}</div>
-                                            <div class="mt-2 flex justify-between items-center">
-                                                <div class="text-xs text-slate-500">Last played: {game.timeAgo}</div>
-                                                <button class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs text-white">
-                                                    Load
-                                                </button>
-                                            </div>
-                                        </div>
-                                    {/each}
-                                </div>
-
-                                <div class="mt-auto">
-                                    <button class="w-full py-3 bg-slate-700 hover:bg-slate-600 rounded font-medium text-slate-300 flex items-center justify-center">
-                                        <span>Browse All Saved Games</span>
-                                    </button>
-                                </div>
-
+                                <LoadGamePanel />
                             {:else if selectedMenu === "Settings"}
-                                <div class="text-lg font-bold mb-3">Settings</div>
-                                <div class="text-sm text-slate-300 mb-4">
-                                    Customize your game experience and adjust system settings.
-                                </div>
-
-                                <div class="space-y-4 mb-6">
-                                    <div>
-                                        <label class="block text-xs text-slate-400 mb-1">Game Speed</label>
-                                        <div class="w-full bg-slate-900 rounded h-2 mt-2">
-                                            <div class="bg-purple-500 h-2 rounded" style="width: 60%"></div>
-                                        </div>
-                                        <div class="flex justify-between text-xs text-slate-500 mt-1">
-                                            <span>Slow</span>
-                                            <span>Normal</span>
-                                            <span>Fast</span>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-xs text-slate-400 mb-1">Audio</label>
-                                        <div class="flex items-center space-x-2 mt-2">
-                                            <div class="text-xs text-slate-300 w-24">Music</div>
-                                            <div class="flex-1 bg-slate-900 rounded h-2">
-                                                <div class="bg-purple-500 h-2 rounded" style="width: 70%"></div>
-                                            </div>
-                                        </div>
-                                        <div class="flex items-center space-x-2 mt-2">
-                                            <div class="text-xs text-slate-300 w-24">Sound Effects</div>
-                                            <div class="flex-1 bg-slate-900 rounded h-2">
-                                                <div class="bg-purple-500 h-2 rounded" style="width: 80%"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label class="block text-xs text-slate-400 mb-1">Display</label>
-                                        <div class="grid grid-cols-2 gap-2 mt-2">
-                                            <button class="px-3 py-2 bg-purple-900 border border-purple-700 rounded text-center text-purple-400">
-                                                Windowed
-                                            </button>
-                                            <button class="px-3 py-2 bg-slate-900 border border-slate-700 rounded text-center hover:bg-slate-700">
-                                                Fullscreen
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mt-auto">
-                                    <button class="w-full py-3 bg-purple-600 hover:bg-purple-700 rounded font-bold text-white flex items-center justify-center">
-                                        <span>Save Settings</span>
-                                    </button>
-                                </div>
+                                <SettingsPanel />
 
                             {:else if selectedMenu === "Tutorial"}
-                                <div class="text-lg font-bold mb-3">Tutorial</div>
-                                <div class="text-sm text-slate-300 mb-4">
-                                    Learn how to play DevCorp Sim and master the art of software company management.
-                                </div>
-
-                                <div class="space-y-3 mb-6">
-                                    <div class="p-3 bg-slate-900 border border-slate-700 rounded hover:bg-slate-700 cursor-pointer">
-                                        <div class="font-medium">Getting Started</div>
-                                        <div class="text-xs text-slate-400 mt-1">Learn the basics of company
-                                            management
-                                        </div>
-                                    </div>
-                                    <div class="p-3 bg-slate-900 border border-slate-700 rounded hover:bg-slate-700 cursor-pointer">
-                                        <div class="font-medium">Employee Management</div>
-                                        <div class="text-xs text-slate-400 mt-1">How to hire, train and manage your
-                                            team
-                                        </div>
-                                    </div>
-                                    <div class="p-3 bg-slate-900 border border-slate-700 rounded hover:bg-slate-700 cursor-pointer">
-                                        <div class="font-medium">Project Development</div>
-                                        <div class="text-xs text-slate-400 mt-1">Taking on and completing software
-                                            projects
-                                        </div>
-                                    </div>
-                                    <div class="p-3 bg-slate-900 border border-slate-700 rounded hover:bg-slate-700 cursor-pointer">
-                                        <div class="font-medium">Financial Management</div>
-                                        <div class="text-xs text-slate-400 mt-1">Budgeting, investments and profit
-                                            strategies
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mt-auto">
-                                    <button class="w-full py-3 bg-amber-600 hover:bg-amber-700 rounded font-bold text-white flex items-center justify-center">
-                                        <span>Start Interactive Tutorial</span>
-                                    </button>
-                                </div>
+<TutorialPanel />
 
                             {:else if selectedMenu === "Exit"}
-                                <div class="text-lg font-bold mb-3">Exit Game</div>
-                                <div class="text-sm text-slate-300 mb-4">
-                                    Are you sure you want to exit DevCorp Sim?
-                                </div>
-
-                                <div class="flex-1 flex items-center justify-center">
-                                    <div class="text-center">
-                                        <div class="text-5xl mb-4">👋</div>
-                                        <div class="text-slate-400">Thanks for playing!</div>
-                                    </div>
-                                </div>
-
-                                <div class="mt-auto grid grid-cols-2 gap-3">
-                                    <button class="py-3 bg-slate-700 hover:bg-slate-600 rounded font-medium text-slate-300">
-                                        Cancel
-                                    </button>
-                                    <button class="py-3 bg-red-600 hover:bg-red-700 rounded font-bold text-white">
-                                        Exit Game
-                                    </button>
-                                </div>
+                               <ExitGamePanel />
                             {/if}
                         </div>
                     </div>
