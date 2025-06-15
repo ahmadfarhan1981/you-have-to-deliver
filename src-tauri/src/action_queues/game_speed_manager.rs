@@ -4,7 +4,7 @@ use std::ptr::write;
 use std::sync::Arc;
 
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
-use crate::sim::resources::global::SimManager;
+use crate::action_queues::sim_manager::SimManager;
 use crossbeam::queue::SegQueue;
 use legion::system;
 

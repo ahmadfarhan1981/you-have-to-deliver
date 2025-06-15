@@ -1,4 +1,4 @@
-use crate::sim::resources::global::SimManager;
+use crate::action_queues::sim_manager::SimManager;
 use dashmap::DashMap;
 use std::sync::Arc;
 
