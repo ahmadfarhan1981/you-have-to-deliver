@@ -15,11 +15,12 @@ mod master_data;
 mod resources;
 mod schedules;
 mod sim;
-
+mod simulation_thread;
 use crate::resources::init::{initialize_emit_registries, initialize_non_shared_resources};
 use crate::schedules::init::init_schedules;
-use crate::sim::resources::global::{AssetBasePath, Dirty, SimManager, TickCounter};
+use crate::sim::resources::global::{AssetBasePath, Dirty, TickCounter};
 use crate::sim::systems::global::{increase_sim_tick_system, UsedProfilePictureRegistry};
+use crate::simulation_thread::{run_simulation_thread, SimThreadConfig};
 
 use legion::{Entity, Resources, Schedule, World};
 use sim::systems::global::print_person_system;
@@ -42,7 +43,7 @@ use crate::sim::person::init::{
 use crate::sim::utils::logging::init_logging;
 use crossbeam::queue::SegQueue;
 use dashmap::{DashMap, DashSet};
-use spin_sleep::SpinSleeper;
+use spin_sleep::{SpinSleeper, SpinStrategy};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -63,10 +64,7 @@ use action_queues::game_speed_manager::{
     decrease_speed, handle_game_speed_manager_queue_system, increase_speed, set_game_speed,
 };
 use action_queues::sim_manager;
-use action_queues::sim_manager::{
-    delete_all_entity_system, handle_new_game_manager_queue_system,
-    handle_sim_manager_queue_system, reset_state_system,
-};
+use action_queues::sim_manager::{delete_all_entity_system, handle_new_game_manager_queue_system, handle_sim_manager_queue_system, reset_state_system, SimManager};
 
 use crate::action_queues::sim_manager::{reset_snapshot_system, test_sim_manager_system};
 use crate::db::init::{self, SavesDirectory};
@@ -97,20 +95,6 @@ fn print_startup_banner() {
     print_banner();
 }
 
-pub struct SimContext {
-    pub world: Arc<Mutex<World>>,
-    pub resources: Arc<Mutex<Resources>>,
-}
-
-// Implement Debug manually so Tauri is happy
-impl fmt::Debug for SimContext {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("SimContext")
-            .field("world", &"World")
-            .field("resources", &"Resources")
-            .finish()
-    }
-}
 
 fn main() {
     init_logging();
@@ -158,13 +142,9 @@ fn main() {
     // === Launch Tauri app ===
     tauri::Builder::default()
         .setup(|app| {
-            info!("Setup");
+            info!("Tauri setup initiated.");
             let app_handle = app.handle().clone();
-            let path = app.path().resolve("assets", BaseDirectory::Resource)?;
-
-            info!("Connecting to the game db file...");
-            info!("Setup");
-            let app_handle = app.handle().clone();
+            let assets_path = app.path().resolve("assets", BaseDirectory::Resource)?;
 
             // Resolve the saves directory path
             let saves_dir_path = app
@@ -182,127 +162,22 @@ fn main() {
 
             // === Sim thread ===
             thread::spawn(move || {
-                let mut world = World::default();
-                let mut resources = Resources::default();
-
-                resources.insert(Arc::new(AppContext { app_handle }));
-
-                resources.insert(reset_request);
-                resources.insert(Arc::clone(&first_run));
-                resources.insert(Arc::clone(&sim_manager));
-
-                //command queues related
-                resources.insert(queue_manager);
-                resources.insert(sim_command_queues);
-
-                //tick counter
-                resources.insert(tick_counter.clone());
-                resources.insert(Arc::clone(&game_speed));
-                resources.insert(sim_snapshot_state); // Insert the cloned Arc
-                resources.insert(AssetBasePath(path));
-                resources.insert(sim_snapshot_registry);
-
-                initialize_non_shared_resources(&mut resources);
-
-                let mut game_schedules = init_schedules();
-
-                let sleeper =
-                    SpinSleeper::new(0).with_spin_strategy(spin_sleep::SpinStrategy::YieldThread); // prevents CPU burn
-                let state = Arc::clone(&sim_manager);
-
-                loop {
-                    game_schedules
-                        .sim_manager_dispatch
-                        .execute(&mut world, &mut resources);
-                    game_schedules
-                        .sim_manager_reset
-                        .execute(&mut world, &mut resources);
-                    if reset.should_reset.load(Ordering::Relaxed) {
-                        game_schedules
-                            .sim_manager_delete_world_entity
-                            .execute(&mut world, &mut resources);
-                        game_schedules
-                            .reset_state
-                            .execute(&mut world, &mut resources);
-                        // game_schedules.startup.execute(&mut world, &mut resources);
-
-                        game_schedules
-                            .pre_integration
-                            .execute(&mut world, &mut resources);
-                        game_schedules
-                            .integration
-                            .execute(&mut world, &mut resources);
-                        game_schedules
-                            .post_integration
-                            .execute(&mut world, &mut resources);
-                    }
-
-                    game_schedules
-                        .sim_manager
-                        .execute(&mut world, &mut resources);
-
-                    if state.is_running() {
-                        if (first_run.is_first_run()) {
-                            //Tick the startup schedule
-                            game_schedules.startup.execute(&mut world, &mut resources);
-                        }
-                        let tick_start = Instant::now();
-
-                        // Process SimCommand queue
-                        game_schedules
-                            .dispatcher_queue
-                            .execute(&mut world, &mut resources);
-
-                        game_schedules
-                            .subsystem_command
-                            .execute(&mut world, &mut resources);
-
-                        // Main sim tick only if not paused. paused will return a None current interval
-                        let maybe_interval = game_speed.read().current_interval();
-                        if maybe_interval.is_some() {
-                            game_schedules.sim.execute(&mut world, &mut resources);
-                        }
-
-                        // Always run integration so UI sees updates
-                        game_schedules
-                            .pre_integration
-                            .execute(&mut world, &mut resources);
-                        game_schedules
-                            .integration
-                            .execute(&mut world, &mut resources);
-                        game_schedules
-                            .post_integration
-                            .execute(&mut world, &mut resources);
-
-                        let elapsed = tick_start.elapsed();
-
-                        match maybe_interval {
-                            Some(tick_duration) => {
-                                trace!(
-                                    "tick duration {} elapse {}",
-                                    tick_duration.as_millis(),
-                                    elapsed.as_millis()
-                                );
-                                if elapsed < tick_duration {
-                                    sleeper.sleep(tick_duration - elapsed);
-                                } else {
-                                    eprintln!(
-                                        "{:?} Tick lag: {:?}",
-                                        tick_counter,
-                                        elapsed - tick_duration
-                                    );
-                                    // Don’t sleep again — just loop immediately to catch up
-                                }
-                            }
-                            None => {
-                                eprintln!("Sim paused, sleeping normal tick...");
-                                sleeper.sleep(GameSpeed::Normal.interval().unwrap());
-                            }
-                        }
-                    } else {
-                        sleeper.sleep(Duration::from_millis(100));
-                    }
-                }
+                // All Arcs and owned values (like queue_manager) are moved into this closure.
+                // They are then moved into SimThreadConfig.
+                let sim_thread_config = SimThreadConfig {
+                    app_handle, // This is app_handle.clone() from .setup()
+                    asset_base_path: assets_path,
+                    reset_request,
+                    first_run,
+                    sim_manager,
+                    queue_manager, // queue_manager is moved here
+                    sim_command_queues,
+                    tick_counter,
+                    game_speed,
+                    sim_snapshot_state,
+                    sim_snapshot_registry,
+                };
+                run_simulation_thread(sim_thread_config);
             });
 
             Ok(())

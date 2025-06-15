@@ -82,8 +82,6 @@
         <!-- Main Grid Area -->
         <div id="main_container" class="flex-1 overflow-auto bg-slate-400">
             {#if $activeTab?.id === "overview"}
-                <!--- --->
-
                 <!-- Company Overview Card -->
                 <CompanyOverview/>
                 {#each $teamSnapshotsWithPeople as team}
@@ -156,11 +154,13 @@
                 <ProjectPanel/>
             {:else}
                 <!-- Employee Detail Tab -->
+
                 {#if $activeTab?.type === "person"}
                     {@const currentTab = $activeTab}
                     {@const person = $activeTab.context.person}
 
-                    {#if $activePersonSnapshot}><EmployeeDetails personStore={activePersonSnapshot}/>{/if}
+                    {#if $activePersonSnapshot}<EmployeeDetails personStore={activePersonSnapshot}/>{/if}
+
                 {:else}
                     <!-- Empty tab or custom tab content -->
                     <div class="p-6">

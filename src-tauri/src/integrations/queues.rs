@@ -1,7 +1,7 @@
 use crate::action_queues::game_speed_manager::GameSpeedManagerCommand;
 use crate::action_queues::team_manager::{TeamAssignmentCommand, TeamManagerCommand};
 use crate::sim::game_speed::components::GameSpeed;
-use crate::sim::resources::global::SimManager;
+use crate::action_queues::sim_manager::SimManager;
 use crossbeam::queue::SegQueue;
 use legion::system;
 use std::fmt;

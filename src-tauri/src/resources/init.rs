@@ -1,44 +1,54 @@
-use std::{ sync::{atomic::AtomicBool, Arc}};
+use std::sync::Arc;
 
 use dashmap::DashMap;
 use legion::{Entity, Resources};
-use parking_lot::RwLock;
 
-use crate::{integrations::{queues::{QueueManager, UICommandQueues}, snapshots::{company::CompanySnapshot, snapshots::SnapshotState}, snapshots_emitter::snapshots_emitter::{ExportFrequency, SnapshotCollectionEmitter, SnapshotEmitRegistry, SnapshotEmitterConfig, SnapshotFieldEmitter}}, sim::{game_speed::components::GameSpeedManager, new_game::new_game::{CompanyPreset, StartingEmployeesConfig}, person::{components::PersonId, skills::SkillId}, registries::registry::{GlobalSkillNameMap, Registry}, resources::global::TickCounter, systems::global::UsedProfilePictureRegistry, team::components::TeamId}};
+use crate::{
+    integrations::{
+        snapshots::{company::CompanySnapshot, snapshots::SnapshotState},
+        snapshots_emitter::snapshots_emitter::{
+            ExportFrequency, SnapshotCollectionEmitter, SnapshotEmitRegistry,
+            SnapshotEmitterConfig, SnapshotFieldEmitter,
+        },
+    },
+    sim::{
+        new_game::new_game::{CompanyPreset, StartingEmployeesConfig},
+        person::{components::PersonId, skills::SkillId},
+        registries::registry::{GlobalSkillNameMap, Registry}
+        ,
+        systems::global::UsedProfilePictureRegistry,
+        team::components::TeamId,
+    },
+};
 
-pub fn initialize_non_shared_resources(resources: &mut Resources){
+pub fn initialize_non_shared_resources(resources: &mut Resources) {
     let used_portrait = UsedProfilePictureRegistry::default();
     resources.insert(used_portrait);
     resources.insert(Arc::<GlobalSkillNameMap>::new(GlobalSkillNameMap::default()));
-   //registries
-                resources.insert(Arc::new(Registry::<PersonId, Entity>::with_name(
-                    "Person registry",
-                )));
+    //registries
+    resources.insert(Arc::new(Registry::<PersonId, Entity>::with_name(
+        "Person registry",
+    )));
 
-                resources.insert(Arc::new(Registry::<SkillId, Entity>::with_name(
-                    "Skill registry",
-                )));
+    resources.insert(Arc::new(Registry::<SkillId, Entity>::with_name(
+        "Skill registry",
+    )));
 
-                resources.insert(Arc::new(Registry::<TeamId, Entity>::with_name(
-                    "Team registry",
-                )));
+    resources.insert(Arc::new(Registry::<TeamId, Entity>::with_name(
+        "Team registry",
+    )));
 
-resources.insert(CompanyPreset::default());
-                resources.insert(StartingEmployeesConfig::default());
+    resources.insert(CompanyPreset::default());
+    resources.insert(StartingEmployeesConfig::default());
 
-            
-            
-                let data_last_update_map: DashMap<&'static str, u64> = DashMap::new();
-                let data_last_update = Arc::new(data_last_update_map);
-                resources.insert(data_last_update);
-            
-            }
+    let data_last_update_map: DashMap<&'static str, u64> = DashMap::new();
+    let data_last_update = Arc::new(data_last_update_map);
+    resources.insert(data_last_update);
+}
 
-
-
-pub fn initialize_emit_registries(main_snapshot_state:&Arc<SnapshotState>)->SnapshotEmitRegistry{
-    
-    
+pub fn initialize_emit_registries(
+    main_snapshot_state: &Arc<SnapshotState>,
+) -> SnapshotEmitRegistry {
     //Snapshot registry
     let mut snapshot_registry = SnapshotEmitRegistry::new();
     let game_speed_snapshots_emitter = SnapshotFieldEmitter {
@@ -76,7 +86,7 @@ pub fn initialize_emit_registries(main_snapshot_state:&Arc<SnapshotState>)->Snap
         },
     };
     let company_snapshots_emitter: SnapshotFieldEmitter<CompanySnapshot> = SnapshotFieldEmitter {
-        field: main_snapshot_state.company.clone(), 
+        field: main_snapshot_state.company.clone(),
         config: SnapshotEmitterConfig {
             frequency: ExportFrequency::EveryTick,
             event_name: "company_snapshot",
