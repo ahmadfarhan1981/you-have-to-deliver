@@ -34,17 +34,46 @@ impl Consideration for EnergyConsideration {
 }
 
 // Scores higher when hungry
+// Scores higher when hungry, with specific thresholds for behavior change
 pub struct HungerConsideration;
 impl Consideration for HungerConsideration {
     fn score(&self, context: &ScoreContext) -> f32 {
-        let score:f32 = 1.0 - (context.needs.hunger.value() as f32 / 100.0);
-        score.powf(2.0) // Exponentially higher score when very low
-        //if context.needs.is_hungry { 1.0 } else { 0.0 }
+        let hunger_value = context.needs.hunger.value() as f32; // 0 (starving) to 100 (full)
+
+        const VERY_FULL_THRESHOLD: f32 = 85.0; // Above this, almost no desire to eat
+        const SATIATED_THRESHOLD: f32 = 60.0;  // Above this, low desire (can top off)
+        const PECKISH_THRESHOLD: f32 = 30.0;   // Above this, "I can eat" phase
+
+        const SCORE_VERY_FULL: f32 = 0.05;
+        const SCORE_SATIATED: f32 = 0.25;
+        const SCORE_PECKISH_MAX: f32 = 0.7; // Max score for "I can eat", before "truly hungry"
+        const SCORE_STARVING: f32 = 1.0;
+
+        if hunger_value > VERY_FULL_THRESHOLD {
+            // Very full, minimal desire to eat. This is your sharp drop-off.
+            SCORE_VERY_FULL
+        } else if hunger_value > SATIATED_THRESHOLD {
+            // Satiated, but could eat if nothing better to do.
+            SCORE_SATIATED
+        } else if hunger_value > PECKISH_THRESHOLD {
+            // "I can eat" phase. Linearly increasing desire.
+            // As hunger_value goes from SATIATED_THRESHOLD (e.g., 60) down to PECKISH_THRESHOLD (e.g., 30)
+            let range = SATIATED_THRESHOLD - PECKISH_THRESHOLD;
+            let progress_in_range = (SATIATED_THRESHOLD - hunger_value) / range; // 0 to 1
+            SCORE_SATIATED + progress_in_range * (SCORE_PECKISH_MAX - SCORE_SATIATED)
+        } else {
+            // Truly hungry. Sharp increase in desire as hunger approaches 0.
+            // As hunger_value goes from PECKISH_THRESHOLD (e.g., 30) down to 0
+            let range = PECKISH_THRESHOLD; // From PECKISH_THRESHOLD to 0
+            let progress_in_range = (PECKISH_THRESHOLD - hunger_value) / range; // 0 to 1
+            // Using powf for a sharper curve as hunger gets critical
+            SCORE_PECKISH_MAX + progress_in_range.powf(2.0) * (SCORE_STARVING - SCORE_PECKISH_MAX)
+        }
     }
 }
 pub struct DefaultConsideration;
 impl Consideration for DefaultConsideration {
-    fn score(&self, context: &ScoreContext) -> f32 { 0.54f32 }
+    fn score(&self, context: &ScoreContext) -> f32 { 0.4f32 }
 }
 
 //
@@ -194,12 +223,11 @@ pub fn goal_selection(
     world: &mut SubWorld,
 
 ) {
-    info!("Goal selection");
     let all_goal_definitions = get_all_goal_definitions();
-    let mut query = <(Entity, &Person, Option<&EmployeeGoapFacts>, &Energy, &Hunger, Option<&mut CurrentGoal>, &mut DebugDisplayComponent)>::query();
+    let mut query = <(Entity, &Person, Option<&EmployeeGoapFacts>, &Energy, &Hunger,  &mut CurrentGoal, &mut DebugDisplayComponent)>::query();
 
 
-    for (entity, person, goap_facts, energy, hunger, current_goal_option, debug_display) in query.iter_mut(world) {
+    for (entity, person, goap_facts, energy, hunger, current_goal, debug_display) in query.iter_mut(world) {
 
         let needs = Needs{
             energy: energy.clone(),
@@ -225,7 +253,8 @@ pub fn goal_selection(
             if utility > highest_utility {
                 highest_utility = utility;
                 best_goal_name = Some(goal_def.name.clone());
-                //current_goal.0 = goal_def.goap_target_facts.clone(); // Update the GOAP target facts
+
+                if current_goal.0 != goal_def.name.clone(){ *current_goal = CurrentGoal{0: goal_def.name.clone()}}
             }
         }
         // info!("Employee {:?} selected Goal: {:?} (Utility: {:.2})", person, best_goal_name, highest_utility);

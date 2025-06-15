@@ -1,4 +1,5 @@
 use std::cmp::Ordering;
+use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 
 pub const MAX_TICK:u64 = 2_290_657_279;
@@ -19,7 +20,7 @@ pub const MAX_TICK:u64 = 2_290_657_279;
 ///
 /// Provides `From<u64>` for converting from raw tick count,
 /// and a `.to_tick()` method for converting back.
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, Hash, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Hash, PartialEq, Eq, Encode, Decode)]
 pub struct SimDate {
     pub year: u16,
     pub week: u8,

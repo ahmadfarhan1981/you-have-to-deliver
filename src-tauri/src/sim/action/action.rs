@@ -2,6 +2,8 @@ use std::sync::Arc;
 use legion::{system, Entity};
 use legion::systems::CommandBuffer;
 use tracing::info;
+use crate::sim::ai::consideration::GoalName;
+use crate::sim::ai::goap::CurrentGoal;
 use crate::sim::person::components::Person;
 use crate::sim::person::needs::{Energy, Hunger};
 use crate::sim::project::project::ProjectId;
@@ -37,21 +39,19 @@ pub fn decide_action(
     #[resource] tick_counter: &Arc<TickCounter>,
     entity: &Entity,
     person: &Person,
+    current_goal: &CurrentGoal,
     action: Option<&ActionIntent>,
     hunger: &Hunger,
     energy: &Energy,
     cmd: &mut CommandBuffer,
 ){
 
-    if hunger.value() < 20{
-        info!("Hunger decided! {} {} {}", person.name, energy.value(), hunger.value());
-        cmd.add_component(*entity,ActionIntent::from(ActionType::Eat));
-    }else if energy.value() < 20{
-        info!("Rest decided! {} {} {}", person.name, energy.value(), hunger.value());
-        cmd.add_component(*entity,ActionIntent::from(ActionType::Rest));
-    }else {
-        cmd.remove_component::<ActionIntent>(*entity);
+    match current_goal.0 {
+        GoalName::Rest => {cmd.add_component(*entity,ActionIntent::from(ActionType::Rest));}
+        GoalName::Eat => {cmd.add_component(*entity,ActionIntent::from(ActionType::Eat));}
+        GoalName::DoNothing => { cmd.remove_component::<ActionIntent>(*entity);}
     }
+
 
 }
 
@@ -70,10 +70,10 @@ pub fn execute_action(
         ActionType::GeneralWork => {}
         ActionType::Work(_) => {}
         ActionType::Rest => {
-            energy.level.increase(50);
+            energy.level.increase(45);
         }
         ActionType::Eat => {
-            hunger.level.increase(50);
+            hunger.level.increase(10);
         }
         ActionType::Idle => {
         }

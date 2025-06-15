@@ -13,43 +13,14 @@
     import {activeTab} from "$lib/stores/TabStore";
     import DebugDisplay from "$lib/components/plain/DebugDisplay.svelte";
     import ValueBar from "$lib/components/ValueBar.svelte";
+    import CalendarPanel from "$lib/components/CalendarPanel.svelte";
+    import WeekCalendarPanel from "$lib/components/WeekCalendarPanel.svelte";
+    import DayCalendarPanel from "$lib/components/DayCalendarPanel.svelte";
+    import WeekCalendarPanel2 from "$lib/components/WeekCalendarPanel2.svelte";
 
 
     export let personStore: Readable<PersonSnapshotWithTotal | null>;
     $: person = $personStore;
-
-    function showCategory(category) {
-        // Hide all categories
-        document.querySelectorAll('.skill-category').forEach(cat => {
-            cat.classList.add('hidden');
-        });
-
-        // Show selected category
-        document.querySelector(`[data-category="${category}"]`).classList.remove('hidden');
-
-        // Update tab styles
-        document.querySelectorAll('.skill-tab').forEach(tab => {
-            tab.classList.remove('active', 'bg-white', 'text-gray-700', 'shadow-sm');
-            tab.classList.add('text-gray-600');
-        });
-
-        event.target.classList.add('active', 'bg-white', 'text-gray-700', 'shadow-sm');
-        event.target.classList.remove('text-gray-600');
-    }
-
-    function filterSkills() {
-        const searchTerm = document.getElementById('skillSearch').value.toLowerCase();
-        const skillItems = document.querySelectorAll('.skill-item');
-
-        skillItems.forEach(item => {
-            const skillName = item.querySelector('span').textContent.toLowerCase();
-            if (skillName.includes(searchTerm)) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-            }
-        });
-    }
 </script>
 {#if person != null}
     <div class="p-6 bg-game-bg game-bg">
@@ -61,8 +32,14 @@
                             <EmployeePotrait person={person}/>
                         </div>
                         <div class=" grid grid-cols-1 gap-6 ">
-                            <FinancialHealthPanel/>
+<!--                            <FinancialHealthPanel/>-->
                             <EmployeeInfoPanel personStore={personStore}/>
+<!--                            <DebugDisplay personId={$personStore.person_id}/>-->
+<!--                            <div>-->
+<!--                                Needs-->
+<!--                                <ValueBar value={$personStore.energy.level}/>-->
+<!--                                <ValueBar value={$personStore.hunger.level}/>-->
+<!--                            </div>-->
                         </div>
                     </div>
                 </div>
@@ -75,22 +52,24 @@
     <div class="border-t border-gray-300 my-6"></div>
 
     <div class="grid grid-cols-3 gap-6">
-        <div>
-            <DebugDisplay personId={$personStore.person_id}/>
-        </div>
-        <div>
-            <ValueBar value={$personStore.energy.level}/>
-            <ValueBar value={$personStore.hunger.level}/>
-        </div>
+
+
         <div>
             <PersonOverviewPanel person={person}/>
             <PersonalityMatrixPanel personality={person.personality}/>
+<!--            <CalendarPanel  currentMonthView="1" currentYear="1"/>-->
+
         </div>
+
 
         <div class="col-span-1">
             <StatPanel personStore={personStore}/>
 
         </div>
+        <div>
+            <DayCalendarPanel />
+        </div>
+
         <div class="col-span-1">
             <SkillsPanel person={person}/>
         </div>
