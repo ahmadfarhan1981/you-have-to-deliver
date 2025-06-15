@@ -1,11 +1,5 @@
 <script lang="ts">
-    import {onMount} from 'svelte';
-
-    import {invoke} from "@tauri-apps/api/core";
-    import {goto} from "$app/navigation";
-    import {gameSpeed} from "$lib/stores/gameSpeed.js";
     import NewGamePanel from "$lib/components/NewGamePanel.svelte";
-    import { Toaster, toast } from "svelte-hot-french-toast";
     import RecentGamePanel from "$lib/components/RecentGamePanel.svelte";
     import MainMenuWelcomPanel from "$lib/components/MainMenuWelcomPanel.svelte";
     import LoadGamePanel from "$lib/components/LoadGamePanel.svelte";

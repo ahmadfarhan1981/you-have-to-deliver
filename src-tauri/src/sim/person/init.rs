@@ -110,9 +110,6 @@ pub fn load_global_skills(
     #[resource] skill_registry: &Arc<Registry<SkillId, Entity>>,
     #[resource] global_skills_name_map: &Arc<GlobalSkillNameMap>,
 ) {
-    // let bt = Backtrace::capture();
-    // info!("Captured backtrace:\n{:?}", bt);
-    // info!("{}", SKILL_DEFS.len());
     for skill_def in SKILL_DEFS {
         trace!("Single skill load {}", skill_def.id.to_string());
         let mut global_skill = GlobalSkill::from(skill_def);

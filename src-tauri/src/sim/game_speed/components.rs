@@ -70,6 +70,11 @@ impl GameSpeed {
 pub struct GameSpeedManager {
     pub game_speed: GameSpeed,
 }
+impl Default for GameSpeedManager {
+    fn default() -> Self { 
+        Self { game_speed: GameSpeed::Normal }
+    }
+}
 
 impl GameSpeedManager {
     pub fn set(&mut self, game_speed: GameSpeed) {
