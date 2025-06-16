@@ -1,5 +1,6 @@
 use crate::sim::globals::{BASE_ENERGY_DECAY_PER_TICK, BASE_HUNGER_DECAY_PER_TICK};
 use crate::sim::person::stats::Stats;
+use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
@@ -20,7 +21,7 @@ impl  From<(Energy, Hunger)> for Needs{
 }
 
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Encode, Decode)]
 pub struct NeedValue{
     value:u8,
     value_raw:f32,
@@ -72,7 +73,7 @@ impl NeedValue {
 
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Encode, Decode)]
 pub struct Energy{
     /// Current energy value on a 0-100 scale.
     /// 0 being dead tired and 100 being fully refreshed.
@@ -85,7 +86,7 @@ impl Default for Energy {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, Encode, Decode)]
 pub struct Hunger{
     /// Current energy value on a 0-100 scale.
     /// 0 being straving and 100 being fully satiated.

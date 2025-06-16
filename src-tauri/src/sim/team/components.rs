@@ -1,18 +1,18 @@
+use bincode::{Decode, Encode};
 use dashmap::DashSet;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use tracing::{debug, info};
 use crate::sim::person::components::{Person, PersonId};
 use crate::sim::utils::snapshots::convert_dashset_to_vec;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default, Eq, PartialEq, Hash, Copy)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, Eq, PartialEq, Hash, Copy, Encode, Decode)]
 pub struct TeamId(pub u32);
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default)]
+#[derive(Debug, Clone, Default)]
 pub struct Team{
     pub team_id: TeamId,
     pub name: String,
     pub description: String,
-    #[serde(skip)]//TODO manager recreating it after load/save
     members: DashSet<PersonId>
 }
 impl Team {
@@ -72,5 +72,52 @@ impl Team {
         let mut vec = self.members.iter().map(|id| id.0).collect::<Vec<u32>>();
         vec.sort_unstable();
         vec
+    }
+}
+
+
+
+impl Serialize for Team {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where S: Serializer {
+        // Create temporary struct for serialization
+        #[derive(Serialize)]
+        struct TeamSerde {
+            team_id: TeamId,
+            name: String,
+            description: String,
+            members: Vec<PersonId>,
+        }
+        
+        let temp = TeamSerde {
+            team_id: self.team_id,
+            name: self.name.clone(),
+            description: self.description.clone(),
+            members: self.members.iter().map(|x| *x).collect(),
+        };
+        
+        temp.serialize(serializer)
+    }
+}
+
+impl<'de> Deserialize<'de> for Team {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where D: Deserializer<'de> {
+        #[derive(Deserialize)]
+        struct TeamSerde {
+            team_id: TeamId,
+            name: String,
+            description: String,
+            members: Vec<PersonId>,
+        }
+        
+        let temp = TeamSerde::deserialize(deserializer)?;
+        
+        Ok(Team {
+            team_id: temp.team_id,
+            name: temp.name,
+            description: temp.description,
+            members: temp.members.into_iter().collect(),
+        })
     }
 }

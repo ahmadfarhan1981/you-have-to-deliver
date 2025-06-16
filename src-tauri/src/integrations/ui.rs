@@ -57,14 +57,14 @@ pub fn refresh_data(app: AppHandle, emit_registry: State<'_, Arc<SnapshotEmitReg
 
 
 #[tauri::command]
-pub fn list_save_slots(saves_dir_state: tauri::State<SavesDirectory>) -> Result<Vec<SaveSlot>, String> {
+pub fn list_save_slots(saves_dir_state: tauri::State<Arc<SavesDirectory>>) -> Result<Vec<SaveSlot>, String> {
     scan_save_slots(&saves_dir_state) // Access the PathBuf via .0
         .map_err(|e| e.to_string())
 }
 
 
 #[tauri::command]
-pub fn test_save_slots(saves_dir_state: tauri::State<SavesDirectory>)  {
+pub fn test_save_slots(saves_dir_state: tauri::State<Arc<SavesDirectory>>)  {
     create_new_save_slot(&saves_dir_state,
                          format!("{}{:?}","Save slot paan dev", std::time::SystemTime::now() ).as_str(),
     );

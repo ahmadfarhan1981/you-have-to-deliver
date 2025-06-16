@@ -1,6 +1,8 @@
 // src/ai/goap.rs
 use std::collections::HashMap;
+use bincode::{Decode, Encode};
 use legion::Entity;
+use serde::{Deserialize, Serialize};
 use crate::sim::ai::consideration::{GoalDefinition, GoalName};
 
 // --- Employee GOAP Facts (Legion Component) ---
@@ -74,7 +76,7 @@ impl EmployeeGoapFacts {
 // The target EmployeeGoapFacts that the employee is currently trying to achieve.
 // #[derive(Clone, Debug, PartialEq, Eq, Default)]
 // pub struct CurrentGoal(pub EmployeeGoapFacts);
-#[derive(Clone, Debug, PartialEq, Eq, Default)]
+#[derive(Clone, Debug, PartialEq, Eq, Default, Serialize, Deserialize, Decode, Encode)]
 pub struct CurrentGoal(pub GoalName);
 
 // --- Current Plan (Legion Component) ---

@@ -15,3 +15,4 @@ pub mod team;
 pub mod utils;
 mod locations;
 mod talent_generation;
+pub mod persistence;

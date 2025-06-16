@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 
+use bincode::{Decode, Encode};
+use serde::{Deserialize, Serialize};
+
 #[derive(Debug, Clone, Copy, Hash, PartialEq, Eq)]
 pub enum PersonalityAxis {
     Assertiveness,
@@ -9,7 +12,7 @@ pub enum PersonalityAxis {
     Influence,
 }
 
-#[derive(Debug, Clone, Default, Copy)]
+#[derive(Debug, Clone, Default, Copy, Serialize, Deserialize, Encode, Decode)]
 pub struct PersonalityMatrix {
     pub assertiveness: i8,
     pub structure_preference: i8,
