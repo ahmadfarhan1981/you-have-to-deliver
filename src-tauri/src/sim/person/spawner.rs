@@ -11,6 +11,7 @@ use crate::sim::registries::registry::Registry;
 use crate::sim::resources::global::{AssetBasePath, Dirty};
 use crate::sim::systems::global::UsedProfilePictureRegistry;
 use crate::sim::utils::debugging::DebugDisplayComponent;
+use bincode::{Decode, Encode};
 use dashmap::DashSet;
 use legion::systems::CommandBuffer;
 use legion::Entity;
@@ -45,7 +46,7 @@ pub fn bounded_normal(mean: f64, std_dev: f64, min: i16, max: i16) -> i16 {
     return fallback.clamp(min.into(), max.into()) as i16;
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Default, Encode, Decode)]
 #[serde(rename_all = "PascalCase")]
 pub enum TalentGrade {
     Basic,

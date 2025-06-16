@@ -1,8 +1,10 @@
 use crate::sim::ai::goap::{CurrentGoal, EmployeeGoapFacts};
 use crate::sim::person::needs::{Energy, Hunger, Needs};
 use std::default::Default;
+use bincode::{Decode, Encode};
 use legion::{system, Entity, IntoQuery};
 use legion::world::SubWorld;
+use serde::{Deserialize, Serialize};
 use tracing::info;
 use crate::integrations::snapshots::debug_display::DebugDisplayEntrySnapshot;
 use crate::sim::person::components::Person;
@@ -115,7 +117,7 @@ impl Consideration for DefaultConsideration {
 // }
 
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Default)] // Add necessary derives
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Default, Serialize, Deserialize, Encode, Decode)] // Add necessary derives
 pub enum GoalName {
     Rest,
     Eat,

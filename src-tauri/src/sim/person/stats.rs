@@ -1,3 +1,4 @@
+use bincode::{Decode, Encode};
 use rand::prelude::SliceRandom;
 use rand::{rng, Rng};
 use serde::{Deserialize, Serialize};
@@ -81,7 +82,7 @@ pub struct StatsConfig {
     pub adaptability: u16,
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, Encode, Decode)]
 pub struct Stats {
     // Cognition
     judgement: u16,

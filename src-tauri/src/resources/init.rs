@@ -20,6 +20,7 @@ use crate::{
         team::components::TeamId,
     },
 };
+use crate::db::init::SaveSlot;
 
 pub fn initialize_non_shared_resources(resources: &mut Resources) {
     let used_portrait = UsedProfilePictureRegistry::default();
@@ -44,6 +45,8 @@ pub fn initialize_non_shared_resources(resources: &mut Resources) {
     let data_last_update_map: DashMap<&'static str, u64> = DashMap::new();
     let data_last_update = Arc::new(data_last_update_map);
     resources.insert(data_last_update);
+    
+    resources.insert(SaveSlot::default());
 }
 
 pub fn initialize_emit_registries(

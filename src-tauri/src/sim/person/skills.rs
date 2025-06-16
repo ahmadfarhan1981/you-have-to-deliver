@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 use crate::master_data::skills::SkillDef;
 use crate::sim::person::stats::StatType;
+use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum_macros::Display;
 use tracing::{error, warn};
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq, Encode, Decode)]
 pub struct SkillId(pub u32);
 
 struct SkillRequirement {
@@ -156,7 +157,7 @@ pub struct AssignedSkill {
     value: u32,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, Encode, Decode)]
 pub struct SkillSet {
     pub(crate) skills: HashMap<SkillId, u32>,
 }

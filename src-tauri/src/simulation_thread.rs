@@ -23,6 +23,7 @@ use crate::{
 };
 use crate::action_queues::sim_manager::SimManager;
 use crate::action_queues::team_manager::TeamManagerCommand;
+use crate::db::init::SavesDirectory;
 use crate::integrations::queues::SimCommand;
 use crate::integrations::queues::SimCommand::TeamManager;
 
@@ -38,6 +39,7 @@ pub struct SimThreadConfig {
     pub game_speed: Arc<RwLock<GameSpeedManager>>,
     pub sim_snapshot_state: Arc<SnapshotState>,
     pub sim_snapshot_registry: Arc<SnapshotEmitRegistry>,
+    pub saves_directory: Arc<SavesDirectory>,
 }
 
 pub fn run_simulation_thread(config: SimThreadConfig) {
@@ -57,6 +59,7 @@ pub fn run_simulation_thread(config: SimThreadConfig) {
         game_speed,
         sim_snapshot_state,
         sim_snapshot_registry,
+        saves_directory,
     } = config;
 
     resources.insert(Arc::new(AppContext { app_handle }));
@@ -70,6 +73,8 @@ pub fn run_simulation_thread(config: SimThreadConfig) {
     resources.insert(Arc::clone(&sim_snapshot_state));
     resources.insert(AssetBasePath(asset_base_path));
     resources.insert(Arc::clone(&sim_snapshot_registry));
+    resources.insert(Arc::clone(&saves_directory));
+    
 
     initialize_non_shared_resources(&mut resources);
 

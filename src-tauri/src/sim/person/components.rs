@@ -1,3 +1,4 @@
+use bincode::{Decode, Encode};
 use fmt::Display;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -7,7 +8,7 @@ use crate::sim::person::needs::{Energy, Hunger};
 use crate::sim::person::spawner::TalentGrade;
 use crate::sim::team::components::TeamId;
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Encode, Decode)]
 pub struct Person {
     pub person_id: PersonId,
     pub name: String,
@@ -18,10 +19,10 @@ pub struct Person {
     pub joined: u64,
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq, Encode, Decode)]
 pub struct PersonId(pub u32);
 
-#[derive(Clone, Debug, Copy, Serialize, Deserialize, Hash, Eq, PartialEq, Default)]
+#[derive(Clone, Debug, Copy, Serialize, Deserialize, Hash, Eq, PartialEq, Default, Encode, Decode)]
 pub enum Gender {
     #[default]
     Male,
@@ -37,7 +38,7 @@ impl Display for Gender {
     }
 }
 
-#[derive(Debug, EnumIter, Serialize, Deserialize, Hash, Eq, PartialEq, Clone, Default, Copy)]
+#[derive(Debug, EnumIter, Serialize, Deserialize, Hash, Eq, PartialEq, Clone, Default, Copy, Encode, Decode)]
 pub enum ProfilePictureCategory {
     #[default]
     Office,
@@ -61,7 +62,7 @@ impl ProfilePictureCategory {
     }
 }
 
-#[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize, Hash, Default, Copy)]
+#[derive(Eq, PartialEq, Debug, Clone, Serialize, Deserialize, Hash, Default, Copy, Encode, Decode)]
 pub struct ProfilePicture {
     pub gender: Gender,
     pub category: ProfilePictureCategory,

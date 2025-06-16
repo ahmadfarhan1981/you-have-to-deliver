@@ -156,9 +156,11 @@ fn main() {
             if !saves_dir_path.exists() {
                 std::fs::create_dir_all(&saves_dir_path).expect("Failed to create saves directory");
             }
+            let saves_directory  = Arc::new(SavesDirectory(saves_dir_path));
 
             // Manage the path so commands can access it via tauri::State
-            app.manage(SavesDirectory(saves_dir_path));
+            let ui_saves_directory = Arc::clone(&saves_directory);
+            app.manage(ui_saves_directory);
 
             // === Sim thread ===
             thread::spawn(move || {
@@ -176,12 +178,14 @@ fn main() {
                     game_speed,
                     sim_snapshot_state,
                     sim_snapshot_registry,
+                    saves_directory
                 };
                 run_simulation_thread(sim_thread_config);
             });
 
             Ok(())
         })
+        //manage savesDirectory is in the setup closure becaue it needs app
         .manage(ui_snapshot_state)
         .manage(ui_command_queues)
         .manage(ui_sim_manager)

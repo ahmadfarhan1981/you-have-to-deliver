@@ -2,15 +2,20 @@ use tauri::Manager;
 use std::path::PathBuf; // Consolidated imports
 use serde::{Deserialize, Serialize};
 use std::fs;
+use std::sync::Arc;
 use bincode::{Decode, Encode};
 // rayon::in_place_scope_fifo is unused, consider removing if not needed elsewhere
-use tracing::info;
-use crate::db::error::SavesManagementError;
+use tracing::{error, info};
+use crate::db::error::BincodeError;
+use crate::db::{self, error::SavesManagementError};
 use crate::sim::sim_date::sim_date::SimDate;
-use std::time::{SystemTime, UNIX_EPOCH}; // For generating timestamp
+use std::time::{SystemTime, UNIX_EPOCH};
+use sled::Db;
+// For generating timestamp
 
 #[derive(Debug, Clone)]
 pub struct SavesDirectory(pub PathBuf);
+const GAMESTATE_DB_FILENAME: &str = "gamestate.sled";
 
 
 #[derive(Serialize, Deserialize, Debug, Clone, Decode, Encode)]
@@ -22,12 +27,170 @@ pub struct SaveSlotMetadata {
     pub last_saved_timestamp: i64,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, Decode, Encode)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SaveSlot {
     pub slot_id: String, // This will be the sanitized or generated, path-safe directory name
     pub path: PathBuf,
     pub metadata: Option<SaveSlotMetadata>,
     pub is_empty: bool,
+    #[serde(skip)]
+    pub handle : Option<Db>
+}
+impl Default for SaveSlot {
+    fn default() -> Self {
+        Self {
+            slot_id: "".to_string(),
+            path: Default::default(),
+            metadata: None,
+            is_empty: true,
+            handle: None,
+        }
+    }
+}
+
+
+impl SaveSlot {
+    /// Ensures the Sled database handle is open if the slot is not empty and the handle is None.
+    ///
+    /// # Arguments
+    /// * `_saves_directory_arc` - An Arc reference to the saves directory. Currently unused if `self.path` is absolute,
+    ///                            but included as per requirements for potential future use or consistency.
+    ///
+    /// # Returns
+    /// * `Ok(())` if the handle is successfully opened or was already open/slot is empty.
+    /// * `Err(SavesManagementError)` if an error occurs while trying to open the database.
+    pub fn ensure_db_handle_is_open(
+        &mut self,
+        _saves_directory_arc: Arc<SavesDirectory>, // Included as requested
+    ) -> Result<(), SavesManagementError> {
+        if self.handle.is_some() {
+            info!("DB handle for slot '{}' is already open.", self.slot_id);
+            return Ok(());
+        }
+
+        if self.is_empty {
+            info!("Slot '{}' is empty, not opening DB handle.", self.slot_id);
+            return Ok(());
+        }
+
+        let gamestate_db_path = self.path.join(GAMESTATE_DB_FILENAME);
+        info!("Attempting to open DB for slot '{}' at path: {:?}", self.slot_id, gamestate_db_path);
+
+        if !gamestate_db_path.exists() || !gamestate_db_path.is_dir() {
+            error!("Gamestate DB directory not found or is not a directory for slot '{}' at: {:?}", self.slot_id, gamestate_db_path);
+            return Err(SavesManagementError::Io(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!(
+                    "Gamestate DB directory not found for slot '{}': {:?}",
+                    self.slot_id, gamestate_db_path
+                ),
+            )));
+        }
+
+        // Configure Sled DB. These settings are similar to when creating a new slot,
+        // assuming the handle will be used for active game operations.
+        let db_config = sled::Config::default()
+            .path(&gamestate_db_path)
+            .cache_capacity(10_000_000) // Consistent with create_new_save_slot
+            .flush_every_ms(Some(1000)); // Consistent with create_new_save_slot
+
+        match db_config.open() {
+            Ok(db) => {
+                self.handle = Some(db);
+                info!("Successfully opened DB handle for slot '{}'.", self.slot_id);
+                Ok(())
+            }
+            Err(e) => {
+                error!("Failed to open Sled DB for slot '{}': {:?}", self.slot_id, e);
+                // Assuming SavesManagementError implements From<sled::Error>
+                Err(e.into())
+            }
+        }
+    }
+
+    /// Loads a specific save slot by its ID.
+    ///
+    /// This function constructs a `SaveSlot`, loads its metadata from the `gamestate.sled` database,
+    /// and then attempts to open the database handle if the slot is not empty.
+    ///
+    /// # Arguments
+    /// * `slot_id` - The ID (directory name) of the save slot to load.
+    /// * `saves_directory_arc` - An Arc reference to the saves directory.
+    ///
+    /// # Returns
+    /// * `Ok(SaveSlot)` if the slot is successfully loaded (metadata may be None if slot is empty but dir exists).
+    /// * `Err(SavesManagementError)` if the slot directory doesn't exist, metadata is corrupt, or DB errors occur.
+    pub fn load(
+        slot_id: String,
+        saves_directory_arc: Arc<SavesDirectory>,
+    ) -> Result<Self, SavesManagementError> {
+        let slot_path = saves_directory_arc.0.join(slot_id.as_str());
+        info!("Attempting to load save slot '{}' from path: {:?}", slot_id, slot_path);
+
+        if !slot_path.exists() {
+            error!("Save slot directory not found for slot_id '{}' at: {:?}", slot_id, slot_path);
+            return Err(SavesManagementError::Io(std::io::Error::new(
+                std::io::ErrorKind::NotFound,
+                format!("Save slot directory not found for slot_id '{}': {:?}", slot_id, slot_path),
+            )));
+        }
+        if !slot_path.is_dir() {
+            error!("Save slot path is not a directory for slot_id '{}' at: {:?}", slot_id, slot_path);
+            return Err(SavesManagementError::Io(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput, // Or NotADirectory if more specific
+                format!("Save slot path is not a directory for slot_id '{}': {:?}", slot_id, slot_path),
+            )));
+        }
+
+        let gamestate_db_path = slot_path.join(GAMESTATE_DB_FILENAME);
+        let mut loaded_metadata: Option<SaveSlotMetadata> = None;
+        let mut is_slot_empty = true; // Assume empty until metadata is successfully loaded
+
+        if gamestate_db_path.exists() && gamestate_db_path.is_dir() {
+            // Attempt to open DB for metadata reading (try read-only first, then read-write fallback)
+            let db_meta_config_ro = sled::Config::default().path(&gamestate_db_path).cache_capacity(1_000_000).flush_every_ms(None);
+            let db_meta = match db_meta_config_ro.open() {
+                Ok(db) => Ok(db),
+                Err(_e_ro) => {
+                    info!("Failed to open DB in read-only mode for slot '{}'. Attempting read-write mode for metadata.", slot_id);
+                    sled::Config::default().path(&gamestate_db_path).cache_capacity(1_000_000).flush_every_ms(None).open()
+                }
+            };
+
+            match db_meta {
+                Ok(db) => {
+                    match db.get(METADATA_KEY)? { // Propagates SledError
+                        Some(ivec_data) => {
+                            match bincode::decode_from_slice(&ivec_data[..], bincode::config::standard()) {
+                                Ok((data, _size)) => {
+                                    loaded_metadata = Some(data);
+                                    is_slot_empty = false; // Metadata found and decoded
+                                    info!("Successfully loaded metadata for slot '{}'.", slot_id);
+                                }
+                                Err(e) => {
+                                    error!("Failed to deserialize metadata for slot '{}': {}", slot_id, e);
+                                    return Err(SavesManagementError::Bincode(BincodeError::Decode(e)));
+                                }
+                            }
+                        }
+                        None => {
+                            info!("Metadata key '{}' not found in slot '{}'. Slot is considered empty.", METADATA_KEY, slot_id);
+                        }
+                    }
+                }
+                Err(e) => {
+                    error!("Failed to open Sled DB for metadata check for slot '{}': {}", slot_id, e);
+                    return Err(e.into());
+                }
+            }
+        } else {
+            info!("Gamestate DB directory not found for slot '{}' at: {:?}. Slot is considered empty.", slot_id, gamestate_db_path);
+        }
+
+        let mut save_slot = Self { slot_id, path: slot_path, metadata: loaded_metadata, is_empty: is_slot_empty, handle: None };
+        save_slot.ensure_db_handle_is_open(saves_directory_arc)?;
+        Ok(save_slot)
+    }
 }
 
 const METADATA_KEY: &str = "save_slot_metadata";
@@ -52,7 +215,7 @@ pub fn scan_save_slots(saves_directory: &SavesDirectory) -> Result<Vec<SaveSlot>
                 None => continue,
             };
 
-            let gamestate_db_path = path.join("gamestate.sled");
+            let gamestate_db_path = path.join(GAMESTATE_DB_FILENAME);
             let mut slot_metadata: Option<SaveSlotMetadata> = None;
             let mut is_empty_slot = true;
 
@@ -92,6 +255,7 @@ pub fn scan_save_slots(saves_directory: &SavesDirectory) -> Result<Vec<SaveSlot>
                 path,
                 metadata: slot_metadata,
                 is_empty: is_empty_slot,
+                handle: None,
             });
         }
     }
@@ -188,7 +352,7 @@ pub fn create_new_save_slot(
     fs::create_dir_all(&slot_path)?;
     info!("Slot directory created/ensured.");
 
-    let gamestate_db_path = slot_path.join("gamestate.sled");
+    let gamestate_db_path = slot_path.join(GAMESTATE_DB_FILENAME);
 
     let db_config = sled::Config::default()
         .path(&gamestate_db_path)
