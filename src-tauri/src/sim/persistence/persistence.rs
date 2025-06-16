@@ -1,14 +1,23 @@
-use bincode::{Decode, Encode};
-use legion::{system, Query};
-use legion::world::SubWorld;
-use serde::{Deserialize, Serialize}; // Added for SavedEmployee
+use std::sync::Arc;
+
+use crate::db::error;
+use crate::db::init::SaveSlot;
+use crate::integrations::snapshots::{company, team};
+// Added for SavedEmployee
 use crate::sim::ai::goap::CurrentGoal;
+use crate::sim::company::company::{Company, PlayerControlled};
 use crate::sim::person::components::{Person, ProfilePicture};
 use crate::sim::person::needs::{Energy, Hunger};
 use crate::sim::person::personality_matrix::PersonalityMatrix;
 use crate::sim::person::skills::SkillSet;
 use crate::sim::person::stats::Stats;
-use tracing::info; // Added for logging
+use crate::sim::team::components::Team;
+use bincode::{Decode, Encode};
+use legion::world::SubWorld;
+use legion::{query, system, Query};
+use serde::{Deserialize, Serialize};
+use tracing::{error, info};
+// Added for logging
 
 /// Represents the data of an employee that can be saved or transferred.
 #[derive(Debug, Clone, Serialize, Deserialize, Encode, Decode)]
@@ -24,8 +33,9 @@ pub struct SavedEmployee {
 }
 
 #[system]
-pub fn process_person_data_explicit_query(
+pub fn save_entity_state(
     world: &SubWorld,
+    #[resource] current_save: &Arc<SaveSlot>,
     // Add #[resource] ResType if you need resources
     query: &mut Query<(
         &Person,
@@ -37,28 +47,91 @@ pub fn process_person_data_explicit_query(
         &Hunger,
         &CurrentGoal,
     )>,
+    company_query: &mut Query<(&Company, &PlayerControlled)>,
+    team_query: &mut Query<(&Team)>,
     // You might want to pass a mutable resource here to store the collected employees
     // e.g., #[resource] mut saved_employee_data: &mut Vec<SavedEmployee>
 ) {
-    let mut collected_employees: Vec<SavedEmployee> = Vec::new(); // Example: collect them locally
-
-    for (person, stats, profile_picture, personality_matrix, skill_set, energy, hunger, current_goal) in query.iter(world) {
-        let saved_employee = SavedEmployee {
-            person: person.clone(),
-            stats: stats.clone(),
-            profile_picture: profile_picture.clone(),
-            personality_matrix: personality_matrix.clone(),
-            skill_set: skill_set.clone(),
-            energy: energy.clone(),
-            hunger: hunger.clone(),
-            current_goal: current_goal.clone(),
-        };
-        info!("Processed and created SavedEmployee for person: {:?}", saved_employee.person.name);
-        collected_employees.push(saved_employee);
+    if current_save.is_empty {
+        error!("No active save slot");
+        return;
     }
 
-    // Here you would typically do something with `collected_employees`,
-    // like saving them to a file, sending them over a network, or storing them in a resource.
-    // For example, if you passed a mutable resource:
-    // *saved_employee_data = collected_employees;
+    if let Some(db) = &current_save.handle {
+        let mut collected_employees: Vec<SavedEmployee> = Vec::new(); // Example: collect them locally
+
+        for (
+            person,
+            stats,
+            profile_picture,
+            personality_matrix,
+            skill_set,
+            energy,
+            hunger,
+            current_goal,
+        ) in query.iter(world)
+        {
+            let saved_employee = SavedEmployee {
+                person: person.clone(),
+                stats: stats.clone(),
+                profile_picture: profile_picture.clone(),
+                personality_matrix: personality_matrix.clone(),
+                skill_set: skill_set.clone(),
+                energy: energy.clone(),
+                hunger: hunger.clone(),
+                current_goal: current_goal.clone(),
+            };
+
+            match bincode::encode_to_vec(saved_employee, bincode::config::standard()) {
+                Ok(encoded_employee) => {
+                    if let Err(e) = db.insert(
+                        format!("employee{}", person.person_id.0),
+                        encoded_employee,
+                    ) {
+                        error!("Failed to save employee {}: {}", person.person_id.0, e);
+                        // Maybe collect failed saves and retry later?
+                    }
+                }
+                Err(e) => {
+                    error!("Failed to encode employee {}: {}", person.person_id.0, e);
+                    // This is more serious - maybe indicates data corruption
+                }
+            }
+        }
+        for(company, _) in company_query.iter(world){
+            match bincode::encode_to_vec(company, bincode::config::standard()) {
+                Ok(enconded_company) => {
+                    if let Err(e) = db.insert(
+                        "company".to_string(),
+                        enconded_company,
+                    ) {
+                        error!("Failed to save company: {}", e);
+                        // Maybe collect failed saves and retry later?
+                    }
+                },
+                Err(e) => {
+                    error!("Failed to encode company {}: {}", company.name, e);
+                    // This is more serious - maybe indicates data corruption
+                }
+            }
+        }
+         let teams:Vec<Team> = team_query.iter(world).map(|t| t.clone()).collect();
+        match( bincode::encode_to_vec(teams, bincode::config::standard())){
+            Ok(encoded_teams) => {if let Err(e) = db.insert(
+                            "teams".to_string(),
+                            encoded_teams,
+                        ) {
+                            error!("Failed to save company: {}", e);
+                            // Maybe collect failed saves and retry later?
+                        }},
+            Err(_) => todo!(),
+        }
+    } else {
+        error!("No active save slot");
+        return;
+    }
+
+   
+
+    
 }

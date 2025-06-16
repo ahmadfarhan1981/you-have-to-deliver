@@ -3,21 +3,24 @@ use crate::action_queues::shared::timed_dispatch;
 use crate::integrations::queues::QueueManager;
 use crate::integrations::queues::SimCommand::TeamManager;
 
+use crate::integrations::snapshots::{person, team};
+use crate::integrations::ui::new_team;
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{Person, PersonId};
 use crate::sim::registries::registry::Registry;
 use crate::sim::resources::global::Dirty;
 use crate::sim::team::components::{Team, TeamId};
+use crate::sim::team::utils::creat_new_team;
 use dashmap::DashSet;
 use legion::systems::CommandBuffer;
 use legion::world::{EntityAccessError, SubWorld};
 use legion::{system, Entity, EntityStore, IntoQuery, Query, Write};
 use parking_lot::RwLock;
+use std::ops::Sub;
 use std::sync::Arc;
 use std::time::Duration;
-use tracing::{debug, info, trace, warn};
+use tracing::{debug, error, info, trace, warn};
 use tracing_subscriber::fmt::time::uptime;
-use crate::sim::team::utils::creat_new_team;
 
 pub enum TeamManagerCommand {
     NewTeam {
@@ -91,8 +94,6 @@ pub fn handle_team_manager_queue(
     })
 }
 
-
-
 #[system]
 pub fn handle_team_assignment_queue(
     #[resource] queue_manager: &QueueManager,
@@ -113,38 +114,23 @@ pub fn handle_team_assignment_queue(
 
             let (mut team_world, mut person_world) = world.split::<&mut Team>();
 
-            let person_entity = match person_registry.get_entity_from_id(&PersonId(person_id)) {
-                Some(entity) => entity,
-                None => {
-                    warn!(
-                        "Can't find person entity with ID:{:?} when adding to team. Skipping...",
-                        person_id
-                    );
-                    return;
-                }
-            };
-
-            let mut person = match <&mut Person>::query().get_mut(&mut person_world, person_entity)
-            {
-                Ok(person) => person,
-                Err(_) => {
-                    warn!(
-                        "Can't find person component with ID:{:?} when adding to team. Skipping...",
-                        person_id
-                    );
-                    return; // Early exit if person component not found
-                }
+            let Some(mut person_lookup) =
+                get_person_from_id(person_id, &person_registry, &mut person_world)
+            else {
+                error!("Cannot find person component");
+                return;
             };
 
             // If the person was on an old team, remove them from it first.
-            if let Some(old_team) = person.team {
+            if let Some(old_team) = person_lookup.person.team {
                 trace!("Found existing team. Removing before adding to new team.");
                 if let Some(team_entity) = team_registry.get_entity_from_id(&old_team) {
                     if let Ok(mut team_component) =
                         <&mut Team>::query().get_mut(&mut team_world, team_entity)
                     {
-                        team_component.remove_person(person);
+                        team_component.remove_person(&mut person_lookup.person);
                         commands.add_component(team_entity, Dirty);
+                        person_lookup.person.team = None; //technically not needed since we will add it again after.
                     } else {
                         warn!("Can't find existing team component while trying to remove old team. Skipping...");
                     }
@@ -158,9 +144,9 @@ pub fn handle_team_assignment_queue(
                 if let Ok(mut team_component) =
                     <&mut Team>::query().get_mut(&mut team_world, new_team)
                 {
-                    info!("Im here yo");
-                    team_component.add_person(person);
-                    commands.add_component(person_entity, Dirty);
+                    person_lookup.person.team = Some(TeamId(team_id));
+                    team_component.add_person(person_lookup.person);
+                    commands.add_component(person_lookup.entity, Dirty);
                     commands.add_component(new_team, Dirty);
                 } else {
                     info!("No team component found while adding to new team. Skipping...");
@@ -178,46 +164,72 @@ pub fn handle_team_assignment_queue(
 
             let (mut team_world, mut person_world) = world.split::<&mut Team>();
 
-            let person_entity = match person_registry.get_entity_from_id(&PersonId(person_id)) {
-                Some(entity) => entity,
-                None => {
-                    warn!(
-                        "Can't find person entity with ID:{:?} when removing from team. Skipping...",
-                        person_id
-                    );
-                    return;
-                }
-            };
-
-            let mut person = match <&mut Person>::query().get_mut(&mut person_world, person_entity)
-            {
-                Ok(person) => person,
-                Err(_) => {
-                    warn!(
-                        "Can't find person component with ID:{:?} when removing from team. Skipping...",
-                        person_id
-                    );
-                    return; // Early exit if person component not found
-                }
+            let Some(mut person_lookup) =
+                get_person_from_id(person_id, &person_registry, &mut person_world)
+            else {
+                error!("Cannot find person component");
+                return;
             };
 
             // If the person was on an old team, remove them from it first.
-            if let Some(old_team) = person.team {
-                trace!("Found existing team. Removing..."); // no need to check, we're just unassigning
-                if let Some(team_entity) = team_registry.get_entity_from_id(&old_team) {
-                    if let Ok(mut team_component) =
-                        <&mut Team>::query().get_mut(&mut team_world, team_entity)
-                    {
-                        team_component.remove_person(person);
-                        commands.add_component(team_entity, Dirty);
-                        commands.add_component(person_entity, Dirty);
-                    } else {
-                        warn!("Can't find existing team component while trying to remove old team. Skipping...");
-                    }
-                } else {
-                    warn!("Can't find existing team while trying to remove old team.. Skipping...");
-                }
-            }
+            remove_person_from_current_team(
+                person_lookup,
+                team_registry,
+                &mut team_world,
+                commands,
+            );
         }
     })
+}
+
+#[derive(Debug)]
+pub struct PersonLookupResult<'a> {
+    pub entity: Entity,
+    pub person: &'a mut Person,
+}
+
+pub fn get_person_from_id<'a>(
+    person_id: u32,
+    person_registry: &Arc<Registry<PersonId, Entity>>,
+    subworld: &'a mut SubWorld,
+) -> Option<PersonLookupResult<'a>> {
+    let Some(person_entity) = person_registry.get_entity_from_id(&PersonId(person_id)) else {
+        warn!("Can't find person entity with ID:{:?}", person_id);
+        return None;
+    };
+
+    let Ok(person) = <&mut Person>::query().get_mut(subworld, person_entity) else {
+        warn!(
+            "Can't find person component with ID:{:?} - entity exists but component missing!",
+            person_id
+        );
+        return None;
+    };
+
+    Some(PersonLookupResult {
+        entity: person_entity,
+        person, // No clone - return the mutable reference
+    })
+}
+
+pub fn remove_person_from_current_team(
+    person_lookup: PersonLookupResult,
+    team_registry: &Arc<Registry<TeamId, Entity>>,
+    team_world: &mut SubWorld,
+    commands: &mut CommandBuffer,
+) {
+    if let Some(old_team) = person_lookup.person.team {
+        trace!("Found existing team. Removing..."); // no need to check, we're just unassigning
+        if let Some(team_entity) = team_registry.get_entity_from_id(&old_team) {
+            if let Ok(mut team_component) = <&mut Team>::query().get_mut(team_world, team_entity) {
+                team_component.remove_person(person_lookup.person);
+                commands.add_component(team_entity, Dirty);
+                commands.add_component(person_lookup.entity, Dirty);
+            } else {
+                warn!("Can't find existing team component while trying to remove old team. Skipping...");
+            }
+        } else {
+            warn!("Can't find existing team while trying to remove old team.. Skipping...");
+        }
+    }
 }

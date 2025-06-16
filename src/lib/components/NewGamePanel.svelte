@@ -30,6 +30,9 @@
 
     let companyName = '';
     let slogan = '';
+    let saveSlotId = '';
+    let saveSlotIdManuallySet = false;
+    let generatedSuffix = Math.random().toString(36).substring(2, 7); // Short random suffix
 
     // Default all values to 0
     let talentConfig: Record<EmployeeArchetype, number> = {
@@ -47,6 +50,7 @@
         applyConfig(employeeConfigs[0])
         companyName = companyPresets[0].name;
         slogan = companyPresets[0].slogan;
+        updateSaveSlotId(); // Initial population
     });
 
     function applyConfig(config: StartingEmployeesConfig) {
@@ -67,6 +71,20 @@
         const random = companyPresets[selectedCompanyIndex];
         companyName = random.name;
         slogan = random.slogan;
+        // No need to reset saveSlotIdManuallySet here, company name change handles it
+    }
+
+    function sanitizeForSlotId(name: string): string {
+        return name.trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_.-]/g, '');
+    }
+
+    $: if (companyName && !saveSlotIdManuallySet) {
+        updateSaveSlotId();
+    }
+
+    function updateSaveSlotId() {
+        const sanitizedName = sanitizeForSlotId(companyName);
+        saveSlotId = `${sanitizedName}_${generatedSuffix}`;
     }
 
     // Handle game start
@@ -88,13 +106,10 @@
         console.log("Employee Config:", currentEmployeeConfig);
         console.log(`Difficulty: ${difficulty}, Starting Capital: ${startingCapital}`);
 
-        await  invoke("new_sim",{company:currentCompanyPreset, employee: currentEmployeeConfig});
+        await  invoke("new_sim",{company:currentCompanyPreset, employee: currentEmployeeConfig, slotId: saveSlotId});
         await  invoke('resume_sim');
         // await goto("/game");
         // Navigate to game screen or trigger game initialization
-
-
-
 
     }
 
@@ -125,9 +140,7 @@
                 🎲
             </button>
         </div>
-
-
-        <div>
+          <div>
             <label class="block text-xs text-slate-400 mb-1">Slogan</label>
             <input
                     type="text"
@@ -135,7 +148,20 @@
                     placeholder="Enter company slogan..."
                     class="w-full bg-slate-900 border border-slate-700 rounded px-3 py-2 text-slate-200 focus:outline-none focus:ring-1 focus:ring-green-500"
             />
+             <label class="block text-xs text-slate-500 mb-0">Save Slot ID (auto-generated, editable)</label>
+            <input
+                    type="text"
+                    bind:value={saveSlotId}
+                    on:input={() => saveSlotIdManuallySet = true}
+                    placeholder="auto-generated slot id..."
+                    class="w-[45%] bg-slate-800 border border-slate-600 rounded px-1 py-0 text-sm text-slate-400 focus:outline-none focus:ring-1 focus:ring-green-600 placeholder-slate-500"
+            />
+            <p class="text-xs text-slate-600 mt-1">Leave as is for auto-generation, or set a custom one.</p>
         </div>
+        
+
+
+      
 
         <label class="block text-xs text-slate-400 mb-1">Starting employees presets:</label>
         <div class="rounded-lg border border-slate-700 p-3 space-y-2">
