@@ -30,6 +30,7 @@ pub enum SimManagerCommand {
     StartSim {
         company: CompanyPreset,
         employee: StartingEmployeesConfig,
+        slot_id: String,
     },
     #[default]
     StopSim,
@@ -137,7 +138,7 @@ pub fn handle_new_game_manager_queue(
                 Some(employee),
             );
         }
-        SimManagerCommand::StartSim { company, employee } => {
+        SimManagerCommand::StartSim { company, employee, slot_id } => {
             sim_manager.reset_sim(
                 queue_manager,
                 tick_counter,

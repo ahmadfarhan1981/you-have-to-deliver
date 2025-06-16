@@ -133,10 +133,10 @@ impl QueueManager {
                 count += 1;
                 info!("Sim manager command: {:?}", command);
                 match command {
-                    SimManagerCommand::StartSim { company, employee } => {
+                    SimManagerCommand::StartSim { company, employee, slot_id } => {
                         self.new_game_manager
                             .queue
-                            .push(SimManagerCommand::StartSim { company, employee });
+                            .push(SimManagerCommand::StartSim { company, employee, slot_id });
                     }
 
                     SimManagerCommand::ResetSim { employee, company } => {

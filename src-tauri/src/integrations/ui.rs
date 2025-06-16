@@ -28,8 +28,8 @@ pub fn resume_sim(queues: State<'_, Arc<UICommandQueues>>) {
 }
 
 #[tauri::command]
-pub fn new_sim(queues: State<'_, Arc<UICommandQueues>>, company: CompanyPreset, employee:StartingEmployeesConfig) {
-    queues.control.push(SimManagerCommand::StartSim{company, employee});
+pub fn new_sim(queues: State<'_, Arc<UICommandQueues>>, company: CompanyPreset, employee:StartingEmployeesConfig, slot_id: String) {
+    queues.control.push(SimManagerCommand::StartSim{company, employee, slot_id});
 }
 
 #[tauri::command]
