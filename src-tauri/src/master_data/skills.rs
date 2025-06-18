@@ -1,3 +1,7 @@
+use std::collections::HashMap;
+use std::sync::OnceLock;
+use crate::sim::person::skills::{GlobalSkill, SkillId};
+
 #[derive(Debug, Clone)]
 pub struct SkillDef {
     pub id: &'static str,
@@ -9,7 +13,7 @@ pub struct SkillDef {
     pub feedforward: &'static [&'static str],
     pub feedback: &'static [&'static str],
 }
-
+pub static GLOBAL_SKILLS: OnceLock<HashMap<SkillId,GlobalSkill>> = OnceLock::new();
 pub const SKILL_DEFS: &[SkillDef] = &[
     SkillDef {
         id: "abstraction-modeling",

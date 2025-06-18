@@ -15,6 +15,14 @@ pub struct UICommandQueues {
     pub runtime: ExposedQueue<SimCommand>,
     pub control: ExposedQueue<SimManagerCommand>,
 }
+impl UICommandQueues{
+    pub fn clear_queues(&self){
+        debug!("Clearing command queue...");
+        //dispatch queues
+        self.runtime.clear();
+        self.control.clear();
+    }
+}
 
 pub enum SimCommand {
     GameSpeed(GameSpeedManagerCommand),
@@ -59,6 +67,13 @@ pub struct QueueManager {
 }
 
 impl QueueManager {
+    pub fn clear_queues(&self){
+        debug!("Clearing command queues...");
+        //subsystem queues
+        while self.sim_manager.queue.pop().is_some() {}
+        while self.game_speed_manager.queue.pop().is_some() {}
+        while self.sim_manager.queue.pop().is_some() {}
+    }
     pub fn print_summary(&self) {
         info!("{}", self.get_summary_string());
     }

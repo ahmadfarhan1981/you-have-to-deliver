@@ -250,7 +250,7 @@ pub fn goal_selection(
 
         for goal_def in all_goal_definitions.iter() {
             let utility = goal_def.calculate_utility(&context);
-            debug_display.entries.push(("Goal ".to_string() + &goal_def.name.to_string(), utility.to_string() ));
+            //debug_display.entries.push(("Goal ".to_string() + &goal_def.name.to_string(), utility.to_string() ));
             // Simple highest utility wins (could add stickiness later)
             if utility > highest_utility {
                 highest_utility = utility;

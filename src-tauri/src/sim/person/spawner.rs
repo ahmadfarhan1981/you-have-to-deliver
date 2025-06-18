@@ -298,7 +298,7 @@ pub fn spawn_person(
     asset_path: &AssetBasePath,
     used_portraits: &UsedProfilePictureRegistry,
     person_registry: &Arc<Registry<PersonId, Entity>>,
-    global_skills: &Vec<GlobalSkill>,
+    global_skills: &Vec<&GlobalSkill>,
     current_tick: u64,
 ) -> (
     PersonId,
@@ -354,14 +354,14 @@ pub fn spawn_person(
     )
 }
 
-fn assign_skills(stats: &Stats, all_skills: &[GlobalSkill]) -> SkillSet {
+fn assign_skills(stats: &Stats, all_skills: &Vec<&GlobalSkill>) -> SkillSet {
     let mut skills = HashMap::new();
 
     for skill in all_skills {
         let tier = determine_skill_tier(stats, &skill.related_stats);
         if let Some((mean, stddev, min)) = skill_value_by_tier(tier) {
             let value = bounded_normal(mean as f64, stddev as f64, min as i16, 100) as u32;
-            skills.insert(skill.id, value);
+            skills.insert(skill.id.clone(), value);
         }
     }
 

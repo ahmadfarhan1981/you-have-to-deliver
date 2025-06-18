@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::master_data::skills::GLOBAL_SKILLS;
 use crate::sim::person::skills::{GlobalSkill, SkillSet};
 use crate::sim::registries::registry::GlobalSkillNameMap;
 
@@ -28,22 +29,22 @@ impl PartialEq<&SkillSetSnapshot> for SkillSetSnapshot {
     }
 }
 
-impl SkillSetSnapshot {
-    pub fn from_sim(skillset: &SkillSet, name_lookup: &GlobalSkillNameMap) -> Self {
-        let skill_list = skillset.skills.iter().collect::<Vec<_>>();
+
+impl From<&SkillSet> for SkillSetSnapshot {
+    fn from(value: &SkillSet) -> Self {
+        let skill_list = value.skills.iter().collect::<Vec<_>>();
 
         let snapshot_list = skill_list
             .iter()
             .map(|(s, v)| {
-                let id = **s;
+                let id = (**s).clone();
                 let val = **v;
-                let binding = name_lookup.0.get(&id).unwrap();
-                let name = binding.value();
+                let name = GLOBAL_SKILLS.get().unwrap().get(s).unwrap().name.clone();
 
                 AssignedSkillSnapshot {
                     skill_id: id.0.to_string(),
                     value: val,
-                    skill_name: name.clone(),
+                    skill_name: name,
                 }
             })
             .collect::<Vec<_>>();
@@ -51,13 +52,12 @@ impl SkillSetSnapshot {
         SkillSetSnapshot {
             assigned_skills: snapshot_list,
         }
-
-
     }
 }
 
+
 pub struct GlobalSkillSnapshot {
-    pub id: u32,
+    pub id: String,
     pub name: String,
     pub description: String,
     pub tier: String,
@@ -67,7 +67,7 @@ pub struct GlobalSkillSnapshot {
 impl From<&GlobalSkill> for GlobalSkillSnapshot {
     fn from(value: &GlobalSkill) -> Self {
         Self {
-            id: value.id.0,
+            id: value.id.0.clone(),
             name: value.name.clone(),
             description: value.description.clone(),
             tier: value.tier.to_string(),

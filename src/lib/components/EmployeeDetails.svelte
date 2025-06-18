@@ -34,7 +34,7 @@
                         <div class=" grid grid-cols-1 gap-6 ">
 <!--                            <FinancialHealthPanel/>-->
                             <EmployeeInfoPanel personStore={personStore}/>
-<!--                            <DebugDisplay personId={$personStore.person_id}/>-->
+                            <DebugDisplay personId={$personStore.person_id}/>
 <!--                            <div>-->
 <!--                                Needs-->
 <!--                                <ValueBar value={$personStore.energy.level}/>-->

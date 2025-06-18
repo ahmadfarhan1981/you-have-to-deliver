@@ -28,9 +28,6 @@ pub fn print_person(
     #[resource] app_state: &Arc<SnapshotState>,
     query_skill: &mut Query<&GlobalSkill>,
     world: &mut SubWorld,
-    #[resource] skill_registry: &Arc<Registry<SkillId, Entity>>
-
-
 ) {
 
 }
