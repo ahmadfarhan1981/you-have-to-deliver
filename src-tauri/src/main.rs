@@ -36,10 +36,7 @@ use crate::integrations::ui::{
 };
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{PersonId, ProfilePicture};
-use crate::sim::person::init::{
-    emit_done_setup_event_system, generate_employees_system, init_company_system,
-    load_global_skills_system, unset_first_run_flag_system, FirstRun,
-};
+use crate::sim::person::init::{emit_done_setup_event_system, generate_employees_system, init_company_system, load_global_skills_to_static, unset_first_run_flag_system, FirstRun};
 use crate::sim::utils::logging::init_logging;
 use crossbeam::queue::SegQueue;
 use dashmap::{DashMap, DashSet};
@@ -64,9 +61,9 @@ use action_queues::game_speed_manager::{
     decrease_speed, handle_game_speed_manager_queue_system, increase_speed, set_game_speed,
 };
 use action_queues::sim_manager;
-use action_queues::sim_manager::{delete_all_entity_system, handle_new_game_manager_queue_system, handle_sim_manager_queue_system, reset_state_system, SimManager};
+use action_queues::sim_manager::{ handle_new_game_manager_queue_system, handle_sim_manager_queue_system, SimManager};
 
-use crate::action_queues::sim_manager::{reset_snapshot_system, test_sim_manager_system};
+use crate::action_queues::sim_manager::{ test_sim_manager_system};
 use crate::db::init::{self, SavesDirectory};
 use crate::integrations::events::{emit_app_event, AppEventType};
 use crate::integrations::snapshots::company::CompanySnapshot;
@@ -102,7 +99,8 @@ fn main() {
     info!("Starting...");
 
     debug!("Debug log is {ENABLED}. Logs will be verbose. Use {log_settings} environment variable for normal operations.",ENABLED= red(&bold("ENABLED")), log_settings= green(&italic("RUST_LOG=info")));
-
+    
+    load_global_skills_to_static();
     let snapshot_state = SnapshotState::default();
     let ui_snapshot_state = Arc::new(snapshot_state);
     let sim_snapshot_state = Arc::clone(&ui_snapshot_state); // Clone for ECS thread

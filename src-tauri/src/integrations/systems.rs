@@ -185,8 +185,8 @@ pub fn push_persons_to_integration(
     let current_tick = tick_counter.value();
     let registry = &app_state.persons;
 
-    let skillset_snapshot = SkillSetSnapshot::from_sim(skill_set, global_skill_name_map);
 
+    let skillset_snapshot = SkillSetSnapshot::from(skill_set);
     match registry.entry(person.person_id.0) {
         Entry::Occupied(mut existing) => {
             let existing_person = existing.get_mut();
@@ -219,7 +219,7 @@ pub fn push_persons_to_integration(
                 profile_picture,
                 stats,
                 personality,
-                (skill_set, &**global_skill_name_map),
+                skill_set,
                 current_tick,
             ));
             vacant.insert(person);

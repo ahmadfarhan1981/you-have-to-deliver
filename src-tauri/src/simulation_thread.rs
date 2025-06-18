@@ -26,6 +26,7 @@ use crate::action_queues::team_manager::TeamManagerCommand;
 use crate::db::init::SavesDirectory;
 use crate::integrations::queues::SimCommand;
 use crate::integrations::queues::SimCommand::TeamManager;
+use crate::sim::person::init::ShouldGenerateEmployees;
 
 pub struct SimThreadConfig {
     pub app_handle: tauri::AppHandle,
@@ -46,6 +47,7 @@ pub fn run_simulation_thread(config: SimThreadConfig) {
     let mut world = World::default();
     let mut resources = Resources::default();
 
+    world.push(( ShouldGenerateEmployees(true), ));
     // Destructure config for use
     let SimThreadConfig {
         app_handle,

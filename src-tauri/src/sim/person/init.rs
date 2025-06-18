@@ -1,6 +1,6 @@
 use std::backtrace::Backtrace;
 use crate::integrations::ui::AppContext;
-use crate::master_data::skills::SKILL_DEFS;
+use crate::master_data::skills::{GLOBAL_SKILLS, SKILL_DEFS};
 use crate::sim::person::components::PersonId;
 use crate::sim::person::skills::ecs_components::{
     DomainContext, DomainCoordination, DomainExecution, DomainInterpersonal, TierApplied,
@@ -64,14 +64,18 @@ pub fn emit_done_setup_event(#[resource] app_context: &Arc<AppContext>)
     emit_app_event(&app_context.app_handle, AppEventType::InitDone)
 }
 
+// Create a resource to trigger employee generation
+#[derive(Default)]
+pub struct ShouldGenerateEmployees(pub bool);
+
 #[system]
+#[read_component(ShouldGenerateEmployees)]
 pub fn generate_employees(
     cmd: &mut CommandBuffer,
     #[resource] asset_base_path: &AssetBasePath,
     #[resource] used_portrait: &UsedProfilePictureRegistry,
     #[resource] person_registry: &Arc<Registry<PersonId, Entity>>,
     #[resource] sim_manager: &Arc<SimManager>,
-    query: &mut Query<(&GlobalSkill, &TierFoundational)>,
     world: &mut SubWorld,
 ) {
     use crate::sim::person::spawner::spawn_person;
@@ -94,7 +98,8 @@ pub fn generate_employees(
     //     (Exceptional, 0),
     // ];
     let mut q2 = <&GlobalSkill>::query().filter(component::<TierFoundational>()); //.filter(component::<DomainCoordination>());
-    let global_skills = q2.iter(world).cloned().collect::<Vec<_>>();
+    let global_skills:Vec<_> = GLOBAL_SKILLS.get().unwrap().iter().filter(|(id, skill)|  skill.tier == Tier::Foundational ).map(|(id, skill)| skill).collect();
+    // let global_skills = q2.iter(world).cloned().collect::<Vec<_>>();
     let config = (*sim_manager).employees_preset.read().config.clone();
     for (grade, count) in  config {
         for _ in 0..count {
@@ -105,46 +110,25 @@ pub fn generate_employees(
     info!("Generated employees");
 }
 
-#[system]
-pub fn load_global_skills(
-    cmd: &mut CommandBuffer,
-    #[resource] skill_registry: &Arc<Registry<SkillId, Entity>>,
-    #[resource] global_skills_name_map: &Arc<GlobalSkillNameMap>,
+
+
+
+
+
+pub fn load_global_skills_to_static(
 ) {
+    let mut global_skill_hashmap = HashMap::<SkillId, GlobalSkill>::new();
+    
     for skill_def in SKILL_DEFS {
         trace!("Single skill load {}", skill_def.id.to_string());
         let mut global_skill = GlobalSkill::from(skill_def);
-
-        let id = SkillId(skill_registry.generate_id());
-        global_skill.id = id;
-        let tier = global_skill.tier;
-        let domain = global_skill.domain.clone();
-        global_skills_name_map
-            .0
-            .insert(global_skill.id, global_skill.name.clone());
-        // info!("Skill for {:?}", global_skill.clone());
-        let entity = cmd.push((global_skill,));
-
-        match tier {
-            Tier::Foundational => cmd.add_component(entity, TierFoundational),
-            Tier::Conceptual => cmd.add_component(entity, TierConceptual),
-            Tier::Applied => cmd.add_component(entity, TierApplied),
-        }
-        for d in domain {
-            match d {
-                Domain::Execution => cmd.add_component(entity, DomainExecution),
-                Domain::Coordination => cmd.add_component(entity, DomainCoordination),
-                Domain::Interpersonal => cmd.add_component(entity, DomainInterpersonal),
-                Domain::Contextual => cmd.add_component(entity, DomainContext),
-            }
-        }
-
-        skill_registry.insert(id, entity);
-
-        // info!("{:?}", skill_registry.get_entity_from_id(&id).unwrap());
+        let id = global_skill.id.clone();
+        global_skill_hashmap.insert(id, global_skill);
     }
-    info!("Loading global skills... {}", skill_registry);
+    GLOBAL_SKILLS.set(global_skill_hashmap);
+    
 }
+
 
 #[system]
 pub fn init_company(

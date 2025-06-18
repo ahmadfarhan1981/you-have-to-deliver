@@ -38,7 +38,7 @@ impl
         &ProfilePicture,
         &Stats,
         &PersonalityMatrix,
-        (&SkillSet, &GlobalSkillNameMap),
+        &SkillSet,
         u64
     )> for PersonSnapshot
 {
@@ -48,7 +48,7 @@ impl
             &ProfilePicture,
             &Stats,
             &PersonalityMatrix,
-            (&SkillSet, &GlobalSkillNameMap),
+            &SkillSet,
             u64
         ),
     ) -> Self {
@@ -59,7 +59,7 @@ impl
             stats: StatsSnapshot::from(stats),
             profile_picture: ProfilePictureSnapshot::from(picture),
             personality: PersonalitySnapshot::from(personality),
-            assigned_skill: SkillSetSnapshot::from_sim(skillset.0, skillset.1),
+            assigned_skill: SkillSetSnapshot::from(skillset),
             updated: current_tick,
             joined_tick: person.joined,
             team: person.team.map(|id| id.0),

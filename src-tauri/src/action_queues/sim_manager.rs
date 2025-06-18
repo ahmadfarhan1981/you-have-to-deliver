@@ -6,6 +6,7 @@ use crate::sim::person::components::{Person, PersonId, ProfilePicture};
 use crate::sim::person::stats::Stats;
 use crate::sim::resources::global::TickCounter;
 use crate::sim::systems::global::UsedProfilePictureRegistry;
+use crate::sim::team::components::TeamId;
 use crate::sim::utils::sim_reset::ResetRequest;
 use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
@@ -74,36 +75,6 @@ pub fn handle_sim_manager_queue(
     });
 }
 
-#[system(for_each)]
-pub fn delete_all_entity(
-    command_buffer: &mut CommandBuffer,
-    entity: &Entity,
-    #[resource] sim_manager: &Arc<SimManager>,
-    #[resource] reset_request: &Arc<ResetRequest>,
-    // person: &Person
-) {
-    debug!("Clearing entities...");
-    if !reset_request.should_reset.load(Ordering::Relaxed) {
-        return;
-    }
-
-    if sim_manager.is_running() {
-        warn!("Unexpected delete request when sim is running");
-        return;
-    }
-    command_buffer.remove(*entity);
-}
-
-#[system]
-pub fn reset_state(#[resource] reset_request: &mut Arc<ResetRequest>) {
-    reset_request.should_reset.store(false, Ordering::Relaxed);
-}
-
-#[system]
-pub fn reset_snapshot(#[resource] app_state: &Arc<SnapshotState>){
-    app_state.persons.clear();
-    app_state.teams.clear();
-}
 #[system]
 pub fn handle_new_game_manager_queue(
     #[resource] queue_manager: &QueueManager,
@@ -114,6 +85,7 @@ pub fn handle_new_game_manager_queue(
     #[resource] game_speed: &Arc<RwLock<GameSpeedManager>>,
     #[resource] used_profile_picture_registry: &UsedProfilePictureRegistry,
     #[resource] person_registry: &Arc<Registry<PersonId, Entity>>,
+    #[resource] team_registry: &Arc<Registry<TeamId, Entity>>,
     #[resource] reset_request: &mut Arc<ResetRequest>,
     #[resource] command_queues: &Arc<UICommandQueues>,
 ) {
@@ -130,6 +102,7 @@ pub fn handle_new_game_manager_queue(
                 game_speed,
                 used_profile_picture_registry,
                 person_registry,
+                team_registry,
                 reset_request,
                 command_queues,
                 first_run,
@@ -145,6 +118,7 @@ pub fn handle_new_game_manager_queue(
                 game_speed,
                 used_profile_picture_registry,
                 person_registry,
+                team_registry,
                 reset_request,
                 command_queues,
                 first_run,
@@ -203,6 +177,7 @@ impl SimManager {
         game_speed: &Arc<RwLock<GameSpeedManager>>,
         used_profile_picture_registry: &UsedProfilePictureRegistry,
         person_registry: &Arc<Registry<PersonId, Entity>>,
+        team_registry: &Arc<Registry<TeamId, Entity>>,
         reset_request: &mut Arc<ResetRequest>,
         command_queues: &Arc<UICommandQueues>,
         firs_run: &Arc<FirstRun>,
@@ -241,22 +216,15 @@ impl SimManager {
         reset_request.should_reset.store(true, Ordering::Relaxed);
 
         debug!("Clearing resources...");
-
-        debug!("Clearing command queue...");
-        //dispatch queues
-        command_queues.runtime.clear();
-        command_queues.control.clear();
-
-        //subsystem queues
-        while queue_manager.sim_manager.queue.pop().is_some() {}
-        while queue_manager.game_speed_manager.queue.pop().is_some() {}
-        while queue_manager.sim_manager.queue.pop().is_some() {}
-
+        command_queues.clear_queues();
+        queue_manager.clear_queues();
+        
         debug!("Resetting tick counter...");
         tick_counter.reset();
 
         debug!("Resetting registries...");
         used_profile_picture_registry.used_profile_pictures.clear();
         person_registry.clear();
+        team_registry.clear();
     }
 }

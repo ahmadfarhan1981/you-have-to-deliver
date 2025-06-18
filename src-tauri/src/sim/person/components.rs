@@ -19,8 +19,14 @@ pub struct Person {
     pub joined: u64,
 }
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq, Encode, Decode)]
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq, Encode, Decode, PartialOrd, Ord)]
 pub struct PersonId(pub u32);
+impl Into<u32> for PersonId {
+    fn into(self) -> u32 {
+        self.0
+    }
+}
+
 
 #[derive(Clone, Debug, Copy, Serialize, Deserialize, Hash, Eq, PartialEq, Default, Encode, Decode)]
 pub enum Gender {

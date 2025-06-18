@@ -30,11 +30,7 @@ pub fn initialize_non_shared_resources(resources: &mut Resources) {
     resources.insert(Arc::new(Registry::<PersonId, Entity>::with_name(
         "Person registry",
     )));
-
-    resources.insert(Arc::new(Registry::<SkillId, Entity>::with_name(
-        "Skill registry",
-    )));
-
+    
     resources.insert(Arc::new(Registry::<TeamId, Entity>::with_name(
         "Team registry",
     )));

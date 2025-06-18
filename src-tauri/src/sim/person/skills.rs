@@ -7,8 +7,8 @@ use std::str::FromStr;
 use strum_macros::Display;
 use tracing::{error, warn};
 
-#[derive(Clone, Copy, Debug, Serialize, Deserialize, Hash, Eq, PartialEq, Encode, Decode)]
-pub struct SkillId(pub u32);
+#[derive(Clone, Debug, Serialize, Deserialize, Hash, Eq, PartialEq, Encode, Decode)]
+pub struct SkillId(pub String);
 
 struct SkillRequirement {
     direct_requirement: Vec<SkillLink>,
@@ -119,7 +119,7 @@ impl fmt::Display for GlobalSkill {
 impl From<&SkillDef> for GlobalSkill {
     fn from(value: &SkillDef) -> Self {
         Self {
-            id: SkillId(0),
+            id: SkillId(value.id.parse().unwrap()),
             slug: value.id.parse().unwrap(),
             name: value.name.parse().unwrap(),
             description: value.description.parse().unwrap(),
@@ -159,7 +159,7 @@ pub struct AssignedSkill {
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize, Encode, Decode)]
 pub struct SkillSet {
-    pub(crate) skills: HashMap<SkillId, u32>,
+    pub skills: HashMap<SkillId, u32>,
 }
 
 pub mod ecs_components {

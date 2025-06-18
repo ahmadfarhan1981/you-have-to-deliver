@@ -1,15 +1,16 @@
-use legion::Schedule;
 use crate::action_queues::game_speed_manager::handle_game_speed_manager_queue_system;
-use crate::action_queues::sim_manager::{delete_all_entity_system, handle_new_game_manager_queue_system, handle_sim_manager_queue_system, reset_snapshot_system, reset_state_system, test_sim_manager_system};
+use crate::action_queues::sim_manager::{ handle_new_game_manager_queue_system, handle_sim_manager_queue_system, test_sim_manager_system};
 use crate::action_queues::team_manager::{handle_team_assignment_queue_system, handle_team_manager_queue_system};
 use crate::integrations::queues::{handle_dispatch_queue_system, handle_sim_manager_dispatch_queue_system};
 use crate::integrations::snapshots_emitter::snapshots_emitter::run_snapshot_emitters_system;
 use crate::integrations::systems::{push_company_to_integration_system, push_debug_displays_to_integration_system, push_game_speed_snapshots_system, push_needs_to_integration_system, push_persons_to_integration_system, push_teams_to_integration_system, tick_needs_system};
 use crate::sim::action::action::{decide_action_system, execute_action_system};
 use crate::sim::ai::consideration::goal_selection_system;
-use crate::sim::person::init::{emit_done_setup_event_system, generate_employees_system, init_company_system, load_global_skills_system, unset_first_run_flag_system};
+use crate::sim::person::init::{emit_done_setup_event_system, generate_employees_system, init_company_system, unset_first_run_flag_system};
 use crate::sim::systems::global::{increase_sim_tick_system, print_person_system};
 use crate::sim::utils::debugging::clear_debug_display_system;
+use crate::sim::utils::sim_reset::{delete_all_entity_system, reset_snapshot_system, reset_state_system};
+use legion::Schedule;
 
 pub struct GameSchedules {
     pub startup: Schedule,
@@ -30,8 +31,6 @@ pub fn init_schedules() -> GameSchedules {
     // Startup schedule, runs once on startup. add run once systems here.
     let startup = Schedule::builder()
         .add_system(init_company_system())
-        .flush()
-        .add_system(load_global_skills_system())
         .flush()
         .add_system(generate_employees_system())
         .flush()

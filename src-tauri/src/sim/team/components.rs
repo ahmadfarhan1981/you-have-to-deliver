@@ -6,8 +6,13 @@ use tracing::{debug, info};
 use crate::sim::person::components::{Person, PersonId};
 use crate::sim::utils::snapshots::convert_dashset_to_vec;
 
-#[derive(Debug, Serialize, Deserialize, Clone, Default, Eq, PartialEq, Hash, Copy, Encode, Decode)]
+#[derive(Debug, Serialize, Deserialize, Clone, Default, Eq, PartialEq, Hash, Copy, Encode, Decode, PartialOrd, Ord)]
 pub struct TeamId(pub u32);
+impl Into<u32> for TeamId {
+    fn into(self) -> u32 {
+        self.0
+    }
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct Team {

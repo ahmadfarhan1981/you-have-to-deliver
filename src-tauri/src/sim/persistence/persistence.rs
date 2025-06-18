@@ -2,19 +2,20 @@ use std::sync::Arc;
 
 use crate::db::error;
 use crate::db::init::SaveSlot;
-use crate::integrations::snapshots::{company, team};
+use crate::integrations::snapshots::{company, person, team};
 // Added for SavedEmployee
 use crate::sim::ai::goap::CurrentGoal;
 use crate::sim::company::company::{Company, PlayerControlled};
-use crate::sim::person::components::{Person, ProfilePicture};
+use crate::sim::person::components::{Person, PersonId, ProfilePicture};
 use crate::sim::person::needs::{Energy, Hunger};
 use crate::sim::person::personality_matrix::PersonalityMatrix;
 use crate::sim::person::skills::SkillSet;
 use crate::sim::person::stats::Stats;
-use crate::sim::team::components::Team;
+use crate::sim::registries::registry::Registry;
+use crate::sim::team::components::{Team, TeamId};
 use bincode::{Decode, Encode};
 use legion::world::SubWorld;
-use legion::{query, system, Query};
+use legion::{query, system, Entity, IntoQuery, Query};
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
 // Added for logging
@@ -36,7 +37,6 @@ pub struct SavedEmployee {
 pub fn save_entity_state(
     world: &SubWorld,
     #[resource] current_save: &Arc<SaveSlot>,
-    // Add #[resource] ResType if you need resources
     query: &mut Query<(
         &Person,
         &Stats,
@@ -49,13 +49,13 @@ pub fn save_entity_state(
     )>,
     company_query: &mut Query<(&Company, &PlayerControlled)>,
     team_query: &mut Query<(&Team)>,
-    // You might want to pass a mutable resource here to store the collected employees
-    // e.g., #[resource] mut saved_employee_data: &mut Vec<SavedEmployee>
 ) {
     if current_save.is_empty {
         error!("No active save slot");
         return;
     }
+
+    
 
     if let Some(db) = &current_save.handle {
         let mut collected_employees: Vec<SavedEmployee> = Vec::new(); // Example: collect them locally
@@ -134,4 +134,38 @@ pub fn save_entity_state(
    
 
     
+}
+
+
+#[system]
+pub fn sync_registry_from_person(
+    world: &SubWorld,
+    query: &mut Query<(
+        &Person,
+        &Entity,
+    )>,
+    #[resource]person_registry: &Arc<Registry<PersonId, Entity>>,
+    
+) {
+
+    let x = query.iter(world).map(|(person, entity)| (person.person_id, *entity) );
+    person_registry.repopulate_from_entities(x);
+
+}
+
+
+#[system]
+pub fn sync_registry_from_team(
+    world: &SubWorld,
+    query: &mut Query<(
+        &Team,
+        &Entity,
+    )>,
+    #[resource]team_registry: &Arc<Registry<TeamId, Entity>>,
+    
+) {
+
+    let x = query.iter(world).map(|(team, entity)| (team.team_id, *entity) );
+    team_registry.repopulate_from_entities(x);
+
 }
