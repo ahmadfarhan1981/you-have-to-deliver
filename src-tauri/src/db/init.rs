@@ -11,6 +11,7 @@ use crate::db::{self, error::SavesManagementError};
 use crate::sim::sim_date::sim_date::SimDate;
 use std::time::{SystemTime, UNIX_EPOCH};
 use sled::Db;
+use crate::db::constants::METADATA_KEY;
 // For generating timestamp
 
 #[derive(Debug, Clone)]
@@ -193,7 +194,7 @@ impl SaveSlot {
     }
 }
 
-const METADATA_KEY: &str = "save_slot_metadata";
+
 
 
 pub fn scan_save_slots(saves_directory: &SavesDirectory) -> Result<Vec<SaveSlot>, SavesManagementError> {

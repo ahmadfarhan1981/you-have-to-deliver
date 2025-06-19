@@ -54,7 +54,6 @@ pub fn save_entity_state(
         error!("No active save slot");
         return;
     }
-
     
 
     if let Some(db) = &current_save.handle {

@@ -40,7 +40,6 @@
         } );
 
         const unlistenDebugDisplays = listen<AllPersonDebugDisplays>(personDebugSnapshotEventName, (event) => {
-            console.log("debug snapshot", event.payload)
             personDebugDisplays.set(event.payload);
         });
 
