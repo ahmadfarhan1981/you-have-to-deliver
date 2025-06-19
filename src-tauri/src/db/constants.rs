@@ -1,0 +1,1 @@
+pub const METADATA_KEY: &str = "save_slot_metadata";

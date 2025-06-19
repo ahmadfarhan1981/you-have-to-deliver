@@ -17,10 +17,18 @@
     import WeekCalendarPanel from "$lib/components/WeekCalendarPanel.svelte";
     import DayCalendarPanel from "$lib/components/DayCalendarPanel.svelte";
     import WeekCalendarPanel2 from "$lib/components/WeekCalendarPanel2.svelte";
+    import TabComponent from "$lib/components/TabComponent.svelte";
 
 
-    export let personStore: Readable<PersonSnapshotWithTotal | null>;
+    export let personStore: Readable<PersonSnapshotWithTotal>;
     $: person = $personStore;
+    const tabItems = [
+        { id: 'overview', label: 'Overview' },
+        { id: 'statsSkills', label: 'Stats & Skills' },
+        { id: 'detailsSchedule', label: 'Details & Schedule' },
+        { id: 'performanceProjects', label: 'Performance & Projects' },
+    ];
+    let currentActiveTabId = tabItems[0].id;
 </script>
 {#if person != null}
     <div class="p-6 bg-game-bg game-bg">
@@ -49,9 +57,11 @@
 
     </div>
 
-    <div class="border-t border-gray-300 my-6"></div>
 
-    <div class="grid grid-cols-3 gap-6">
+
+    <div class="border-t border-gray-300"></div>
+    <TabComponent items={tabItems} bind:activeTabId={currentActiveTabId} />
+    <div class="grid grid-cols-3 gap-6 mt-3">
 
 
         <div>
@@ -71,7 +81,7 @@
         </div>
 
         <div class="col-span-1">
-            <SkillsPanel person={person}/>
+            <SkillsPanel personStore={personStore}/>
         </div>
         <div>
             <PersonalityMatrixPanel personality={person.personality}/>
