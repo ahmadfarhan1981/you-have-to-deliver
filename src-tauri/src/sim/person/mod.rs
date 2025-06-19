@@ -8,4 +8,5 @@ pub mod stats;
 pub mod systems;
 pub mod utils;
 pub mod needs;
+pub mod morale;
 
