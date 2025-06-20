@@ -110,8 +110,41 @@
     // Reactive values that change based on toggle
     $: currentChartData = isDetailed ? detailedChartData : consolidatedChartData;
     $: currentRadarIndicators = isDetailed ? detailedRadarIndicators : consolidatedRadarIndicators;
-    $: startAngle = isDetailed ? 90 + (360 /10 ) : 90 + (360/5);
-    // let option :EChartsOption;
+    $: numIndicators = isDetailed ? 10 : 5;
+    $: startAngle = 90 + (360 / numIndicators);
+
+    // Memoize parts of the option to prevent unnecessary chart updates
+    // when underlying data values haven't changed but array/object identities have.
+    let prevCurrentRadarIndicatorsJson = '';
+    let memoizedRadarIndicatorOption: { name: string; max: number }[] = [];
+    $: {
+        // Only compare relevant fields for radar indicators
+        const newJson = JSON.stringify(currentRadarIndicators.map(r => ({ name: r.name, max: r.max })));
+        if (newJson !== prevCurrentRadarIndicatorsJson) {
+            memoizedRadarIndicatorOption = currentRadarIndicators.map((item: RadarIndicator) => ({
+                name: item.name,
+                max: item.max
+            }));
+            prevCurrentRadarIndicatorsJson = newJson;
+        }
+    }
+
+    let prevCurrentChartDataJson = '';
+    let memoizedSeriesDataOption: ChartDataItem[] = []; // Will hold items with ECharts specific styling
+    $: {
+        const newJson = JSON.stringify(currentChartData); // Assumes ChartDataItem is consistently serializable
+        if (newJson !== prevCurrentChartDataJson) {
+            memoizedSeriesDataOption = currentChartData.map((item: ChartDataItem) => ({
+                ...item, // Spread existing item properties
+                symbol: 'circle', // Add/override ECharts specific styling
+                symbolSize: 6,
+                lineStyle: { width: 2 },
+                areaStyle: { opacity: 0.1 }
+            }));
+            prevCurrentChartDataJson = newJson;
+        }
+    }
+    
     $: option = {
         // title: {
         //     text: `${isDetailed ? 'Detailed' : 'Consolidated'} Attribute Radar Chart`,
@@ -158,10 +191,7 @@
         //     bottom: 10
         // },
         radar: {
-            indicator: currentRadarIndicators.map((item: RadarIndicator) => ({
-                name: item.name,
-                max: item.max
-            })),
+            indicator: memoizedRadarIndicatorOption,
             radius: '55%',
             axisName: {
                 fontSize: 12,
@@ -190,17 +220,7 @@
         series: [{
             name: 'Attributes',
             type: 'radar',
-            data: currentChartData.map((item: ChartDataItem) => ({
-                ...item,
-                symbol: 'circle',
-                symbolSize: 6,
-                lineStyle: {
-                    width: 2
-                },
-                areaStyle: {
-                    opacity: 0.1
-                }
-            }))
+            data: memoizedSeriesDataOption,
         }],
         
     };

@@ -1,2 +1,2 @@
 pub mod decimal33;
-mod discreet_float;
+pub mod discreet_float;

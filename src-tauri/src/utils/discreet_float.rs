@@ -2,8 +2,9 @@ use std::ops::{AddAssign, SubAssign};
 use std::fmt;
 use std::str::FromStr;
 use crate::utils::decimal33::{Decimal33, DecimalError};
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct DiscreteFloat33 {
     raw: Decimal33,
 }

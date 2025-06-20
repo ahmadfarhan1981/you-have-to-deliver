@@ -1,5 +1,6 @@
 use std::fmt;
 use std::str::FromStr;
+use serde::{Serialize, Deserialize};
 
 /// Represents errors that can occur during `Decimal33` operations.
 #[derive(Debug)]
@@ -27,14 +28,14 @@ impl From<std::num::ParseFloatError> for DecimalError {
 /// A fixed-point decimal structure storing values with a precision of 3 decimal places.
 /// The value is stored as a `u32` scaled by 1000. For example, 55.201 is stored as 55201.
 /// The maximum representable value is 999.999.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, Encode, Decode)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, bincode::Encode, bincode::Decode)]
 pub struct Decimal33 {
     scaled_int: u32, // value in thousandths, e.g. 55201 = 55.201
 }
 
 impl Decimal33 {
-    pub const PRECISION: u32 = 1000; // 3 decimal places
-    pub const MAX_SCALED: u32 = 999_999; // max value: 999.999
+    const PRECISION: u32 = 1000; // 3 decimal places
+    const MAX_SCALED: u32 = 999_999; // max value: 999.999
 
     /// Creates a new `Decimal33` from an `f32` value.
     ///
@@ -116,27 +117,25 @@ impl Decimal33 {
         self.scaled_int = self.scaled_int.saturating_sub(other.scaled_int);
     }
 
-    /// Subtracts an `f32` value from this `Decimal33` in place.
-    ///
-    /// If `delta` is negative, this method effectively adds the absolute value of `delta`.
-    /// The `delta` is scaled by `PRECISION` (1000) and floored before subtraction.
-    ///
-    /// The subtraction is saturating: if the scaled `delta` is greater than `self.scaled_int`,
-    /// the internal `scaled_int` will become 0.
-    pub fn subtract_f32(&mut self, delta: f32) {
-        if delta < 0.0 {
-            self.add_f32(-delta);
-            return;
-        }
+   /// Subtracts an `f32` value from this `Decimal33` in place.
+   ///
+   /// If `delta` is negative, this method effectively adds the absolute value of `delta`.
+   /// The `delta` is scaled by `PRECISION` (1000) and floored before subtraction.
+   ///
+   /// The subtraction is saturating: if the scaled `delta` is greater than `self.scaled_int`,
+   /// the internal `scaled_int` will become 0.
+   pub fn subtract_f32(&mut self, delta: f32) {
+    if delta < 0.0 {
+        self.add_f32(-delta);
+        return;
+    }
 
-        let delta_scaled = (delta * Self::PRECISION as f32).floor() as u32;
-        self.scaled_int = self.scaled_int.saturating_sub(delta_scaled);
+    let delta_scaled = (delta * Self::PRECISION as f32).floor() as u32;
+    self.scaled_int = self.scaled_int.saturating_sub(delta_scaled);
     }
 }
 
 use std::ops::{AddAssign, SubAssign};
-use bincode::{Decode, Encode};
-use serde::{Deserialize, Serialize};
 
 impl AddAssign for Decimal33 {
     /// Performs saturating addition and assignment.
