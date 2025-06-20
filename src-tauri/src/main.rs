@@ -16,6 +16,8 @@ mod resources;
 mod schedules;
 mod sim;
 mod simulation_thread;
+mod utils;
+
 use crate::resources::init::{initialize_emit_registries, initialize_non_shared_resources};
 use crate::schedules::init::init_schedules;
 use crate::sim::resources::global::{AssetBasePath, Dirty, TickCounter};
