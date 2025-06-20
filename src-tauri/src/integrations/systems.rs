@@ -31,7 +31,9 @@ use tracing::field::debug;
 use tracing_subscriber::registry;
 use crate::constants::COMPANY_SNAPSHOT_EVENT_NAME;
 use crate::integrations::snapshots::debug_display::DebugDisplayEntrySnapshot;
+use crate::integrations::snapshots::stress::StressSnapshot;
 use crate::sim::action::action::ActionIntent;
+use crate::sim::person::morale::StressLevel;
 use crate::sim::utils::debugging::DebugDisplayComponent;
 
 #[system]
@@ -319,4 +321,37 @@ pub fn print_all_debug_displays(registry: &DashMap<u32, Vec<DebugDisplayEntrySna
         }
     }
     info!("--- End of Debug Displays ---");
+}
+#[system(for_each)]
+pub fn push_stress_level_to_integration(
+    #[resource] tick_counter: &Arc<TickCounter>,
+    #[resource] app_state: &Arc<SnapshotState>,
+    person :&Person,
+    stress_level: &StressLevel,
+) {
+    
+    // TODO dirty check
+    let current_tick = tick_counter.value();
+    let person_id = person.person_id.0;
+    
+    let stress_level_snapshots = &app_state.stress_level;
+
+    match stress_level_snapshots.entry(person_id) {
+        Entry::Occupied(mut existing) => {
+            let mut  existing_snapshot = existing.get_mut();
+            if *existing_snapshot != stress_level {
+                *existing_snapshot =StressSnapshot {
+                                        person_id,
+                                        ..StressSnapshot::from(stress_level)
+                                    }; 
+            }
+        }
+        Entry::Vacant(vacant) => {
+            let s = StressSnapshot {
+                person_id,
+                ..StressSnapshot::from(stress_level)
+            };
+            vacant.insert(s);
+        }
+    };
 }

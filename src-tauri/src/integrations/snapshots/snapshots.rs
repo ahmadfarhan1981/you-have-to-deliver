@@ -9,6 +9,8 @@ use serde::Serialize;
 use std::hash::Hash;
 use std::sync::Arc;
 use crate::integrations::snapshots::debug_display::DebugDisplayEntrySnapshot;
+use crate::integrations::snapshots::stress::StressSnapshot;
+use crate::sim::person::morale::StressLevel;
 
 /// this is tha main integration state
 #[derive(Debug)]
@@ -19,6 +21,7 @@ pub struct SnapshotState {
     pub company: Arc<SnapshotField<CompanySnapshot>>,
     pub teams : Arc<DashMap<u32, TeamSnapshot>>,
     pub debug_display: Arc<DashMap<u32, Vec<DebugDisplayEntrySnapshot>>>,
+    pub stress_level: Arc<DashMap<u32, StressSnapshot>>,
 
 }
 
@@ -31,6 +34,7 @@ impl Default for SnapshotState {
             company: Arc::new(SnapshotField::from(CompanySnapshot::default())),
             teams: Arc::new(DashMap::<u32, TeamSnapshot>::new()),
             debug_display: Arc::new(DashMap::<u32, Vec<DebugDisplayEntrySnapshot>>::new()),
+            stress_level: Arc::new(DashMap::<u32, StressSnapshot>::new()),
         }
     }
 }
