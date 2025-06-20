@@ -1,10 +1,10 @@
 use bincode::{Decode, Encode};
 use rand::prelude::SliceRandom;
-use rand::{rng, Rng};
+use rand::Rng; // Removed unused 'rng' import, will use thread_rng
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum_macros::EnumIter;
-use tracing::info;
+use crate::utils::discreet_float::DiscreteFloat33;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter)]
 pub enum StatType {
@@ -85,34 +85,24 @@ pub struct StatsConfig {
 #[derive(Clone, Copy, Debug, Serialize, Deserialize, Encode, Decode)]
 pub struct Stats {
     // Cognition
-    judgement: u16,
-    judgement_raw: u32,
-    creativity: u16,
-    creativity_raw: u32,
+    judgement: DiscreteFloat33,
+    creativity: DiscreteFloat33,
 
     // Perception
-    systems: u16,
-    systems_raw: u32,
-    precision: u16,
-    precision_raw: u32,
+    systems: DiscreteFloat33,
+    precision: DiscreteFloat33,
 
     // Drive
-    focus: u16,
-    focus_raw: u32,
-    discipline: u16,
-    discipline_raw: u32,
+    focus: DiscreteFloat33,
+    discipline: DiscreteFloat33,
 
     // Social
-    empathy: u16,
-    empathy_raw: u32,
-    communication: u16,
-    communication_raw: u32,
+    empathy: DiscreteFloat33,
+    communication: DiscreteFloat33,
 
     // Defense
-    resilience: u16,
-    resilience_raw: u32,
-    adaptability: u16,
-    adaptability_raw: u32,
+    resilience: DiscreteFloat33,
+    adaptability: DiscreteFloat33,
 }
 impl Stats {
     /// Increases random stats in 1–2 point increments until total stat points
@@ -131,7 +121,7 @@ impl Stats {
     pub fn normalize_to(&mut self, target: u16) {
         use StatType::*;
 
-        let mut rng = rng();
+        let mut rng = rand::rng();
         let mut stat_pool = vec![
             Judgement,
             Creativity,
@@ -150,7 +140,7 @@ impl Stats {
             for stat in &stat_pool {
                 let increment = if rng.random_bool(0.5) { 1 } else { 2 };
                 let current = self.get_stat(*stat);
-                self.set_stat(*stat, current + increment);
+                self.set_stat(*stat, current.saturating_add(increment));
                 if self.total() >= target {
                     break;
                 }
@@ -160,7 +150,8 @@ impl Stats {
 
     /// Sets the given stat to a specific value.
     ///
-    /// This updates both the visible stat and its raw counterpart.
+    /// This creates a new `DiscreteFloat33` for the stat.
+    /// Panics if `value` is outside the 0-999 range supported by `DiscreteFloat33`.
     /// The value is clamped to a minimum of 0.
     ///
     /// # Arguments
@@ -172,26 +163,23 @@ impl Stats {
     /// stats.set_stat(StatType::Creativity, 75);
     /// ```
     pub fn set_stat(&mut self, stat: StatType, value: u16) {
-        let clamped = value.max(0); // optional, in case negative u16s are passed indirectly
-
-        macro_rules! set {
-            ($field:ident, $raw_field:ident) => {{
-                self.$field = clamped;
-                self.$raw_field = (clamped as u32) * 1000;
-            }};
-        }
+        // Clamping to 0 is implicitly handled by u16.
+        // DiscreteFloat33::new will handle negative floats, but u16 is always non-negative.
+        // The main concern is value > 999, which DiscreteFloat33::new will reject.
+        let new_df33 = DiscreteFloat33::new(value as f32)
+            .expect("Failed to set stat: value likely out of DiscreteFloat33 range (0-999)");
 
         match stat {
-            StatType::Judgement => set!(judgement, judgement_raw),
-            StatType::Creativity => set!(creativity, creativity_raw),
-            StatType::Systems => set!(systems, systems_raw),
-            StatType::Precision => set!(precision, precision_raw),
-            StatType::Focus => set!(focus, focus_raw),
-            StatType::Discipline => set!(discipline, discipline_raw),
-            StatType::Empathy => set!(empathy, empathy_raw),
-            StatType::Communication => set!(communication, communication_raw),
-            StatType::Resilience => set!(resilience, resilience_raw),
-            StatType::Adaptability => set!(adaptability, adaptability_raw),
+            StatType::Judgement => self.judgement = new_df33,
+            StatType::Creativity => self.creativity = new_df33,
+            StatType::Systems => self.systems = new_df33,
+            StatType::Precision => self.precision = new_df33,
+            StatType::Focus => self.focus = new_df33,
+            StatType::Discipline => self.discipline = new_df33,
+            StatType::Empathy => self.empathy = new_df33,
+            StatType::Communication => self.communication = new_df33,
+            StatType::Resilience => self.resilience = new_df33,
+            StatType::Adaptability => self.adaptability = new_df33,
         }
     }
 
@@ -204,8 +192,7 @@ impl Stats {
 
     /// Adjusts multiple stats by the specified amounts.
     ///
-    /// Each `StatType` will have its raw value modified by `amount * 1000`.
-    /// All updates are applied first, then `sync_from_raw()` is called once at the end.
+    /// Each `StatType`'s `DiscreteFloat33` will be adjusted using its `add_f32` method.
     ///
     /// # Arguments
     /// * `adjustments` – A slice of `(StatType, f32)` tuples.
@@ -220,30 +207,20 @@ impl Stats {
     /// ```
     pub fn adjust_many(&mut self, adjustments: &[(StatType, f32)]) {
         for &(stat, amount) in adjustments {
-            let delta = (amount * 1000.0).round() as i32;
-
-            macro_rules! apply {
-                ($field:ident, $raw_field:ident) => {{
-                    let raw = self.$raw_field as i32 + delta;
-                    self.$raw_field = raw.max(0) as u32;
-                }};
-            }
-
             match stat {
-                StatType::Judgement => apply!(judgement, judgement_raw),
-                StatType::Creativity => apply!(creativity, creativity_raw),
-                StatType::Systems => apply!(systems, systems_raw),
-                StatType::Precision => apply!(precision, precision_raw),
-                StatType::Focus => apply!(focus, focus_raw),
-                StatType::Discipline => apply!(discipline, discipline_raw),
-                StatType::Empathy => apply!(empathy, empathy_raw),
-                StatType::Communication => apply!(communication, communication_raw),
-                StatType::Resilience => apply!(resilience, resilience_raw),
-                StatType::Adaptability => apply!(adaptability, adaptability_raw),
+                StatType::Judgement => self.judgement.add_f32(amount),
+                StatType::Creativity => self.creativity.add_f32(amount),
+                StatType::Systems => self.systems.add_f32(amount),
+                StatType::Precision => self.precision.add_f32(amount),
+                StatType::Focus => self.focus.add_f32(amount),
+                StatType::Discipline => self.discipline.add_f32(amount),
+                StatType::Empathy => self.empathy.add_f32(amount),
+                StatType::Communication => self.communication.add_f32(amount),
+                StatType::Resilience => self.resilience.add_f32(amount),
+                StatType::Adaptability => self.adaptability.add_f32(amount),
             }
         }
-
-        self.sync_from_raw();
+        // No sync_from_raw() needed, DiscreteFloat33 handles its state.
     }
 
     /// Returns the `StatType` with the lowest visible stat value.
@@ -309,41 +286,32 @@ impl Stats {
     }
 
     pub fn total(&self) -> u16 {
-        self.judgement
-            + self.creativity
-            + self.systems
-            + self.precision
-            + self.focus
-            + self.discipline
-            + self.empathy
-            + self.communication
-            + self.resilience
-            + self.adaptability
+        (self.judgement.value()
+            + self.creativity.value()
+            + self.systems.value()
+            + self.precision.value()
+            + self.focus.value()
+            + self.discipline.value()
+            + self.empathy.value()
+            + self.communication.value()
+            + self.resilience.value()
+            + self.adaptability.value()) as u16
     }
 }
 impl From<StatsConfig> for Stats {
     fn from(config: StatsConfig) -> Self {
+        // This will panic if any config value > 999 due to DiscreteFloat33's current range.
         Self {
-            judgement: config.judgement,
-            judgement_raw: config.judgement as u32 * 1000,
-            creativity: config.creativity,
-            creativity_raw: config.creativity as u32 * 1000,
-            systems: config.systems,
-            systems_raw: config.systems as u32 * 1000,
-            precision: config.precision,
-            precision_raw: config.precision as u32 * 1000,
-            focus: config.focus,
-            focus_raw: config.focus as u32 * 1000,
-            discipline: config.discipline,
-            discipline_raw: config.discipline as u32 * 1000,
-            empathy: config.empathy,
-            empathy_raw: config.empathy as u32 * 1000,
-            communication: config.communication,
-            communication_raw: config.communication as u32 * 1000,
-            resilience: config.resilience,
-            resilience_raw: config.resilience as u32 * 1000,
-            adaptability: config.adaptability,
-            adaptability_raw: config.adaptability as u32 * 1000,
+            judgement: DiscreteFloat33::new(config.judgement as f32).expect("Config judgement out of range"),
+            creativity: DiscreteFloat33::new(config.creativity as f32).expect("Config creativity out of range"),
+            systems: DiscreteFloat33::new(config.systems as f32).expect("Config systems out of range"),
+            precision: DiscreteFloat33::new(config.precision as f32).expect("Config precision out of range"),
+            focus: DiscreteFloat33::new(config.focus as f32).expect("Config focus out of range"),
+            discipline: DiscreteFloat33::new(config.discipline as f32).expect("Config discipline out of range"),
+            empathy: DiscreteFloat33::new(config.empathy as f32).expect("Config empathy out of range"),
+            communication: DiscreteFloat33::new(config.communication as f32).expect("Config communication out of range"),
+            resilience: DiscreteFloat33::new(config.resilience as f32).expect("Config resilience out of range"),
+            adaptability: DiscreteFloat33::new(config.adaptability as f32).expect("Config adaptability out of range"),
         }
     }
 }
@@ -373,37 +341,39 @@ impl StatGroup {
 
 impl Stats {
     pub fn get_stat(&self, stat: StatType) -> u16 {
+        // DiscreteFloat33::value() returns u32, cast to u16. Safe if value <= 999.
         match stat {
-            StatType::Judgement => self.judgement,
-            StatType::Creativity => self.creativity,
-            StatType::Systems => self.systems,
-            StatType::Precision => self.precision,
-            StatType::Focus => self.focus,
-            StatType::Discipline => self.discipline,
-            StatType::Empathy => self.empathy,
-            StatType::Communication => self.communication,
-            StatType::Resilience => self.resilience,
-            StatType::Adaptability => self.adaptability,
+            StatType::Judgement => self.judgement.value() as u16,
+            StatType::Creativity => self.creativity.value() as u16,
+            StatType::Systems => self.systems.value() as u16,
+            StatType::Precision => self.precision.value() as u16,
+            StatType::Focus => self.focus.value() as u16,
+            StatType::Discipline => self.discipline.value() as u16,
+            StatType::Empathy => self.empathy.value() as u16,
+            StatType::Communication => self.communication.value() as u16,
+            StatType::Resilience => self.resilience.value() as u16,
+            StatType::Adaptability => self.adaptability.value() as u16,
         }
     }
+
     pub fn average_cognition(&self) -> f32 {
-        (self.judgement as f32 + self.creativity as f32) / 2.0
+        (self.judgement.value() as f32 + self.creativity.value() as f32) / 2.0
     }
 
     pub fn average_perception(&self) -> f32 {
-        (self.systems as f32 + self.precision as f32) / 2.0
+        (self.systems.value() as f32 + self.precision.value() as f32) / 2.0
     }
 
     pub fn average_drive(&self) -> f32 {
-        (self.focus as f32 + self.discipline as f32) / 2.0
+        (self.focus.value() as f32 + self.discipline.value() as f32) / 2.0
     }
 
     pub fn average_social(&self) -> f32 {
-        (self.empathy as f32 + self.communication as f32) / 2.0
+        (self.empathy.value() as f32 + self.communication.value() as f32) / 2.0
     }
 
     pub fn average_defense(&self) -> f32 {
-        (self.resilience as f32 + self.adaptability as f32) / 2.0
+        (self.resilience.value() as f32 + self.adaptability.value() as f32) / 2.0
     }
 
     pub fn group_average(&self, group: StatGroup) -> f32 {
@@ -433,22 +403,5 @@ impl Stats {
         self.group_average(group)
             .partial_cmp(&other.group_average(group))
             .unwrap_or(std::cmp::Ordering::Equal)
-    }
-
-    pub fn sync_from_raw(&mut self) {
-        self.judgement = (self.judgement_raw / 1000) as u16;
-        self.creativity = (self.creativity_raw / 1000) as u16;
-
-        self.systems = (self.systems_raw / 1000) as u16;
-        self.precision = (self.precision_raw / 1000) as u16;
-
-        self.focus = (self.focus_raw / 1000) as u16;
-        self.discipline = (self.discipline_raw / 1000) as u16;
-
-        self.empathy = (self.empathy_raw / 1000) as u16;
-        self.communication = (self.communication_raw / 1000) as u16;
-
-        self.resilience = (self.resilience_raw / 1000) as u16;
-        self.adaptability = (self.adaptability_raw / 1000) as u16;
     }
 }
