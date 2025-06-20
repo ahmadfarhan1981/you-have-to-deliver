@@ -92,11 +92,21 @@ pub fn initialize_emit_registries(
             last_sent_tick: Default::default(),
         },
     };
+
+    let stress_snapshots_emitter = SnapshotCollectionEmitter {
+        map: Arc::clone(&main_snapshot_state.stress_level),
+        config: SnapshotEmitterConfig {
+            frequency: ExportFrequency::EveryTick,
+            event_name: "stress_snapshot",
+            last_sent_tick: Default::default(),
+        },
+    };
     snapshot_registry.register(company_snapshots_emitter);
     snapshot_registry.register(game_speed_snapshots_emitter);
     snapshot_registry.register(person_snapshots_emitter);
     snapshot_registry.register(team_snapshots_emitter);
     snapshot_registry.register(debug_display_snapshots_emitter);
+    snapshot_registry.register(stress_snapshots_emitter);
 
     snapshot_registry
 }

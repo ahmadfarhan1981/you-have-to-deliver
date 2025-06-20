@@ -1,12 +1,15 @@
 use std::collections::VecDeque;
+use bincode::{Decode, Encode};
+use serde::{Deserialize, Serialize};
 
 const STRESS_HISTORY_DAYS: usize = 28;
-const MAX_DAILY_STRESS: f32 = 100.0;
+const MAX_DAILY_STRESS: f32 = 150.0;
 
+const BASELINE_TOLERANCE: f32 = 65.0;
+const SURGE_TOLERANCE: f32 = 90.0;
+const RECOVERY_RATE:f32 = 40.0;
 
-
-
-#[derive(Debug, Default)]
+#[derive(Debug, Serialize, Deserialize, Encode, Decode)]
 pub struct StressLevel {
     // Tick-level load
     pub current: f32,
@@ -31,6 +34,21 @@ pub struct StressLevel {
     // Daily flat recovery
     pub recovery_rate: f32,
 }
+impl Default for StressLevel {
+    fn default() -> Self {
+        Self{
+            current: 0.0,
+            daily_accumulator: 0.0,
+            raw_input_history: VecDeque::new(),
+            raw_input_total: 0.0,
+            felt_stress_history: VecDeque::new(),
+            felt_stress_total: 0.0,
+            baseline_tolerance: BASELINE_TOLERANCE,// TODO take stats into account when generating
+            surge_tolerance: SURGE_TOLERANCE,// TODO take stats into account when generating
+            recovery_rate: RECOVERY_RATE,// TODO take stats into account when generating
+        }
+    }
+}
 
 
 impl StressLevel {
@@ -48,6 +66,8 @@ impl StressLevel {
     /// End-of-day logic — capture both histories
     pub fn finalize_day(&mut self) {
         let clamped_input = self.daily_accumulator.clamp(0.0, MAX_DAILY_STRESS);
+        
+        self.decay_tick();//recover before taking the felt value
         let felt_today = self.current.clamp(0.0, MAX_DAILY_STRESS);
 
         // --- Raw input history ---
