@@ -18,6 +18,8 @@
     import DayCalendarPanel from "$lib/components/DayCalendarPanel.svelte";
     import WeekCalendarPanel2 from "$lib/components/WeekCalendarPanel2.svelte";
     import TabComponent from "$lib/components/TabComponent.svelte";
+    import StressPanel from "$lib/components/StressPanel.svelte";
+    import StressHistoryPanel from "$lib/components/StressHistoryPanel.svelte";
 
 
     export let personStore: Readable<PersonSnapshotWithTotal>;
@@ -77,6 +79,9 @@
 
         </div>
         <div>
+            <StressPanel personStore={personStore} />
+            <StressHistoryPanel personStore={personStore} />
+
             <DayCalendarPanel />
         </div>
 

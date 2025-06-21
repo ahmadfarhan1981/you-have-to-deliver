@@ -30,8 +30,10 @@ use tracing::{debug, info, warn};
 use tracing::field::debug;
 use tracing_subscriber::registry;
 use crate::constants::COMPANY_SNAPSHOT_EVENT_NAME;
+use crate::integrations::events::snapshot_events;
 use crate::integrations::snapshots::debug_display::DebugDisplayEntrySnapshot;
 use crate::integrations::snapshots::stress::StressSnapshot;
+use crate::integrations::snapshots::stress_history::StressHistorySnapshot;
 use crate::sim::action::action::ActionIntent;
 use crate::sim::person::morale::StressLevel;
 use crate::sim::utils::debugging::DebugDisplayComponent;
@@ -354,4 +356,42 @@ pub fn push_stress_level_to_integration(
             vacant.insert(s);
         }
     };
+    
+}
+
+#[system(for_each)]
+pub fn push_stress_history_to_integration(
+    #[resource] tick_counter: &Arc<TickCounter>,
+    #[resource] app_state: &Arc<SnapshotState>,
+    #[resource] last_update_map: &Arc<dashmap::DashMap<&'static str, u64>>,
+    person :&Person,
+    stress_level: &StressLevel,
+) {
+    if tick_counter.current_date().quarter_tick != 1 {return}
+    
+    // TODO dirty check
+    let current_tick = tick_counter.value();
+    let person_id = person.person_id.0;
+
+    let stress_history_snapshots = &app_state.stress_history;
+
+    match stress_history_snapshots.entry(person_id) {
+        Entry::Occupied(mut existing) => {
+            let mut  existing_snapshot = existing.get_mut();
+            if *existing_snapshot != stress_level {
+                *existing_snapshot =StressHistorySnapshot {
+                    person_id,
+                    ..StressHistorySnapshot::from(stress_level)
+                };
+            }
+        }
+        Entry::Vacant(vacant) => {
+            let s = StressHistorySnapshot {
+                person_id,
+                ..StressHistorySnapshot::from(stress_level)
+            };
+            vacant.insert(s);
+        }
+    };
+    last_update_map.insert(snapshot_events::STRESS_HISTORY_SNAPSHOT, current_tick);
 }

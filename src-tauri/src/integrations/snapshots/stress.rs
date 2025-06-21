@@ -18,7 +18,6 @@ pub struct StressSnapshot {
     pub surge_tolerance: f32,
     pub recovery_rate: f32,
 }
-
 impl From<&StressLevel> for StressSnapshot {
     fn from(stress: &StressLevel) -> Self {
         Self {
@@ -44,3 +43,7 @@ impl PartialEq<&StressLevel> for StressSnapshot {
         self == &StressSnapshot::from(*other)
     }
 }
+
+
+#[derive(Copy, Clone, Debug, Default)]
+pub struct DirtyStress;

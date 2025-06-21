@@ -1,6 +1,10 @@
 use std::collections::VecDeque;
+use std::sync::Arc;
 use bincode::{Decode, Encode};
+use legion::system;
+use rand::{rng, Rng};
 use serde::{Deserialize, Serialize};
+use crate::sim::resources::global::TickCounter;
 
 const STRESS_HISTORY_DAYS: usize = 28;
 const MAX_DAILY_STRESS: f32 = 150.0;
@@ -9,7 +13,7 @@ const BASELINE_TOLERANCE: f32 = 65.0;
 const SURGE_TOLERANCE: f32 = 90.0;
 const RECOVERY_RATE:f32 = 40.0;
 
-#[derive(Debug, Serialize, Deserialize, Encode, Decode)]
+#[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
 pub struct StressLevel {
     // Tick-level load
     pub current: f32,
@@ -127,4 +131,22 @@ impl StressLevel {
             .copied()
             .fold(0.0, f32::max)
     }
+}
+
+#[system(for_each)]
+pub fn update_stress(
+    stress_level: &mut StressLevel
+){
+    stress_level.apply( rng().random_range(0.001..0.8) )
+}
+
+#[system(for_each)]
+pub fn daily_stress_reset(
+    #[resource] tick_counter: &Arc<TickCounter>,
+    stress_level: &mut StressLevel
+){
+    if tick_counter.current_date().quarter_tick == 1 {
+        stress_level.finalize_day();
+    }
+    
 }
