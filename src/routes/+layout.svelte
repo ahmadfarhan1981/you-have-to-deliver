@@ -16,6 +16,12 @@
         personDebugDisplays,
         personDebugSnapshotEventName
     } from "$lib/stores/debugDisplay";
+    import {type StressSnapshot, stressSnapshotEventName, stressSnapshots} from "$lib/stores/stress";
+    import {
+        stressHistoryEventName,
+        type StressHistorySnapshot,
+        stressHistorySnapshots
+    } from "$lib/stores/stressHistory";
 
 
     let { children } = $props();
@@ -39,6 +45,17 @@
             teamSnapshots.set(event.payload)
         } );
 
+        const stress_unlisten = listen<StressSnapshot[]>(stressSnapshotEventName, (event)=>{
+            // console.log(JSON.stringify(event.payload))
+            stressSnapshots.set(event.payload)
+            // console.log(JSON.stringify($stressSnapshots))
+        } );
+
+        const stress_history_unlisten =listen<StressHistorySnapshot[]>(stressHistoryEventName, (event) => {
+            // console.log('Received stress history snapshot:', event.payload);
+            stressHistorySnapshots.set(event.payload);
+        });
+
         const unlistenDebugDisplays = listen<AllPersonDebugDisplays>(personDebugSnapshotEventName, (event) => {
             personDebugDisplays.set(event.payload);
         });
@@ -49,8 +66,10 @@
             // Make sure to unsubscribe when the component is destroyed
             unlisten.then(fn => fn());
             person_unlisten.then(fn=>fn());
-            company_unlisten.then(fn=>fn())
-            teams_unlisten.then(fn=>fn())
+            company_unlisten.then(fn=>fn());
+            teams_unlisten.then(fn=>fn());
+            stress_unlisten.then(fn=>fn());
+            stress_history_unlisten.then(fn=>fn());
             unlistenDebugDisplays.then(fn => fn());
 
             cleanupTauriNotificationListeners();

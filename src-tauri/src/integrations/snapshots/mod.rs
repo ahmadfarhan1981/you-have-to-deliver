@@ -11,4 +11,4 @@ pub mod game_speed;
 pub mod needs;
 pub mod debug_display;
 pub mod stress;
-mod stress_history;
+pub mod stress_history;

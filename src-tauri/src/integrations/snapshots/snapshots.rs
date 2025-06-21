@@ -10,6 +10,7 @@ use std::hash::Hash;
 use std::sync::Arc;
 use crate::integrations::snapshots::debug_display::DebugDisplayEntrySnapshot;
 use crate::integrations::snapshots::stress::StressSnapshot;
+use crate::integrations::snapshots::stress_history::StressHistorySnapshot;
 use crate::sim::person::morale::StressLevel;
 
 /// this is tha main integration state
@@ -22,6 +23,7 @@ pub struct SnapshotState {
     pub teams : Arc<DashMap<u32, TeamSnapshot>>,
     pub debug_display: Arc<DashMap<u32, Vec<DebugDisplayEntrySnapshot>>>,
     pub stress_level: Arc<DashMap<u32, StressSnapshot>>,
+    pub stress_history: Arc<DashMap<u32, StressHistorySnapshot>>,
 
 }
 
@@ -35,6 +37,7 @@ impl Default for SnapshotState {
             teams: Arc::new(DashMap::<u32, TeamSnapshot>::new()),
             debug_display: Arc::new(DashMap::<u32, Vec<DebugDisplayEntrySnapshot>>::new()),
             stress_level: Arc::new(DashMap::<u32, StressSnapshot>::new()),
+            stress_history: Arc::new(DashMap::<u32, StressHistorySnapshot>::new()),
         }
     }
 }

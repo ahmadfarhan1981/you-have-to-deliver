@@ -3,6 +3,8 @@ use crate::sim::person::morale::StressLevel;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct StressHistorySnapshot {
+    pub person_id: u32,
+
     pub raw_input_history: Vec<f32>,
     pub felt_stress_history: Vec<f32>,
 
@@ -16,6 +18,7 @@ pub struct StressHistorySnapshot {
 impl From<&StressLevel> for StressHistorySnapshot {
     fn from(stress: &StressLevel) -> Self {
         Self {
+            person_id: 0,
             raw_input_history: stress.raw_input_history.iter().copied().collect(),
             felt_stress_history: stress.felt_stress_history.iter().copied().collect(),
 
@@ -33,3 +36,6 @@ impl PartialEq<&StressLevel> for StressHistorySnapshot {
         self == &StressHistorySnapshot::from(*other)
     }
 }
+
+#[derive(Copy, Clone, Debug, Default)]
+pub struct DirtyStressHistory;

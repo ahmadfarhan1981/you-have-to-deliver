@@ -147,3 +147,14 @@ pub fn emit_app_event(app_handle: &AppHandle, event_type: AppEventType) {
             eprintln!("Failed to emit event '{}': {:?}", event_name, e);
         });
 }
+
+pub mod snapshot_events {
+    pub const GAME_SPEED_SNAPSHOT: &str = "game_speed_snapshot";
+    pub const PERSONS_SNAPSHOT: &str = "persons_snapshot";
+    pub const DEBUG_DISPLAY_SNAPSHOT: &str = "debug_display_snapshot";
+    pub const TEAMS_SNAPSHOT: &str = "teams_snapshot";
+    pub const COMPANY_SNAPSHOT: &str = "company_snapshot";
+    pub const STRESS_SNAPSHOT: &str = "stress_snapshot";
+    pub const STRESS_HISTORY_SNAPSHOT: &str = "stress_history_snapshot";
+}
+

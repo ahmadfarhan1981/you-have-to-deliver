@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use dashmap::DashMap;
+use crate::integrations::events::snapshot_events;
 use legion::{Entity, Resources};
 
 use crate::{
@@ -54,7 +55,7 @@ pub fn initialize_emit_registries(
         field: main_snapshot_state.game_speed.clone(), // Clones the Arc<SnapshotField>, sharing the instance
         config: SnapshotEmitterConfig {
             frequency: ExportFrequency::EveryTick,
-            event_name: "game_speed_snapshot",
+            event_name: snapshot_events::GAME_SPEED_SNAPSHOT,
             last_sent_tick: Default::default(),
         },
     };
@@ -63,7 +64,7 @@ pub fn initialize_emit_registries(
         map: Arc::clone(&main_snapshot_state.persons),
         config: SnapshotEmitterConfig {
             frequency: ExportFrequency::EveryTick,
-            event_name: "persons_snapshot",
+            event_name: snapshot_events::PERSONS_SNAPSHOT,
             last_sent_tick: Default::default(),
         },
     };
@@ -72,7 +73,7 @@ pub fn initialize_emit_registries(
         map: Arc::clone(&main_snapshot_state.debug_display),
         config: SnapshotEmitterConfig {
             frequency: ExportFrequency::EveryTick,
-            event_name: "debug_display_snapshot",
+            event_name: snapshot_events::DEBUG_DISPLAY_SNAPSHOT,
             last_sent_tick: Default::default(),
         },
     };
@@ -80,7 +81,7 @@ pub fn initialize_emit_registries(
         map: Arc::clone(&main_snapshot_state.teams),
         config: SnapshotEmitterConfig {
             frequency: ExportFrequency::EveryTick,
-            event_name: "teams_snapshot",
+            event_name: snapshot_events::TEAMS_SNAPSHOT,
             last_sent_tick: Default::default(),
         },
     };
@@ -88,7 +89,7 @@ pub fn initialize_emit_registries(
         field: main_snapshot_state.company.clone(),
         config: SnapshotEmitterConfig {
             frequency: ExportFrequency::EveryTick,
-            event_name: "company_snapshot",
+            event_name: snapshot_events::COMPANY_SNAPSHOT,
             last_sent_tick: Default::default(),
         },
     };
@@ -97,7 +98,16 @@ pub fn initialize_emit_registries(
         map: Arc::clone(&main_snapshot_state.stress_level),
         config: SnapshotEmitterConfig {
             frequency: ExportFrequency::EveryTick,
-            event_name: "stress_snapshot",
+            event_name: snapshot_events::STRESS_SNAPSHOT,
+            last_sent_tick: Default::default(),
+        },
+    };
+
+    let stress_history_snapshots_emitter = SnapshotCollectionEmitter {
+        map: Arc::clone(&main_snapshot_state.stress_history),
+        config: SnapshotEmitterConfig {
+            frequency: ExportFrequency::EveryNTicks(4),
+            event_name: snapshot_events::STRESS_HISTORY_SNAPSHOT,
             last_sent_tick: Default::default(),
         },
     };
@@ -107,6 +117,8 @@ pub fn initialize_emit_registries(
     snapshot_registry.register(team_snapshots_emitter);
     snapshot_registry.register(debug_display_snapshots_emitter);
     snapshot_registry.register(stress_snapshots_emitter);
+    snapshot_registry.register(stress_history_snapshots_emitter);
+
 
     snapshot_registry
 }

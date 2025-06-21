@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use crate::db::error;
+use crate::db::keys::save_keys;
 use crate::db::init::SaveSlot;
 use crate::integrations::snapshots::{company, person, team};
 // Added for SavedEmployee
@@ -18,6 +19,7 @@ use legion::world::SubWorld;
 use legion::{query, system, Entity, IntoQuery, Query};
 use serde::{Deserialize, Serialize};
 use tracing::{error, info};
+use crate::sim::person::morale::StressLevel;
 // Added for logging
 
 /// Represents the data of an employee that can be saved or transferred.
@@ -31,6 +33,7 @@ pub struct SavedEmployee {
     pub energy: Energy,
     pub hunger: Hunger,
     pub current_goal: CurrentGoal,
+    pub stress_level: StressLevel,
 }
 
 #[system]
@@ -46,6 +49,7 @@ pub fn save_entity_state(
         &Energy,
         &Hunger,
         &CurrentGoal,
+        &StressLevel,
     )>,
     company_query: &mut Query<(&Company, &PlayerControlled)>,
     team_query: &mut Query<(&Team)>,
@@ -68,6 +72,7 @@ pub fn save_entity_state(
             energy,
             hunger,
             current_goal,
+            stress_level,
         ) in query.iter(world)
         {
             let saved_employee = SavedEmployee {
@@ -79,12 +84,13 @@ pub fn save_entity_state(
                 energy: energy.clone(),
                 hunger: hunger.clone(),
                 current_goal: current_goal.clone(),
+                stress_level: stress_level.clone(),
             };
 
             match bincode::encode_to_vec(saved_employee, bincode::config::standard()) {
                 Ok(encoded_employee) => {
                     if let Err(e) = db.insert(
-                        format!("employee{}", person.person_id.0),
+                        format!("{}{}", save_keys::EMPLOYEE_PREFIX, person.person_id.0),
                         encoded_employee,
                     ) {
                         error!("Failed to save employee {}: {}", person.person_id.0, e);
@@ -101,7 +107,7 @@ pub fn save_entity_state(
             match bincode::encode_to_vec(company, bincode::config::standard()) {
                 Ok(enconded_company) => {
                     if let Err(e) = db.insert(
-                        "company".to_string(),
+                        save_keys::COMPANY.to_string(),
                         enconded_company,
                     ) {
                         error!("Failed to save company: {}", e);
@@ -114,13 +120,13 @@ pub fn save_entity_state(
                 }
             }
         }
-         let teams:Vec<Team> = team_query.iter(world).map(|t| t.clone()).collect();
+        let teams:Vec<Team> = team_query.iter(world).map(|t| t.clone()).collect();
         match( bincode::encode_to_vec(teams, bincode::config::standard())){
             Ok(encoded_teams) => {if let Err(e) = db.insert(
-                            "teams".to_string(),
+                            save_keys::TEAMS.to_string(),
                             encoded_teams,
                         ) {
-                            error!("Failed to save company: {}", e);
+                            error!("Failed to save teams: {}", e);
                             // Maybe collect failed saves and retry later?
                         }},
             Err(_) => todo!(),
@@ -129,10 +135,6 @@ pub fn save_entity_state(
         error!("No active save slot");
         return;
     }
-
-   
-
-    
 }
 
 
