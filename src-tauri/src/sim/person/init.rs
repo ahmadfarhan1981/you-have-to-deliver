@@ -9,7 +9,7 @@ use crate::sim::person::skills::ecs_components::{
 use crate::sim::person::skills::{Domain, GlobalSkill, SkillId, SkillSet, Tier};
 use crate::sim::person::spawner::bounded_normal;
 use crate::sim::person::stats::{StatType, Stats};
-use crate::sim::registries::registry::{GlobalSkillNameMap, Registry};
+use crate::sim::registries::registry::{ Registry};
 use crate::sim::resources::global::{AssetBasePath, Dirty};
 use crate::sim::systems::global::UsedProfilePictureRegistry;
 use legion::query::{ComponentFilter, EntityFilter, FilterResult};

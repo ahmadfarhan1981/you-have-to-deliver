@@ -207,7 +207,6 @@ impl SubAssign<f32> for Decimal33 {
 
 #[cfg(test)]
 mod tests {
-    use crate::utils::DecimalError::Overflow;
     use super::*;
     use std::f32::EPSILON;
 

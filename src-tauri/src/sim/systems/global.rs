@@ -10,6 +10,7 @@ use legion::{system, Entity, Query};
 use rayon::prelude::*;
 use std::fmt;
 use std::sync::Arc;
+use bincode::{Decode, Encode};
 use crate::integrations::snapshots::snapshots::SnapshotState;
 
 #[system]
@@ -46,4 +47,36 @@ impl fmt::Debug for UsedProfilePictureRegistry {
         )
     }
 }
+impl Encode for UsedProfilePictureRegistry {
+    fn encode<E: bincode::enc::Encoder>(
+        &self,
+        encoder: &mut E,
+    ) -> Result<(), bincode::error::EncodeError> {
+        // Convert DashSet to Vec for encoding
+        let vec: Vec<ProfilePicture> = self.used_profile_pictures
+            .iter()
+            .map(|item| item.clone())
+            .collect();
 
+        vec.encode(encoder)
+    }
+}
+
+impl Decode<()> for UsedProfilePictureRegistry {
+    fn decode<D: bincode::de::Decoder>(
+        decoder: &mut D,
+    ) -> Result<Self, bincode::error::DecodeError> {
+        // Decode as Vec first
+        let vec: Vec<ProfilePicture> = Vec::decode(decoder)?;
+
+        // Convert Vec back to DashSet
+        let used_profile_pictures = DashSet::new();
+        for item in vec {
+            used_profile_pictures.insert(item);
+        }
+
+        Ok(UsedProfilePictureRegistry {
+            used_profile_pictures,
+        })
+    }
+}

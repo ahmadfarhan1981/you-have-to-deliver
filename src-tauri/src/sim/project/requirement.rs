@@ -1,6 +1,6 @@
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
-use crate::sim::project::FeatureTag::FeatureTag;
+use crate::sim::project::feature_tag::FeatureTag;
 
 #[derive(Debug, Serialize, Deserialize, Encode, Decode, Clone)]
 pub struct Requirement {

@@ -1,25 +1,35 @@
-use std::sync::Arc;
-
-use crate::db::error;
-use crate::db::keys::save_keys;
-use crate::db::init::SaveSlot;
-use crate::integrations::snapshots::{company, person, team};
 // Added for SavedEmployee
+use crate::action_queues::sim_manager::SimManager;
+use crate::db::constants::{db_keys, save_version};
+use crate::db::error;
+use crate::db::init::{LoadDataFromDBError, SaveSlot, SaveSlotMetadata, SavesDirectory};
+use crate::integrations::snapshots::{company, person, team};
 use crate::sim::ai::goap::CurrentGoal;
 use crate::sim::company::company::{Company, PlayerControlled};
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
+use crate::sim::person::morale::StressLevel;
 use crate::sim::person::needs::{Energy, Hunger};
 use crate::sim::person::personality_matrix::PersonalityMatrix;
 use crate::sim::person::skills::SkillSet;
 use crate::sim::person::stats::Stats;
 use crate::sim::registries::registry::Registry;
+use crate::sim::resources::global::TickCounter;
+use crate::sim::sim_date::sim_date::SimDate;
 use crate::sim::team::components::{Team, TeamId};
-use bincode::{Decode, Encode};
+use bincode::error::EncodeError;
+use bincode::{encode_to_vec, Decode, Encode};
 use legion::world::SubWorld;
-use legion::{query, system, Entity, IntoQuery, Query};
+use legion::{query, system, Entity, IntoQuery, Query, Resources, World};
+use rand_distr::num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
-use tracing::{error, info};
-use crate::sim::person::morale::StressLevel;
+use std::sync::{Arc, RwLock};
+use std::sync::atomic::AtomicBool;
+use std::time::{SystemTime, UNIX_EPOCH};
+use legion::systems::CommandBuffer;
+use tauri::utils::acl::Commands;
+use tracing::{error, info, warn};
+use crate::db::error::SavesManagementError::TimeError;
+use crate::sim::systems::global::UsedProfilePictureRegistry;
 // Added for logging
 
 /// Represents the data of an employee that can be saved or transferred.
@@ -36,10 +46,28 @@ pub struct SavedEmployee {
     pub stress_level: StressLevel,
 }
 
+pub struct LoadGame{
+    pub should_load: AtomicBool,
+    pub slot_id: RwLock<Option<String>>,
+}
+impl LoadGame{
+}
+impl Default for LoadGame {
+    fn default() -> Self {
+        Self{
+            should_load: AtomicBool::new(false),
+            slot_id: RwLock::new(None),
+        }
+    }
+}
+
 #[system]
-pub fn save_entity_state(
+pub fn save_game_state(
     world: &SubWorld,
-    #[resource] current_save: &Arc<SaveSlot>,
+    #[resource] current_tick: &Arc<TickCounter>,
+    #[resource] sim_manager: &Arc<SimManager>,
+    #[resource] saves_directory: &Arc<SavesDirectory>,
+    #[resource] used_profile_pictures: &UsedProfilePictureRegistry,
     query: &mut Query<(
         &Person,
         &Stats,
@@ -50,19 +78,33 @@ pub fn save_entity_state(
         &Hunger,
         &CurrentGoal,
         &StressLevel,
+        &PlayerControlled,
     )>,
     company_query: &mut Query<(&Company, &PlayerControlled)>,
     team_query: &mut Query<(&Team)>,
 ) {
-    if current_save.is_empty {
-        error!("No active save slot");
+    if !sim_manager.has_save_slot() {
+        warn!("No active save slot");
         return;
     }
+    if sim_manager
+        .with_save_slot(|slot| {
+            if slot.is_empty {
+                warn!("Empty save slot");
+                true
+            } else {
+                false
+            }
+        })
+        .unwrap_or(true)
+    {
+        return; // This exits the outer function
+    }
+
     
-
-    if let Some(db) = &current_save.handle {
-        let mut collected_employees: Vec<SavedEmployee> = Vec::new(); // Example: collect them locally
-
+    sim_manager.with_save_slot(|current_save| {
+        current_save.ensure_db_handle_is_open(saves_directory);
+        let mut employee_id_list: Vec<u32> = vec![]; 
         for (
             person,
             stats,
@@ -73,6 +115,7 @@ pub fn save_entity_state(
             hunger,
             current_goal,
             stress_level,
+            _player_controlled,
         ) in query.iter(world)
         {
             let saved_employee = SavedEmployee {
@@ -87,86 +130,117 @@ pub fn save_entity_state(
                 stress_level: stress_level.clone(),
             };
 
-            match bincode::encode_to_vec(saved_employee, bincode::config::standard()) {
-                Ok(encoded_employee) => {
-                    if let Err(e) = db.insert(
-                        format!("{}{}", save_keys::EMPLOYEE_PREFIX, person.person_id.0),
-                        encoded_employee,
-                    ) {
-                        error!("Failed to save employee {}: {}", person.person_id.0, e);
-                        // Maybe collect failed saves and retry later?
-                    }
-                }
-                Err(e) => {
-                    error!("Failed to encode employee {}: {}", person.person_id.0, e);
-                    // This is more serious - maybe indicates data corruption
-                }
+            current_save.save_entry(
+                format!("{}{}", db_keys::EMPLOYEE_PREFIX, person.person_id.0).as_str(),
+                &saved_employee,
+            );
+            employee_id_list.push(person.person_id.0);
+
+        }
+        current_save.save_entry(db_keys::EMPLOYEES_LIST, &employee_id_list );
+        // Save the player-controlled company.
+        // Currently, only the one player controlled company exists.
+        //
+        // Non player companies will be added later.
+        // They will be stored using a different db key in future.
+        for (company, _player_controlled) in company_query.iter(world) {
+            current_save.save_entry(db_keys::COMPANY, company);
+        }
+
+        let teams: Vec<Team> = team_query.iter(world).map(|t| t.clone()).collect();
+        current_save.save_entry(db_keys::TEAMS, &teams);
+
+        current_save.save_entry(db_keys::TICK_COUNTER, current_tick);
+
+        let metadata = SaveSlotMetadata {
+            name: current_save.metadata.clone().unwrap().name.clone(),
+            employee_count: query.iter(world).count() as u32,
+            sim_date: current_tick.current_date(),
+            save_version: save_version::SAVE_VERSION.to_string(),
+            last_saved_timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_secs() as i64,
+        };
+        current_save.save_entry(db_keys::METADATA, &metadata);
+        
+        
+        current_save.save_entry(db_keys::USED_PROFILE_PICTURES, used_profile_pictures);
+        
+        match current_save.load_entry::<TickCounter>(db_keys::TICK_COUNTER){
+            Ok(Some(tick)) => {
+                info!("Tick counter loaded {:?}", tick);
             }
+            Ok(None)=>{info!("Nothing in db for tick counter")}
+            Err(e) => {error!("Error loading tick counter: {:?}", e);}
         }
-        for(company, _) in company_query.iter(world){
-            match bincode::encode_to_vec(company, bincode::config::standard()) {
-                Ok(enconded_company) => {
-                    if let Err(e) = db.insert(
-                        save_keys::COMPANY.to_string(),
-                        enconded_company,
-                    ) {
-                        error!("Failed to save company: {}", e);
-                        // Maybe collect failed saves and retry later?
-                    }
-                },
-                Err(e) => {
-                    error!("Failed to encode company {}: {}", company.name, e);
-                    // This is more serious - maybe indicates data corruption
-                }
-            }
-        }
-        let teams:Vec<Team> = team_query.iter(world).map(|t| t.clone()).collect();
-        match( bincode::encode_to_vec(teams, bincode::config::standard())){
-            Ok(encoded_teams) => {if let Err(e) = db.insert(
-                            save_keys::TEAMS.to_string(),
-                            encoded_teams,
-                        ) {
-                            error!("Failed to save teams: {}", e);
-                            // Maybe collect failed saves and retry later?
-                        }},
-            Err(_) => todo!(),
-        }
-    } else {
-        error!("No active save slot");
-        return;
-    }
+        
+    });
 }
 
+
+
+pub fn load_game_state(
+    world: &mut World,
+    resources: &mut Resources,
+    // #[resource] current_tick: &Arc<TickCounter>,
+    // #[resource] sim_manager: &Arc<SimManager>,
+    // #[resource] saves_directory: &Arc<SavesDirectory>,
+    // #[resource] used_profile_pictures: &UsedProfilePictureRegistry,
+    // commands: &mut CommandBuffer,
+    // load: &mut Query<&Company>,
+)
+{
+    match resources.get::<&Arc< crate::action_queues::sim_manager::SimManager >>(){
+        Some(sim_manager) => {
+            if !sim_manager.has_save_slot() {
+                warn!("No active save slot");
+                return;
+            }
+            
+            sim_manager.with_save_slot(|current_save| {
+                match resources.get_mut::<&Arc<TickCounter>>(){
+                    Some(tick_counter) => {
+                        let Ok(Some(saved_tick_counter)) = current_save.load_entry::<TickCounter>(db_keys::TICK_COUNTER) else {error!("Error loading tick counter"); return};
+                        info!("Saved{:?}",saved_tick_counter);
+                        info!("Current{:?}",tick_counter);
+                        //tick_counter.update_from(&saved_tick_counter);
+                        
+                        
+                    }
+                    None => {}
+
+                }
+            } );
+        }
+        None => {}
+        
+    }
+    
+    
+    
+}
 
 #[system]
 pub fn sync_registry_from_person(
     world: &SubWorld,
-    query: &mut Query<(
-        &Person,
-        &Entity,
-    )>,
-    #[resource]person_registry: &Arc<Registry<PersonId, Entity>>,
-    
+    query: &mut Query<(&Person, &Entity)>,
+    #[resource] person_registry: &Arc<Registry<PersonId, Entity>>,
 ) {
-
-    let x = query.iter(world).map(|(person, entity)| (person.person_id, *entity) );
+    let x = query
+        .iter(world)
+        .map(|(person, entity)| (person.person_id, *entity));
     person_registry.repopulate_from_entities(x);
-
 }
-
 
 #[system]
 pub fn sync_registry_from_team(
     world: &SubWorld,
-    query: &mut Query<(
-        &Team,
-        &Entity,
-    )>,
-    #[resource]team_registry: &Arc<Registry<TeamId, Entity>>,
-    
+    query: &mut Query<(&Team, &Entity)>,
+    #[resource] team_registry: &Arc<Registry<TeamId, Entity>>,
 ) {
-
-    let x = query.iter(world).map(|(team, entity)| (team.team_id, *entity) );
+    let x = query
+        .iter(world)
+        .map(|(team, entity)| (team.team_id, *entity));
     team_registry.repopulate_from_entities(x);
-
 }

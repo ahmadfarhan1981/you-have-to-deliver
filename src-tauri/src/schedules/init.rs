@@ -11,7 +11,10 @@ use crate::sim::systems::global::{increase_sim_tick_system, print_person_system}
 use crate::sim::utils::debugging::clear_debug_display_system;
 use crate::sim::utils::sim_reset::{delete_all_entity_system, reset_snapshot_system, reset_state_system};
 use legion::Schedule;
+use legion::systems::{Builder, ParallelRunnable};
+use crate::sim::persistence::persistence::save_game_state_system;
 use crate::sim::person::morale::{daily_stress_reset_system, update_stress_system};
+use crate::sim::person::stats::StatType::Systems;
 
 pub struct GameSchedules {
     pub startup: Schedule,
@@ -83,12 +86,6 @@ pub fn init_schedules() -> GameSchedules {
         .add_system(handle_game_speed_manager_queue_system())
         .add_system(handle_team_manager_queue_system())
         .add_system(handle_team_assignment_queue_system())
-        .add_system(tick_needs_system())
-        .flush()
-        .add_system(decide_action_system())
-        .flush()
-        .add_system(execute_action_system())
-        .add_system(test_sim_manager_system())
         .build();
 
     // main sim
@@ -99,8 +96,15 @@ pub fn init_schedules() -> GameSchedules {
         .add_system(goal_selection_system())
         .add_system(update_stress_system())
         .add_system(daily_stress_reset_system())
+        .add_system(tick_needs_system())
+        .flush()
+        .add_system(decide_action_system())
+        .flush()
+        .add_system(execute_action_system())
+        .add_system(test_sim_manager_system())
+        .add_system(save_game_state_system())
         .build();
-
+    
     //integration, handles generating snapshots
     let pre_integration = Schedule::builder().build();
     let integration =
@@ -117,7 +121,8 @@ pub fn init_schedules() -> GameSchedules {
     let post_integration = Schedule::builder()
         .add_system(run_snapshot_emitters_system())
         .build();
-
+    
+    
     GameSchedules {
         startup,
         dispatcher_queue,
@@ -132,4 +137,13 @@ pub fn init_schedules() -> GameSchedules {
         integration,
         post_integration,
     }
+}
+
+pub fn build_schedule<T>( systems: Vec<T>, schedule: &mut Builder)
+where T: ParallelRunnable + 'static{
+    
+    for sys in systems{
+        schedule.add_system(sys);
+    }
+    
 }

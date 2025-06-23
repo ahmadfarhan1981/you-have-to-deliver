@@ -21,11 +21,12 @@ use crate::{
         utils::sim_reset::ResetRequest,
     },
 };
-use crate::action_queues::sim_manager::SimManager;
+use crate::action_queues::sim_manager::{SimManager, SimManagerCommand};
 use crate::action_queues::team_manager::TeamManagerCommand;
 use crate::db::init::SavesDirectory;
 use crate::integrations::queues::SimCommand;
 use crate::integrations::queues::SimCommand::TeamManager;
+use crate::sim::persistence::persistence::LoadGame;
 use crate::sim::person::init::ShouldGenerateEmployees;
 
 pub struct SimThreadConfig {
@@ -83,12 +84,16 @@ pub fn run_simulation_thread(config: SimThreadConfig) {
     let mut game_schedules = init_schedules();
     let sleeper = SpinSleeper::new(0).with_spin_strategy(SpinStrategy::YieldThread);
 
+    let load_game = Arc::new(LoadGame::default());
+    resources.insert(Arc::clone(&load_game));
+    
     // Clones for the loop
     let loop_sim_manager_state = Arc::clone(&sim_manager);
     let loop_reset_request = Arc::clone(&reset_request);
     let loop_first_run = Arc::clone(&first_run);
     let loop_game_speed = Arc::clone(&game_speed);
     let loop_tick_counter = Arc::clone(&tick_counter);
+    let loop_load_game = Arc::clone(&load_game);
 
     #[cfg(debug_assertions)]
     {
@@ -111,7 +116,12 @@ pub fn run_simulation_thread(config: SimThreadConfig) {
                         if trimmed_input == "team" {
                             console_input_queues.runtime.push(SimCommand::TeamManager(TeamManagerCommand::NewTeam {name:"Team Alpha".to_string(), description: "First team".to_string()}));
                             
-                        } 
+                        }else if trimmed_input == "stop" {
+                            console_input_queues.runtime.push(SimCommand::SimManager(SimManagerCommand::StopSim));
+                        }else if trimmed_input== "resume" {
+                            console_input_queues.control.push(SimManagerCommand::ResumeSim);
+                        
+                        }
                         
                         // Add more command parsing logic here
                     }
@@ -157,6 +167,11 @@ pub fn run_simulation_thread(config: SimThreadConfig) {
             .execute(&mut world, &mut resources);
 
         if loop_sim_manager_state.is_running() {
+            if loop_load_game.should_load.load(Ordering::Relaxed) {
+                //switch to save slot.
+                //load data
+            }
+            
             if loop_first_run.is_first_run() {
                 game_schedules.startup.execute(&mut world, &mut resources);
             }

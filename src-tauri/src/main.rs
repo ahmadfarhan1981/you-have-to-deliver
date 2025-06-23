@@ -34,7 +34,7 @@ use crate::integrations::systems::{
 };
 use crate::integrations::ui::{
     assign_person_to_team, exit_app, list_save_slots, new_sim, new_team, refresh_data, resume_sim,
-    stop_sim, test_save_slots, unassign_team, AppContext,
+    stop_sim, unassign_team, AppContext,
 };
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{PersonId, ProfilePicture};
@@ -78,7 +78,7 @@ use crate::sim::new_game::new_game::{
     StartingEmployeesConfig,
 };
 use crate::sim::person::skills::SkillId;
-use crate::sim::registries::registry::{GlobalSkillNameMap, Registry};
+use crate::sim::registries::registry::{Registry};
 use crate::sim::team::components::TeamId;
 use crate::sim::utils::debugging::clear_debug_display_system;
 use crate::sim::utils::sim_reset::ResetRequest;
@@ -204,7 +204,6 @@ fn main() {
             get_starting_employee_configs,
             get_company_presets,
             list_save_slots,
-            test_save_slots,
             exit_app
         ])
         .run(tauri::generate_context!())

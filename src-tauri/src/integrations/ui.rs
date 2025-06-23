@@ -63,13 +63,6 @@ pub fn list_save_slots(saves_dir_state: tauri::State<Arc<SavesDirectory>>) -> Re
 }
 
 
-#[tauri::command]
-pub fn test_save_slots(saves_dir_state: tauri::State<Arc<SavesDirectory>>)  {
-    create_new_save_slot(&saves_dir_state,
-                         format!("{}{:?}","Save slot paan dev", std::time::SystemTime::now() ).as_str(),
-    );
-
-}
 
 #[tauri::command]
 pub async fn exit_app(app_handle: tauri::AppHandle) {

@@ -14,7 +14,6 @@ use crate::sim::person::personality_matrix::PersonalityMatrix;
 use crate::sim::person::skills::{SkillId, SkillSet};
 use crate::sim::person::spawner::spawn_person;
 use crate::sim::person::stats::Stats;
-use crate::sim::registries::registry::GlobalSkillNameMap;
 use crate::sim::resources::global::{Dirty, TickCounter};
 use crate::sim::team::components::Team;
 use crate::sim::utils::snapshots::replace_if_changed;
@@ -176,7 +175,6 @@ pub fn push_intents_and_goals_to_integration(
 pub fn push_persons_to_integration(
     #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] app_state: &Arc<SnapshotState>,
-    #[resource] global_skill_name_map: &Arc<GlobalSkillNameMap>,
     entity: &Entity,
     person: &Person,
     stats: &Stats,
@@ -356,7 +354,7 @@ pub fn push_stress_level_to_integration(
             vacant.insert(s);
         }
     };
-    
+
 }
 
 #[system(for_each)]
@@ -368,7 +366,7 @@ pub fn push_stress_history_to_integration(
     stress_level: &StressLevel,
 ) {
     if tick_counter.current_date().quarter_tick != 1 {return}
-    
+
     // TODO dirty check
     let current_tick = tick_counter.value();
     let person_id = person.person_id.0;

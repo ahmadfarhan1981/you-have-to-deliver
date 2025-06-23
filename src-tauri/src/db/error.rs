@@ -3,8 +3,8 @@ use bincode::error::{DecodeError, EncodeError};
 
 #[derive(Debug)]
 pub enum BincodeError{
-    Encode(bincode::error::EncodeError),
-    Decode(bincode::error::DecodeError),
+    Encode(EncodeError),
+    Decode(DecodeError),
 }
 
 impl std::fmt::Display for BincodeError {
@@ -27,7 +27,8 @@ pub enum SavesManagementError {
     Sled(sled::Error),
     Bincode(BincodeError),
     MetadataKeyNotFound(String),
-    TimeError(std::time::SystemTimeError),
+    TimeError(SystemTimeError),
+    EmptySaveSlotError,
 }
 
 // Implement Display for manual error message formatting if needed
@@ -39,7 +40,8 @@ impl std::fmt::Display for SavesManagementError {
             SavesManagementError::Sled(e) => write!(f, "Sled DB error: {}", e),
             SavesManagementError::Bincode(e) => write!(f, "Bincode error: {}", e),
             SavesManagementError::MetadataKeyNotFound(slot_id) => write!(f, "Metadata key not found in save slot: {}", slot_id),
-            SavesManagementError::TimeError(e) => write!(f, "Time error: {}", e)
+            SavesManagementError::TimeError(e) => write!(f, "Time error: {}", e),
+            SavesManagementError::EmptySaveSlotError => write!(f, "Slot is empty")
         }
     }
 }
@@ -53,7 +55,8 @@ impl std::error::Error for SavesManagementError {
             SavesManagementError::Sled(e) => Some(e),
             SavesManagementError::Bincode(e) => Some(e),
             SavesManagementError::MetadataKeyNotFound(_) => None,
-            SavesManagementError::TimeError(e) => Some(e)
+            SavesManagementError::TimeError(e) => Some(e),
+            SavesManagementError::EmptySaveSlotError => Some(self),
         }
     }
 }
@@ -63,13 +66,13 @@ impl From<SystemTimeError> for SavesManagementError {
         Self::TimeError(value)
     }
 }
-impl From<bincode::error::EncodeError> for SavesManagementError {
+impl From<EncodeError> for SavesManagementError {
     fn from(value: EncodeError) -> Self {
         Self::Bincode(BincodeError::Encode(value))
     }
 }
 
-impl From<bincode::error::DecodeError> for SavesManagementError {
+impl From<DecodeError> for SavesManagementError {
     fn from(value: DecodeError) -> Self {
         Self::Bincode(BincodeError::Decode(value))
     }

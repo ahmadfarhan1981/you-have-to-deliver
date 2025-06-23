@@ -51,7 +51,10 @@
                     </div>
                     <div class="mt-2 flex justify-between items-center">
                         <div class="text-xs text-slate-500">
-                            Last played: {new Date(game.metadata.last_saved_timestamp * 1000).toLocaleString()}
+                            Last played: {new Date(game.metadata.last_saved_timestamp * 1000).toLocaleString()} <br />
+                            {game.metadata.employee_count} employee{game.metadata.employee_count > 1?'s': ''} <br />
+                            Save version {game.metadata.save_version} <br />
+                            2 Trillion Cash
                         </div>
                         <button class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs text-white">
                             Load
