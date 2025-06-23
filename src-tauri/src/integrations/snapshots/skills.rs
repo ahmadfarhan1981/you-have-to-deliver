@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::master_data::skills::GLOBAL_SKILLS;
 use crate::sim::person::skills::{GlobalSkill, SkillSet};
-use crate::sim::registries::registry::GlobalSkillNameMap;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 pub struct AssignedSkillSnapshot {

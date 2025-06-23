@@ -10,7 +10,6 @@ use crate::sim::person::personality_matrix::PersonalityMatrix;
 use crate::sim::person::skills::SkillSet;
 use crate::sim::person::spawner::TalentGrade;
 use crate::sim::person::stats::Stats;
-use crate::sim::registries::registry::GlobalSkillNameMap;
 use crate::sim::sim_date::sim_date::SimDate;
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

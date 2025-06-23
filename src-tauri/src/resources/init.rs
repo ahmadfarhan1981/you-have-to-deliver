@@ -15,7 +15,7 @@ use crate::{
     sim::{
         new_game::new_game::{CompanyPreset, StartingEmployeesConfig},
         person::{components::PersonId, skills::SkillId},
-        registries::registry::{GlobalSkillNameMap, Registry}
+        registries::registry::{Registry}
         ,
         systems::global::UsedProfilePictureRegistry,
         team::components::TeamId,
@@ -24,9 +24,8 @@ use crate::{
 use crate::db::init::SaveSlot;
 
 pub fn initialize_non_shared_resources(resources: &mut Resources) {
-    let used_portrait = UsedProfilePictureRegistry::default();
-    resources.insert(used_portrait);
-    resources.insert(Arc::<GlobalSkillNameMap>::new(GlobalSkillNameMap::default()));
+    resources.insert(UsedProfilePictureRegistry::default());
+    
     //registries
     resources.insert(Arc::new(Registry::<PersonId, Entity>::with_name(
         "Person registry",
@@ -35,14 +34,8 @@ pub fn initialize_non_shared_resources(resources: &mut Resources) {
     resources.insert(Arc::new(Registry::<TeamId, Entity>::with_name(
         "Team registry",
     )));
-
-    resources.insert(CompanyPreset::default());
-    resources.insert(StartingEmployeesConfig::default());
-
-    let data_last_update_map: DashMap<&'static str, u64> = DashMap::new();
-    let data_last_update = Arc::new(data_last_update_map);
-    resources.insert(data_last_update);
     
+    resources.insert(Arc::new(DashMap::<&'static str, u64>::new()));//whats this for?
     resources.insert(SaveSlot::default());
 }
 
@@ -52,7 +45,7 @@ pub fn initialize_emit_registries(
     //Snapshot registry
     let mut snapshot_registry = SnapshotEmitRegistry::new();
     let game_speed_snapshots_emitter = SnapshotFieldEmitter {
-        field: main_snapshot_state.game_speed.clone(), // Clones the Arc<SnapshotField>, sharing the instance
+        field: Arc::clone(&main_snapshot_state.game_speed), 
         config: SnapshotEmitterConfig {
             frequency: ExportFrequency::EveryTick,
             event_name: snapshot_events::GAME_SPEED_SNAPSHOT,
@@ -86,7 +79,7 @@ pub fn initialize_emit_registries(
         },
     };
     let company_snapshots_emitter: SnapshotFieldEmitter<CompanySnapshot> = SnapshotFieldEmitter {
-        field: main_snapshot_state.company.clone(),
+        field: Arc::clone(&main_snapshot_state.company),
         config: SnapshotEmitterConfig {
             frequency: ExportFrequency::EveryTick,
             event_name: snapshot_events::COMPANY_SNAPSHOT,

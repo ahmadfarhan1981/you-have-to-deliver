@@ -1,22 +1,23 @@
 use tauri::Manager;
 use std::path::PathBuf; // Consolidated imports
 use serde::{Deserialize, Serialize};
-use std::fs;
+use std::{fmt, fs};
 use std::sync::Arc;
-use bincode::{Decode, Encode};
+use std::task::Context;
+use bincode::{decode_from_slice, Decode, Encode};
 // rayon::in_place_scope_fifo is unused, consider removing if not needed elsewhere
-use tracing::{error, info};
+use tracing::{error, info, trace, warn};
 use crate::db::error::BincodeError;
 use crate::db::{self, error::SavesManagementError};
 use crate::sim::sim_date::sim_date::SimDate;
 use std::time::{SystemTime, UNIX_EPOCH};
-use sled::Db;
-use crate::db::constants::METADATA_KEY;
+use bincode::config::standard;
+use sled::{Db, IVec};
+use crate::db::constants::{db_keys, save_version, GAMESTATE_DB_FILENAME};
 // For generating timestamp
 
 #[derive(Debug, Clone)]
 pub struct SavesDirectory(pub PathBuf);
-const GAMESTATE_DB_FILENAME: &str = "gamestate.sled";
 
 
 #[derive(Serialize, Deserialize, Debug, Clone, Decode, Encode)]
@@ -62,20 +63,21 @@ impl SaveSlot {
     /// * `Err(SavesManagementError)` if an error occurs while trying to open the database.
     pub fn ensure_db_handle_is_open(
         &mut self,
-        _saves_directory_arc: Arc<SavesDirectory>, // Included as requested
+        _saves_directory_arc: &Arc<SavesDirectory>, // Included as requested
     ) -> Result<(), SavesManagementError> {
         if self.handle.is_some() {
-            info!("DB handle for slot '{}' is already open.", self.slot_id);
+            trace!("DB handle for slot '{}' is already open.", self.slot_id);
             return Ok(());
         }
 
         if self.is_empty {
-            info!("Slot '{}' is empty, not opening DB handle.", self.slot_id);
-            return Ok(());
+            warn!("Slot '{}' is empty, not opening DB handle.", self.slot_id);
+            return Err(SavesManagementError::EmptySaveSlotError);
         }
 
         let gamestate_db_path = self.path.join(GAMESTATE_DB_FILENAME);
         info!("Attempting to open DB for slot '{}' at path: {:?}", self.slot_id, gamestate_db_path);
+        
 
         if !gamestate_db_path.exists() || !gamestate_db_path.is_dir() {
             error!("Gamestate DB directory not found or is not a directory for slot '{}' at: {:?}", self.slot_id, gamestate_db_path);
@@ -160,9 +162,9 @@ impl SaveSlot {
 
             match db_meta {
                 Ok(db) => {
-                    match db.get(METADATA_KEY)? { // Propagates SledError
+                    match db.get(db_keys::METADATA)? { // Propagates SledError
                         Some(ivec_data) => {
-                            match bincode::decode_from_slice(&ivec_data[..], bincode::config::standard()) {
+                            match decode_from_slice(&ivec_data[..], standard()) {
                                 Ok((data, _size)) => {
                                     loaded_metadata = Some(data);
                                     is_slot_empty = false; // Metadata found and decoded
@@ -175,7 +177,7 @@ impl SaveSlot {
                             }
                         }
                         None => {
-                            info!("Metadata key '{}' not found in slot '{}'. Slot is considered empty.", METADATA_KEY, slot_id);
+                            info!("Metadata key '{}' not found in slot '{}'. Slot is considered empty.", db_keys::METADATA, slot_id);
                         }
                     }
                 }
@@ -189,10 +191,94 @@ impl SaveSlot {
         }
 
         let mut save_slot = Self { slot_id, path: slot_path, metadata: loaded_metadata, is_empty: is_slot_empty, handle: None };
-        save_slot.ensure_db_handle_is_open(saves_directory_arc)?;
+        save_slot.ensure_db_handle_is_open(&saves_directory_arc)?;
         Ok(save_slot)
     }
+
+    // Saving related fn
+    /// Custom error type for saving to the database, without external crates.
+
+
+    /// Save a encoded value to the sled database, logging any errors that occur.
+    pub fn save_entry<T: bincode::Encode>(&mut self,
+        key: &str,
+        value: &T,
+    ) -> Result<Option<IVec>, SaveDataToDBError> {
+        match bincode::encode_to_vec(value, standard()) {
+            Ok(encoded) => match self.handle.as_ref().unwrap().insert(key, encoded) {
+                Ok(ivec) => Ok(ivec),
+                Err(e) => {
+                    error!("Failed to save key '{}': {}", key, e);
+                    Err(SaveDataToDBError::Db(e))
+                }
+            },
+            Err(e) => {
+                error!("Failed to encode key '{}': {}", key, e);
+                Err(SaveDataToDBError::Encoding(e))
+            }
+        }
+    }
+    
+
+    /// Load and decode a value from the sled database using the given key.
+    ///
+    /// Returns `Ok(None)` if the key does not exist.
+    pub fn load_entry<T>(
+        &self,
+        key: &str,
+    ) -> Result<Option<T>, LoadDataFromDBError>
+    where
+        T: bincode::Decode<()>,
+    {
+        let handle = self.handle.as_ref().ok_or(LoadDataFromDBError::MissingHandle)?;
+
+        match handle.get(key) {
+            Ok(Some(bytes)) => {
+                match decode_from_slice::<T, _>(&bytes, standard()) {
+                    Ok((value, _)) => Ok(Some(value)),
+                    Err(e) => {
+                        error!("Failed to decode key '{}': {}", key, e);
+                        Err(LoadDataFromDBError::Decoding(e))
+                    }
+                }
+            }
+            Ok(None) => Ok(None),
+            Err(e) => {
+                error!("Failed to load key '{}': {}", key, e);
+                Err(LoadDataFromDBError::Db(e))
+            }
+        }
+    }
+
+
 }
+
+#[derive(Debug)]
+pub enum SaveDataToDBError {
+    Encoding(bincode::error::EncodeError),
+    Db(sled::Error),
+    
+}
+#[derive(Debug)]
+pub enum LoadDataFromDBError{
+    Decoding(bincode::error::DecodeError),
+    MissingHandle,
+    Db(sled::Error),
+}
+
+
+
+
+impl fmt::Display for SaveDataToDBError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            SaveDataToDBError::Encoding(e) => write!(f, "Encoding failed: {}", e),
+            SaveDataToDBError::Db(e) => write!(f, "Database insert failed: {}", e),
+        }
+    }
+}
+
+impl std::error::Error for SaveDataToDBError {}
 
 
 
@@ -228,9 +314,9 @@ pub fn scan_save_slots(saves_directory: &SavesDirectory) -> Result<Vec<SaveSlot>
 
                 match db_config.open() {
                     Ok(db) => {
-                        match db.get(METADATA_KEY)? {
+                        match db.get(db_keys::METADATA)? {
                             Some(ivec_data) => {
-                                match bincode::decode_from_slice(&ivec_data[..], bincode::config::standard()) {
+                                match decode_from_slice(&ivec_data[..], standard()) {
                                     Ok((data, _size)) => {
                                         slot_metadata = Some(data);
                                         is_empty_slot = false;
@@ -241,7 +327,7 @@ pub fn scan_save_slots(saves_directory: &SavesDirectory) -> Result<Vec<SaveSlot>
                                 }
                             }
                             None => {
-                                eprintln!("Metadata key '{}' not found in slot dir {}", METADATA_KEY, directory_name);
+                                eprintln!("Metadata key '{}' not found in slot dir {}", db_keys::METADATA, directory_name);
                             }
                         }
                     }
@@ -333,6 +419,7 @@ pub fn sanitize_foldername(name: &str) -> String {
 pub fn create_new_save_slot(
     saves_directory: &SavesDirectory,
     user_visible_name: &str, // This is the name the user sees and provides
+    company_name: &str,
 ) -> Result<(String, SaveSlotMetadata), SavesManagementError> {
     let sanitized_folder_name = sanitize_foldername(user_visible_name);
     info!("Creating new save slot. User name: '{}', Sanitized folder: '{}'", user_visible_name, sanitized_folder_name);
@@ -366,18 +453,18 @@ pub fn create_new_save_slot(
     let current_timestamp_secs = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() as i64;
 
     let metadata = SaveSlotMetadata {
-        name: user_visible_name.to_string(), // Store the original user-visible name here
+        name: company_name.to_string(), // Store the original user-visible name here
         employee_count: 0,
         sim_date: SimDate { year: 1, week: 1, day: 1, quarter_tick: 42 },
-        save_version: env!("CARGO_PKG_VERSION").to_string(),
+        save_version: save_version::SAVE_VERSION.to_string(),
         last_saved_timestamp: current_timestamp_secs,
     };
     info!("Generated metadata: {:?}", metadata);
 
-    let encoded_metadata = bincode::encode_to_vec(&metadata, bincode::config::standard())?;
+    let encoded_metadata = bincode::encode_to_vec(&metadata, standard())?;
     info!("Metadata encoded ({} bytes).", encoded_metadata.len());
 
-    db.insert(METADATA_KEY, encoded_metadata)?;
+    db.insert(db_keys::METADATA, encoded_metadata)?;
     info!("Metadata inserted into DB.");
 
     db.flush()?;

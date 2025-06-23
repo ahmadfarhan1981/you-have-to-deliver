@@ -201,5 +201,3 @@ where
 //         self.next_id.fetch_add(1, Ordering::Relaxed)
 //     }
 // }
-#[derive(Default)]
-pub struct GlobalSkillNameMap(pub DashMap<SkillId,String>);

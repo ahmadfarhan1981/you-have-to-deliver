@@ -13,17 +13,19 @@ use legion::world::SubWorld;
 use legion::{system, Entity, IntoQuery, Query, Resources, World};
 use std::fmt;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc};
 
 use crate::sim::new_game::new_game::{CompanyPreset, CompanyPresetStatic, StartingEmployeesConfig};
 use crate::sim::person::init::FirstRun;
 use crate::sim::registries::registry::Registry;
 use arc_swap::ArcSwap;
-use parking_lot::RwLock;
+use parking_lot::{Mutex, RwLock};
 use std::time::Duration;
 use tracing::field::debug;
 use tracing::{debug, error, info, trace, warn};
+use crate::db::init::{create_new_save_slot, SaveSlot, SavesDirectory};
 use crate::integrations::snapshots::snapshots::SnapshotState;
+use crate::sim::persistence::persistence::LoadGame;
 
 #[derive(Default, Debug)]
 pub enum SimManagerCommand {
@@ -40,6 +42,7 @@ pub enum SimManagerCommand {
         employee: StartingEmployeesConfig,
     },
     ResumeSim,
+    LoadSim{slot_id:String},
 }
 
 // #[derive(Default, Debug)]
@@ -65,11 +68,14 @@ pub fn handle_sim_manager_queue(
         }
         SimManagerCommand::ResumeSim => sim_manager.resume_sim(),
 
-        SimManagerCommand::ResetSim { .. } => {
+        SimManagerCommand::ResetSim { .. } => {//TODO split these to another sim command
             error!("Unexpected item in queue. ResetSim should be handled by new game queue")
             //reset is handled by new game manager queue
         }
         SimManagerCommand::StartSim { .. } => {
+            error!("Unexpected item in queue. StartSim should be handled by new game queue")
+        }
+        SimManagerCommand::LoadSim { .. } => {
             error!("Unexpected item in queue. StartSim should be handled by new game queue")
         }
     });
@@ -88,6 +94,8 @@ pub fn handle_new_game_manager_queue(
     #[resource] team_registry: &Arc<Registry<TeamId, Entity>>,
     #[resource] reset_request: &mut Arc<ResetRequest>,
     #[resource] command_queues: &Arc<UICommandQueues>,
+    #[resource] saves_directory: &Arc<SavesDirectory>,
+    #[resource] load_game: &Arc<LoadGame>,
 ) {
     trace!("Handle new game manager queue");
 
@@ -112,6 +120,23 @@ pub fn handle_new_game_manager_queue(
             );
         }
         SimManagerCommand::StartSim { company, employee, slot_id } => {
+
+            let Ok((actual_slot_id, slot_metadata)) = create_new_save_slot(saves_directory, slot_id.as_str(), company.name.as_str()) else {
+                error!("Failed to create new save slot");
+                return;
+            };
+            let slot_path = saves_directory.0.join(actual_slot_id.clone());
+            let save_slot = SaveSlot {
+                slot_id:actual_slot_id,
+                path: slot_path,
+                metadata: Some(slot_metadata),
+                is_empty: false,
+                handle: None,
+            };
+            sim_manager.set_save_slot(save_slot);
+            sim_manager.with_save_slot(|slot|{
+                slot.ensure_db_handle_is_open(&saves_directory);
+            });
             sim_manager.reset_sim(
                 queue_manager,
                 tick_counter,
@@ -126,6 +151,10 @@ pub fn handle_new_game_manager_queue(
                 Some(company),
                 Some(employee),
             );
+        }
+        SimManagerCommand::LoadSim { slot_id } => {
+            load_game.should_load.store(true, Ordering::Relaxed);
+            load_game.slot_id.write().unwrap().replace(slot_id);
         }
         cmd => {
             error!("Unexpected item in game manager queue {:?}", cmd);
@@ -144,6 +173,7 @@ pub struct SimManager {
     running: AtomicBool,
     pub company_preset: RwLock<CompanyPreset>,
     pub employees_preset: RwLock<StartingEmployeesConfig>,
+    pub save_slot: Mutex<Option<SaveSlot>>, // let's be conservative and use mutex for save slots
 }
 
 impl SimManager {
@@ -151,15 +181,18 @@ impl SimManager {
         self.running.store(true, Ordering::SeqCst);
     }
     pub fn pause_sim(&self) {
+        self.with_save_slot(|slot|{
+            slot.handle = None;
+        });
         self.running.store(false, Ordering::SeqCst);
     }
     pub fn is_running(&self) -> bool {
         self.running.load(Ordering::Relaxed)
     }
 
-    pub fn new_sim(&self, company_preset: CompanyPreset, employee_preset: CompanyPreset) {
-        self.pause_sim();
-    }
+    // pub fn new_sim(&self, company_preset: CompanyPreset, employee_preset: CompanyPreset) {
+    //     //self.pause_sim();
+    // }
 
     pub fn load_sim(&self) {}
     pub fn default() -> Self {
@@ -167,6 +200,7 @@ impl SimManager {
             running: AtomicBool::new(false),
             company_preset: RwLock::new(CompanyPreset::default()),
             employees_preset: RwLock::new(StartingEmployeesConfig::default()),
+            save_slot: Mutex::new(None),
         }
     }
 
@@ -226,5 +260,107 @@ impl SimManager {
         used_profile_picture_registry.used_profile_pictures.clear();
         person_registry.clear();
         team_registry.clear();
+
+    }
+}
+
+// SaveSlot related impl
+impl SimManager {
+    /// Sets the current save slot, replacing any existing one.
+    ///
+    /// # Example
+    /// ```
+    /// sim_manager.set_save_slot(my_slot);
+    /// ```
+    pub fn set_save_slot(&self, slot: SaveSlot) {
+        let mut lock = self.save_slot.lock();
+        *lock = Some(slot);
+    }
+
+    /// Clears the current save slot (sets it to `None`).
+    ///
+    /// # Example
+    /// ```
+    /// sim_manager.clear_save_slot();
+    /// ```
+    pub fn clear_save_slot(&self) {
+        let mut lock = self.save_slot.lock();
+        *lock = None;
+    }
+
+    /// Checks whether a save slot is currently loaded.
+    ///
+    /// # Example
+    /// ```
+    /// if sim_manager.has_save_slot() {
+    ///     println!("Ready to save!");
+    /// }
+    /// ```
+    pub fn has_save_slot(&self) -> bool {
+        let lock = self.save_slot.lock();
+        lock.is_some()
+    }
+
+    /// Runs a closure with **mutable access** to the current save slot if it exists.
+    /// Returns `Some(result)` if a slot was present, or `None` if not.
+    ///
+    /// # Example
+    /// ```
+    /// sim_manager.with_save_slot(|slot| {
+    ///     slot.is_empty = false;
+    /// });
+    /// ```
+    pub fn with_save_slot<F, R>(&self, f: F) -> Option<R>
+    where
+        F: FnOnce(&mut SaveSlot) -> R,
+    {
+        let mut lock = self.save_slot.lock();
+        match &mut *lock {
+            Some(slot) => Some(f(slot)),
+            None => None,
+        }
+    }
+
+    /// Runs a closure with **read-only access** to the current save slot if it exists.
+    /// Returns `Some(result)` if a slot was present, or `None` if not.
+    ///
+    /// # Example
+    /// ```
+    /// let path = sim_manager.with_save_slot_ref(|slot| slot.path.clone());
+    /// ```
+    pub fn with_save_slot_ref<F, R>(&self, f: F) -> Option<R>
+    where
+        F: FnOnce(&SaveSlot) -> R,
+    {
+        let lock = self.save_slot.lock();
+        match &*lock {
+            Some(slot) => Some(f(slot)),
+            None => None,
+        }
+    }
+
+    /// Runs a **fallible** closure with mutable access to the current save slot.
+    /// Returns `Ok(Some(result))` if a slot was present and the closure succeeded,
+    /// `Ok(None)` if no slot was loaded, or `Err(e)` if the closure failed.
+    ///
+    /// # Example
+    /// ```
+    /// let result = sim_manager.try_with_save_slot(|slot| {
+    ///     if slot.is_empty {
+    ///         Err("Can't save: slot is empty")
+    ///     } else {
+    ///         Ok(slot.slot_id.clone())
+    ///     }
+    /// });
+    /// ```
+    pub fn try_with_save_slot<F, R, E>(&self, f: F) -> Result<Option<R>, E>
+    where
+        F: FnOnce(&mut SaveSlot) -> Result<R, E>,
+    {
+        let mut lock = self.save_slot.lock();
+        match &mut *lock {
+            Some(slot) => f(slot).map(Some),
+            None => Ok(None),
+        }
     }
 }
