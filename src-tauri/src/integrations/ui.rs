@@ -54,15 +54,16 @@ pub fn refresh_data(app: AppHandle, emit_registry: State<'_, Arc<SnapshotEmitReg
     emit_registry.force_emit_all(&app);
 }
 
-
-
 #[tauri::command]
 pub fn list_save_slots(saves_dir_state: tauri::State<Arc<SavesDirectory>>) -> Result<Vec<SaveSlot>, String> {
     scan_save_slots(&saves_dir_state) // Access the PathBuf via .0
         .map_err(|e| e.to_string())
 }
-
-
+#[tauri::command]
+pub fn load_game(slot_id: String , queues: State<'_, Arc<UICommandQueues>> ){
+    info!("Load game called.{}", &slot_id);
+    queues.control.push(SimManagerCommand::LoadSim { slot_id });
+}
 
 #[tauri::command]
 pub async fn exit_app(app_handle: tauri::AppHandle) {

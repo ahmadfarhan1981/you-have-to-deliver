@@ -32,10 +32,7 @@ use crate::integrations::systems::{
     push_game_speed_snapshots_system, push_needs_to_integration_system,
     push_persons_to_integration_system, push_teams_to_integration_system, tick_needs_system,
 };
-use crate::integrations::ui::{
-    assign_person_to_team, exit_app, list_save_slots, new_sim, new_team, refresh_data, resume_sim,
-    stop_sim, unassign_team, AppContext,
-};
+use crate::integrations::ui::{assign_person_to_team, exit_app, list_save_slots, load_game, new_sim, new_team, refresh_data, resume_sim, stop_sim, unassign_team, AppContext};
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{PersonId, ProfilePicture};
 use crate::sim::person::init::{emit_done_setup_event_system, generate_employees_system, init_company_system, load_global_skills_to_static, unset_first_run_flag_system, FirstRun};
@@ -204,7 +201,8 @@ fn main() {
             get_starting_employee_configs,
             get_company_presets,
             list_save_slots,
-            exit_app
+            exit_app,
+            load_game,
         ])
         .run(tauri::generate_context!())
         .expect("error running tauri app");

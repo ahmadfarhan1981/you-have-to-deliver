@@ -29,6 +29,7 @@ use std::path::Path;
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, trace};
 use crate::sim::ai::goap::CurrentGoal;
+use crate::sim::company::company::PlayerControlled;
 use crate::sim::person::morale::StressLevel;
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: i16, max: i16) -> i16 {
@@ -342,6 +343,7 @@ pub fn spawn_person(
         DebugDisplayComponent::default(),
         CurrentGoal::default(),
         StressLevel::default(),
+        PlayerControlled,
     ));
     person_registry.insert(id, entity);
 

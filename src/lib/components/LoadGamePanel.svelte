@@ -23,6 +23,11 @@
 
     let recentGames: SaveSlot[] = []; // Expect an array of SaveSlot
 
+    async function loadGame (slotId : String){
+        await invoke("load_game",{slotId:slotId});
+        await invoke("resume_sim");
+    }
+
     onMount(async () => {
         try {
             recentGames = await invoke('list_save_slots');
@@ -56,7 +61,7 @@
                             Save version {game.metadata.save_version} <br />
                             2 Trillion Cash
                         </div>
-                        <button class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs text-white">
+                        <button class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded text-xs text-white" on:click={()=>loadGame(game.slot_id)}>
                             Load
                         </button>
                     </div>

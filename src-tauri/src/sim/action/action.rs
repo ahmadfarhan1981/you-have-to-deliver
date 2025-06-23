@@ -45,7 +45,7 @@ pub fn decide_action(
     energy: &Energy,
     cmd: &mut CommandBuffer,
 ){
-
+    // info!("Decide action {}", person.name);
     match current_goal.0 {
         GoalName::Rest => {cmd.add_component(*entity,ActionIntent::from(ActionType::Rest));}
         GoalName::Eat => {cmd.add_component(*entity,ActionIntent::from(ActionType::Eat));}
@@ -65,7 +65,7 @@ pub fn execute_action(
     energy: &mut Energy,
     cmd: &mut CommandBuffer,
 ) {
-    info!("Executing {:?}", action);
+    // info!("Executing {:?}", action);
     match action.current {
         ActionType::GeneralWork => {}
         ActionType::Work(_) => {}
