@@ -159,8 +159,21 @@ impl QueueManager {
                             .queue
                             .push(SimManagerCommand::ResetSim { company, employee });
                     }
-                    _ => {
+                    
+                    
+                    // _ => {
+                    //     self.sim_manager.queue.push(command);
+                    // }
+                    SimManagerCommand::StopSim => {
                         self.sim_manager.queue.push(command);
+                    }
+                    SimManagerCommand::ResumeSim => {
+                        self.sim_manager.queue.push(command);
+                    }
+                    SimManagerCommand::LoadSim { slot_id } => {
+                        self.new_game_manager
+                            .queue
+                            .push(SimManagerCommand::LoadSim { slot_id });
                     }
                 }
             } else {

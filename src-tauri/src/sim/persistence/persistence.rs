@@ -22,10 +22,11 @@ use legion::world::SubWorld;
 use legion::{query, system, Entity, IntoQuery, Query, Resources, World};
 use rand_distr::num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc};
 use std::sync::atomic::AtomicBool;
 use std::time::{SystemTime, UNIX_EPOCH};
 use legion::systems::CommandBuffer;
+use parking_lot::RwLock;
 use tauri::utils::acl::Commands;
 use tracing::{error, info, warn};
 use crate::db::error::SavesManagementError::TimeError;
@@ -46,6 +47,7 @@ pub struct SavedEmployee {
     pub stress_level: StressLevel,
 }
 
+#[derive(Debug)]
 pub struct LoadGame{
     pub should_load: AtomicBool,
     pub slot_id: RwLock<Option<String>>,
@@ -104,6 +106,7 @@ pub fn save_game_state(
     
     sim_manager.with_save_slot(|current_save| {
         current_save.ensure_db_handle_is_open(saves_directory);
+
         let mut employee_id_list: Vec<u32> = vec![]; 
         for (
             person,
@@ -154,7 +157,7 @@ pub fn save_game_state(
 
         let metadata = SaveSlotMetadata {
             name: current_save.metadata.clone().unwrap().name.clone(),
-            employee_count: query.iter(world).count() as u32,
+            employee_count: employee_id_list.len() as u32,
             sim_date: current_tick.current_date(),
             save_version: save_version::SAVE_VERSION.to_string(),
             last_saved_timestamp: SystemTime::now()
@@ -167,13 +170,13 @@ pub fn save_game_state(
         
         current_save.save_entry(db_keys::USED_PROFILE_PICTURES, used_profile_pictures);
         
-        match current_save.load_entry::<TickCounter>(db_keys::TICK_COUNTER){
-            Ok(Some(tick)) => {
-                info!("Tick counter loaded {:?}", tick);
-            }
-            Ok(None)=>{info!("Nothing in db for tick counter")}
-            Err(e) => {error!("Error loading tick counter: {:?}", e);}
-        }
+        // match current_save.load_entry::<TickCounter>(db_keys::TICK_COUNTER){
+        //     Ok(Some(tick)) => {
+        //         info!("Tick counter loaded {:?}", tick);
+        //     }
+        //     Ok(None)=>{info!("Nothing in db for tick counter")}
+        //     Err(e) => {error!("Error loading tick counter: {:?}", e);}
+        // }
         
     });
 }
@@ -191,31 +194,31 @@ pub fn load_game_state(
     // load: &mut Query<&Company>,
 )
 {
-    match resources.get::<&Arc< crate::action_queues::sim_manager::SimManager >>(){
-        Some(sim_manager) => {
-            if !sim_manager.has_save_slot() {
-                warn!("No active save slot");
-                return;
-            }
-            
-            sim_manager.with_save_slot(|current_save| {
-                match resources.get_mut::<&Arc<TickCounter>>(){
-                    Some(tick_counter) => {
-                        let Ok(Some(saved_tick_counter)) = current_save.load_entry::<TickCounter>(db_keys::TICK_COUNTER) else {error!("Error loading tick counter"); return};
-                        info!("Saved{:?}",saved_tick_counter);
-                        info!("Current{:?}",tick_counter);
-                        //tick_counter.update_from(&saved_tick_counter);
-                        
-                        
-                    }
-                    None => {}
-
-                }
-            } );
-        }
-        None => {}
-        
-    }
+    // match resources.get::<&Arc< crate::action_queues::sim_manager::SimManager >>(){
+    //     Some(sim_manager) => {
+    //         if !sim_manager.has_save_slot() {
+    //             warn!("No active save slot");
+    //             return;
+    //         }
+    //
+    //         sim_manager.with_save_slot(|current_save| {
+    //             match resources.get_mut::<&Arc<TickCounter>>(){
+    //                 Some(tick_counter) => {
+    //                     let Ok(Some(saved_tick_counter)) = current_save.load_entry::<TickCounter>(db_keys::TICK_COUNTER) else {error!("Error loading tick counter"); return};
+    //                     info!("Saved{:?}",saved_tick_counter);
+    //                     info!("Current{:?}",tick_counter);
+    //                     //tick_counter.update_from(&saved_tick_counter);
+    //
+    //
+    //                 }
+    //                 None => {}
+    //
+    //             }
+    //         } );
+    //     }
+    //     None => {}
+    //
+    // }
     
     
     
@@ -227,6 +230,7 @@ pub fn sync_registry_from_person(
     query: &mut Query<(&Person, &Entity)>,
     #[resource] person_registry: &Arc<Registry<PersonId, Entity>>,
 ) {
+    info!("Syncing registry from person...");
     let x = query
         .iter(world)
         .map(|(person, entity)| (person.person_id, *entity));
@@ -239,6 +243,7 @@ pub fn sync_registry_from_team(
     query: &mut Query<(&Team, &Entity)>,
     #[resource] team_registry: &Arc<Registry<TeamId, Entity>>,
 ) {
+    info!("Syncing registry from team...");
     let x = query
         .iter(world)
         .map(|(team, entity)| (team.team_id, *entity));

@@ -76,7 +76,7 @@ pub fn handle_sim_manager_queue(
             error!("Unexpected item in queue. StartSim should be handled by new game queue")
         }
         SimManagerCommand::LoadSim { .. } => {
-            error!("Unexpected item in queue. StartSim should be handled by new game queue")
+            error!("Unexpected item in queue. LoadSim should be handled by new game queue")
         }
     });
 }
@@ -153,8 +153,14 @@ pub fn handle_new_game_manager_queue(
             );
         }
         SimManagerCommand::LoadSim { slot_id } => {
+            // stop the sim and remove the current save slot, so dont accidentally writing to the previous save.
+            sim_manager.pause_sim();
+            *sim_manager.save_slot.lock() = None;
+            
+            
             load_game.should_load.store(true, Ordering::Relaxed);
-            load_game.slot_id.write().unwrap().replace(slot_id);
+            load_game.slot_id.write().replace(slot_id);
+
         }
         cmd => {
             error!("Unexpected item in game manager queue {:?}", cmd);

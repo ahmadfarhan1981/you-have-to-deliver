@@ -27,6 +27,16 @@ pub struct SnapshotState {
 
 }
 
+impl SnapshotState {
+    pub fn reset(&self) {
+        self.persons.clear();
+        self.teams.clear();
+        self.debug_display.clear();
+        self.stress_level.clear();
+        self.stress_history.clear();
+    }
+}
+
 impl Default for SnapshotState {
     fn default() -> Self {
         Self {

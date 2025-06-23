@@ -12,7 +12,7 @@ use crate::sim::utils::debugging::clear_debug_display_system;
 use crate::sim::utils::sim_reset::{delete_all_entity_system, reset_snapshot_system, reset_state_system};
 use legion::Schedule;
 use legion::systems::{Builder, ParallelRunnable};
-use crate::sim::persistence::persistence::save_game_state_system;
+use crate::sim::persistence::persistence::{save_game_state_system, sync_registry_from_person, sync_registry_from_person_system, sync_registry_from_team_system};
 use crate::sim::person::morale::{daily_stress_reset_system, update_stress_system};
 use crate::sim::person::stats::StatType::Systems;
 
@@ -29,6 +29,7 @@ pub struct GameSchedules {
     pub pre_integration: Schedule,
     pub integration: Schedule,
     pub post_integration: Schedule,
+    pub load_game_schedule: Schedule,
 }
 
 pub fn init_schedules() -> GameSchedules {
@@ -121,7 +122,12 @@ pub fn init_schedules() -> GameSchedules {
     let post_integration = Schedule::builder()
         .add_system(run_snapshot_emitters_system())
         .build();
-    
+ 
+    let load_game_schedule = Schedule::builder()
+        .add_system(sync_registry_from_person_system())
+        .flush()
+        .add_system(sync_registry_from_team_system())
+        .build();
     
     GameSchedules {
         startup,
@@ -136,6 +142,7 @@ pub fn init_schedules() -> GameSchedules {
         pre_integration,
         integration,
         post_integration,
+        load_game_schedule
     }
 }
 

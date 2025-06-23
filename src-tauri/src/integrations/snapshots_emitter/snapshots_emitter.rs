@@ -15,6 +15,8 @@ use crate::integrations::snapshots::snapshots::SnapshotField;
 pub trait SnapshotEmitter {
     fn maybe_emit(&self, tick: u64, last_update_map:  &DashMap<&'static str, u64>, app: &AppHandle) -> bool;
     fn emit(&self, tick: Option<u64>, app: &AppHandle);
+    
+    fn reset(&self);
 }
 #[derive(Debug, Default)]
 pub enum ExportFrequency {
@@ -41,7 +43,7 @@ impl SnapshotEmitRegistry {
             emitters: Vec::new(),
         }
     }
-
+    
     pub fn register<E: SnapshotEmitter + Send + Sync + 'static>(&mut self, emitter: E) {
         self.emitters.push(Box::new(emitter));
     }
@@ -52,6 +54,13 @@ impl SnapshotEmitRegistry {
             let _did_emit = emitter.maybe_emit(tick, last_update_map, app);
         }
     }
+    
+    pub fn reset(&self) {
+        for emitter in &self.emitters {
+            emitter.reset();
+        }
+    }
+    
     pub fn force_emit_all(&self, app: &AppHandle) {
         for emitter in &self.emitters {
             let _did_emit = emitter.emit(None, app);
@@ -111,6 +120,10 @@ impl<T: Serialize + std::fmt::Debug> SnapshotEmitter for SnapshotFieldEmitter<T>
         // info!("Snapshot field: {:?} {:?} {:?}", self.config.event_name, data,  &*self.field.value.load_full());
         let _ = app.emit(self.config.event_name, data);
     }
+
+    fn reset(&self) {
+        self.config.last_sent_tick.store(0, Ordering::Relaxed);
+    }
 }
 
 pub struct SnapshotCollectionEmitter<K, V>
@@ -158,5 +171,9 @@ where
         }
         let all: Vec<V> = self.map.iter().map(|entry| entry.value().clone()).collect();
         let _ = app.emit(self.config.event_name, &all);
+    }
+
+    fn reset(&self) {
+        self.config.last_sent_tick.store(0, Ordering::Relaxed);
     }
 }
