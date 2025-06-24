@@ -1,6 +1,7 @@
 use std::{io, sync::{atomic::Ordering, Arc}, thread, time::{Duration, Instant}};
 use std::io::BufRead;
 use std::thread::sleep;
+use dashmap::DashMap;
 use legion::{Resources, World};
 use parking_lot::RwLock;
 use spin_sleep::{SpinSleeper, SpinStrategy};
@@ -25,11 +26,12 @@ use crate::{
 use crate::action_queues::sim_manager::{SimManager, SimManagerCommand};
 use crate::action_queues::team_manager::TeamManagerCommand;
 use crate::db::constants::{db_keys, save_version};
-use crate::db::error::SavesManagementError;
+use crate::utils::errors::SavesManagementError;
 use crate::db::init::{SaveSlot, SaveSlotMetadata, SavesDirectory};
 use crate::integrations::events::{emit_app_event, AppEventType};
 use crate::integrations::queues::SimCommand;
 use crate::integrations::queues::SimCommand::TeamManager;
+use crate::schedules::init::GameSchedules;
 use crate::sim::action::action::ActionIntent;
 use crate::sim::company::company::{Company, PlayerControlled};
 use crate::sim::persistence::persistence::{LoadGame, SavedEmployee};
@@ -94,8 +96,11 @@ pub fn run_simulation_thread(config: SimThreadConfig) {
     let mut game_schedules = init_schedules();
     let sleeper = SpinSleeper::new(0).with_spin_strategy(SpinStrategy::YieldThread);
 
+    //resources shared with main loop and the ECS
     let load_game = Arc::new(LoadGame::default());
     resources.insert(Arc::clone(&load_game));
+    let last_update_map = Arc::new(DashMap::<&'static str, u64>::new());
+    resources.insert(Arc::clone(&last_update_map));//last update map
     
     // Clones for the loop
     let loop_sim_manager = Arc::clone(&sim_manager);
@@ -106,7 +111,7 @@ pub fn run_simulation_thread(config: SimThreadConfig) {
     let loop_load_game = Arc::clone(&load_game);
     let loop_snapshot_registry = Arc::clone(&sim_snapshot_registry);
     let loop_snapshot_state = Arc::clone(&sim_snapshot_state);
-
+    let loop_last_update_map = Arc::clone(&last_update_map);
     #[cfg(debug_assertions)]
     {
         // --- Start of new code for console input ---
@@ -179,94 +184,14 @@ pub fn run_simulation_thread(config: SimThreadConfig) {
             .execute(&mut world, &mut resources);
 
         if loop_sim_manager.is_running() {
-            if loop_load_game.should_load.load(Ordering::Relaxed) {
-                //switch to save slot.
-                let saves_directory = resources.get::<Arc<SavesDirectory>>().unwrap().clone();
-                let slot = loop_load_game.slot_id.read().as_ref().unwrap().clone();
-
-                let mut save_slot = SaveSlot{
-                    slot_id: slot.clone(),
-                    path: saves_directory.0.join(slot.clone()),
-                    metadata: None,
-                    is_empty: false,
-                    handle: None,
-                };
-                match save_slot.ensure_db_handle_is_open(&saves_directory) {// populates the handle
-                    Ok(_) => {}
-                    Err(e) => {error!("Error when opening save slot. {:?}", e); return}
+            if loop_load_game.should_load.load(Ordering::Relaxed) { 
+                if let Err(e) = handle_game_load(
+                    &mut world, &mut resources, &loop_load_game, &loop_tick_counter, &loop_sim_manager,
+                    &loop_snapshot_state, &loop_snapshot_registry, &loop_last_update_map, &mut game_schedules
+                ) {
+                    error!("Failed to load game: {:?}", e);
                 }
-
-
-
-
-
-                info!("Resetting the world...");
-                world.clear();
-
-                info!("Loading employees...");
-                let Ok(Some(employee_list)) = save_slot.load_entry::<Vec<u32>>(db_keys::EMPLOYEES_LIST) else {return};
-                let number_of_employees = employee_list.len();
-                for employee_id in employee_list {
-                    let Ok(Some(employee)) = save_slot.load_entry::<SavedEmployee>(format!("{}{}",db_keys::EMPLOYEE_PREFIX, employee_id).as_str()) else {return};
-                    
-                    info!("Loading employees: {:?}", employee);
-                    world.push((
-                        employee.person,
-                        employee.stats,
-                        employee.profile_picture,
-                        employee.personality_matrix,
-                        employee.hunger,
-                        employee.energy,
-                        employee.skill_set,
-                        employee.stress_level,
-                        employee.current_goal,
-                        DebugDisplayComponent::default(),
-                        PlayerControlled,
-                        Dirty
-                        ) );
-                }
-
-                info!("Loading teams...");
-                let Ok(Some(team)) = save_slot.load_entry::<Vec<Team>>(db_keys::TEAMS) else {return};
-                for team in team {
-                    world.push((team, Dirty));
-                }
-
-                info!("Loading company...");
-                let Ok(Some(company)) = save_slot.load_entry::<Company>(db_keys::COMPANY) else {return};
-                let company_name = company.name.clone();
-                world.push((company, PlayerControlled, Dirty));
-
-                info!("Loading tick_counter...");
-                let Ok(Some(tick_counter)) = save_slot.load_entry::<TickCounter>(db_keys::TICK_COUNTER) else {return};
-                loop_tick_counter.update_from(&tick_counter);
-
-                let Ok(Some(metadata)) = save_slot.load_entry::<SaveSlotMetadata>(db_keys::METADATA) else {return};
-                save_slot.metadata = Some(metadata);
-
-                
-                //load data
-                info!("Load game {:?}.", loop_load_game);
-                loop_load_game.should_load.store(false, Ordering::Relaxed);
-                let mut  slot = loop_load_game.slot_id.write();
-                *slot = None;
-
-                *loop_sim_manager.save_slot.lock() = Some(save_slot);
-                
-                game_schedules.load_game_schedule.execute(&mut world, &mut resources);// repopulate registries
-
-                
-                //clear snapshotshot state
-                loop_snapshot_state.reset();
-                //reset emitters
-                loop_snapshot_registry.reset();
-                //&DashMap<&'static str, u64> clear last update map
-                
-                let app_context = resources.get::<Arc<AppContext>>().unwrap() ;
-                info!("emit_done_setup_event");
-                emit_app_event(&app_context.app_handle, AppEventType::InitDone)
             }
-            
             if loop_first_run.is_first_run() {
                 game_schedules.startup.execute(&mut world, &mut resources);
             }
@@ -321,4 +246,108 @@ pub fn run_simulation_thread(config: SimThreadConfig) {
             sleeper.sleep(Duration::from_millis(100));
         }
     }
+}
+
+fn handle_game_load(
+    world: &mut World,
+    resources: &mut Resources,
+    loop_load_game: &Arc<LoadGame>,
+    loop_tick_counter: &Arc<TickCounter>,
+    loop_sim_manager: &Arc<SimManager>,
+    loop_snapshot_state: &Arc<SnapshotState>,
+    loop_snapshot_registry: &Arc<SnapshotEmitRegistry>,
+    loop_last_update_map: &Arc<DashMap<&'static str, u64>>,
+    game_schedules: &mut GameSchedules,
+) -> Result<(), SavesManagementError> {
+    //switch to save slot.
+    let saves_directory = resources.get::<Arc<SavesDirectory>>()
+        .ok_or_else(|| SavesManagementError::LoadError("SavesDirectory resource not found".to_string()))?
+        .clone();
+    let slot = loop_load_game.slot_id.read().as_ref()
+        .ok_or_else(|| SavesManagementError::LoadError("Save slot ID not set".to_string()))?
+        .clone();
+
+    let mut save_slot = SaveSlot {
+        slot_id: slot.clone(),
+        path: saves_directory.0.join(slot.clone()),
+        metadata: None,
+        is_empty: false,
+        handle: None,
+    };
+    
+    save_slot.ensure_db_handle_is_open(&saves_directory)?; // populates the handle
+    
+    info!("Resetting the world...");
+    world.clear();
+
+    info!("Loading employees...");
+    let employee_list = save_slot.load_entry::<Vec<u32>>(db_keys::EMPLOYEES_LIST)?
+        .ok_or_else(|| SavesManagementError::LoadError("Employee list not found in save".to_string()))?;
+    let _number_of_employees = employee_list.len(); // Variable not used, can be removed or prefixed with _
+    for employee_id in employee_list {
+        let employee = save_slot.load_entry::<SavedEmployee>(format!("{}{}", db_keys::EMPLOYEE_PREFIX, employee_id).as_str())?
+            .ok_or_else(|| SavesManagementError::LoadError(format!("Employee {} not found in save", employee_id)))?;
+        
+        info!("Loading employees: {:?}", employee);
+        world.push((
+            employee.person,
+            employee.stats,
+            employee.profile_picture,
+            employee.personality_matrix,
+            employee.hunger,
+            employee.energy,
+            employee.skill_set,
+            employee.stress_level,
+            employee.current_goal,
+            DebugDisplayComponent::default(),
+            PlayerControlled,
+            Dirty
+        ));
+    }
+
+    info!("Loading teams...");
+    let teams = save_slot.load_entry::<Vec<Team>>(db_keys::TEAMS)?
+        .ok_or_else(|| SavesManagementError::LoadError("Teams not found in save".to_string()))?;
+    for team in teams {
+        world.push((team, Dirty));
+    }
+
+    info!("Loading company...");
+    let company = save_slot.load_entry::<Company>(db_keys::COMPANY)?
+        .ok_or_else(|| SavesManagementError::LoadError("Company not found in save".to_string()))?;
+    let _company_name = company.name.clone(); // Variable not used, can be removed or prefixed with _
+    world.push((company, PlayerControlled, Dirty));
+
+    info!("Loading tick_counter...");
+    let tick_counter = save_slot.load_entry::<TickCounter>(db_keys::TICK_COUNTER)?
+        .ok_or_else(|| SavesManagementError::LoadError("TickCounter not found in save".to_string()))?;
+    loop_tick_counter.update_from(&tick_counter);
+
+    let metadata = save_slot.load_entry::<SaveSlotMetadata>(db_keys::METADATA)?
+        .ok_or_else(|| SavesManagementError::LoadError("Metadata not found in save".to_string()))?;
+    save_slot.metadata = Some(metadata);
+    
+    //load data
+    info!("Load game {:?}.", loop_load_game);
+    loop_load_game.should_load.store(false, Ordering::Relaxed);
+    let mut slot_write_guard = loop_load_game.slot_id.write();
+    *slot_write_guard = None;
+
+    *loop_sim_manager.save_slot.lock() = Some(save_slot);
+    
+    game_schedules.load_game_schedule.execute(world, resources); // repopulate registries
+
+    //clear snapshot state
+    loop_snapshot_state.reset();
+    //reset emitters
+    loop_snapshot_registry.reset();
+    //reset last update map
+    loop_last_update_map.clear();
+    
+    let app_context = resources.get::<Arc<AppContext>>()
+        .ok_or_else(|| SavesManagementError::LoadError("AppContext resource not found".to_string()))?;
+    info!("emit_done_setup_event");
+    emit_app_event(&app_context.app_handle, AppEventType::InitDone);
+
+    Ok(())
 }

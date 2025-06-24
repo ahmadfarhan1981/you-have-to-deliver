@@ -35,7 +35,7 @@ pub fn initialize_non_shared_resources(resources: &mut Resources) {
         "Team registry",
     )));
     
-    resources.insert(Arc::new(DashMap::<&'static str, u64>::new()));//whats this for?
+    // resources.insert(Arc::new(DashMap::<&'static str, u64>::new()));//last update map
     resources.insert(SaveSlot::default());
 }
 

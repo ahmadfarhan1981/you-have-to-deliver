@@ -7,13 +7,14 @@ use std::task::Context;
 use bincode::{decode_from_slice, Decode, Encode};
 // rayon::in_place_scope_fifo is unused, consider removing if not needed elsewhere
 use tracing::{error, info, trace, warn};
-use crate::db::error::BincodeError;
-use crate::db::{self, error::SavesManagementError};
+use crate::utils::errors::{BincodeError, SavesManagementError};
+use crate::db::{self};
 use crate::sim::sim_date::sim_date::SimDate;
 use std::time::{SystemTime, UNIX_EPOCH};
 use bincode::config::standard;
 use sled::{Db, IVec};
 use crate::db::constants::{db_keys, save_version, GAMESTATE_DB_FILENAME};
+use crate::utils::errors::{LoadDataFromDBError, SaveDataToDBError};
 // For generating timestamp
 
 #[derive(Debug, Clone)]
@@ -252,35 +253,6 @@ impl SaveSlot {
 
 
 }
-
-#[derive(Debug)]
-pub enum SaveDataToDBError {
-    Encoding(bincode::error::EncodeError),
-    Db(sled::Error),
-    
-}
-#[derive(Debug)]
-pub enum LoadDataFromDBError{
-    Decoding(bincode::error::DecodeError),
-    MissingHandle,
-    Db(sled::Error),
-}
-
-
-
-
-impl fmt::Display for SaveDataToDBError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            SaveDataToDBError::Encoding(e) => write!(f, "Encoding failed: {}", e),
-            SaveDataToDBError::Db(e) => write!(f, "Database insert failed: {}", e),
-        }
-    }
-}
-
-impl std::error::Error for SaveDataToDBError {}
-
-
 
 
 pub fn scan_save_slots(saves_directory: &SavesDirectory) -> Result<Vec<SaveSlot>, SavesManagementError> {
