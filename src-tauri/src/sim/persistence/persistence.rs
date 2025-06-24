@@ -1,8 +1,7 @@
 // Added for SavedEmployee
 use crate::action_queues::sim_manager::SimManager;
 use crate::db::constants::{db_keys, save_version};
-use crate::db::error;
-use crate::db::init::{LoadDataFromDBError, SaveSlot, SaveSlotMetadata, SavesDirectory};
+use crate::db::init::{SaveSlot, SaveSlotMetadata, SavesDirectory};
 use crate::integrations::snapshots::{company, person, team};
 use crate::sim::ai::goap::CurrentGoal;
 use crate::sim::company::company::{Company, PlayerControlled};
@@ -22,15 +21,16 @@ use legion::world::SubWorld;
 use legion::{query, system, Entity, IntoQuery, Query, Resources, World};
 use rand_distr::num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc};
+use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::time::{SystemTime, UNIX_EPOCH};
 use legion::systems::CommandBuffer;
 use parking_lot::RwLock;
 use tauri::utils::acl::Commands;
 use tracing::{error, info, warn};
-use crate::db::error::SavesManagementError::TimeError;
+use crate::utils::errors::SavesManagementError::TimeError;
 use crate::sim::systems::global::UsedProfilePictureRegistry;
+use crate::utils::errors::LoadDataFromDBError;
 // Added for logging
 
 /// Represents the data of an employee that can be saved or transferred.

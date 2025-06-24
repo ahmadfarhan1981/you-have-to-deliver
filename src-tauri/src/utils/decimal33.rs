@@ -1,29 +1,6 @@
 use std::fmt;
 use std::str::FromStr;
 
-/// Represents errors that can occur during `Decimal33` operations.
-#[derive(Debug)]
-pub enum DecimalError {
-    /// Error indicating that the input value was negative, which is not supported by `Decimal33::new`.
-    NegativeInput,
-    /// Error indicating that the input float value, when scaled, exceeded the representable range.
-    /// Contains the original problematic float value.
-    Overflow(f32),
-    /// Error indicating an overflow during an addition operation.
-    /// Note: Current addition methods in `Decimal33` use saturating arithmetic,
-    /// so this variant might be intended for other contexts or future uses.
-    OverflowAdd,
-    /// Error indicating a failure to parse a string into a float.
-    /// Wraps the underlying `std::num::ParseFloatError`.
-    ParseFloatError(std::num::ParseFloatError),
-}
-
-impl From<std::num::ParseFloatError> for DecimalError {
-    /// Converts a `std::num::ParseFloatError` into a `DecimalError::ParseFloatError`.
-    fn from(err: std::num::ParseFloatError) -> Self {
-        DecimalError::ParseFloatError(err)
-    }
-}
 /// A fixed-point decimal structure storing values with a precision of 3 decimal places.
 /// The value is stored as a `u32` scaled by 1000. For example, 55.201 is stored as 55201.
 /// The maximum representable value is 999.999.
@@ -137,6 +114,7 @@ impl Decimal33 {
 use std::ops::{AddAssign, SubAssign};
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
+use crate::utils::errors::DecimalError;
 
 impl AddAssign for Decimal33 {
     /// Performs saturating addition and assignment.

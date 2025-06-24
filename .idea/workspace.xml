@@ -92,7 +92,7 @@
     "org.rust.cargo.project.model.impl.CargoExternalSystemProjectAware.subscribe.first.balloon": "",
     "org.rust.first.attach.projects": "true",
     "settings.editor.selected.configurable": "language.rust.cargo.check",
-    "ts.external.directory.path": "C:\\Work\\Project\\you-have-to-deliver\\node_modules\\typescript\\lib",
+    "ts.external.directory.path": "D:\\projects\\you-have-to-deliver\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   },
   "keyToStringList": {
@@ -168,6 +168,7 @@
       <workItem from="1750587193390" duration="12852000" />
       <workItem from="1750641409902" duration="6012000" />
       <workItem from="1750655179166" duration="21999000" />
+      <workItem from="1750718193884" duration="6998000" />
     </task>
     <task id="LOCAL-00001" summary="basic action">
       <option name="closed" value="true" />
