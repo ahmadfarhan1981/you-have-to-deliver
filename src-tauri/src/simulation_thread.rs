@@ -261,10 +261,10 @@ fn handle_game_load(
 ) -> Result<(), SavesManagementError> {
     //switch to save slot.
     let saves_directory = resources.get::<Arc<SavesDirectory>>()
-        .ok_or_else(|| SavesManagementError::LoadError("SavesDirectory resource not found".to_string()))?
+        .ok_or_else(|| SavesManagementError::Io(io::Error::new(io::ErrorKind::NotFound, "SavesDirectory resource not found")))?
         .clone();
     let slot = loop_load_game.slot_id.read().as_ref()
-        .ok_or_else(|| SavesManagementError::LoadError("Save slot ID not set".to_string()))?
+        .ok_or_else(|| SavesManagementError::Io(io::Error::new(io::ErrorKind::NotFound, "Save slot ID not set")))?
         .clone();
 
     let mut save_slot = SaveSlot {
@@ -281,12 +281,10 @@ fn handle_game_load(
     world.clear();
 
     info!("Loading employees...");
-    let employee_list = save_slot.load_entry::<Vec<u32>>(db_keys::EMPLOYEES_LIST)?
-        .ok_or_else(|| SavesManagementError::LoadError("Employee list not found in save".to_string()))?;
+    let employee_list = save_slot.load_entry::<Vec<u32>>(db_keys::EMPLOYEES_LIST)?;
     let _number_of_employees = employee_list.len(); // Variable not used, can be removed or prefixed with _
     for employee_id in employee_list {
-        let employee = save_slot.load_entry::<SavedEmployee>(format!("{}{}", db_keys::EMPLOYEE_PREFIX, employee_id).as_str())?
-            .ok_or_else(|| SavesManagementError::LoadError(format!("Employee {} not found in save", employee_id)))?;
+        let employee = save_slot.load_entry::<SavedEmployee>(format!("{}{}", db_keys::EMPLOYEE_PREFIX, employee_id).as_str())?;
         
         info!("Loading employees: {:?}", employee);
         world.push((
@@ -306,25 +304,21 @@ fn handle_game_load(
     }
 
     info!("Loading teams...");
-    let teams = save_slot.load_entry::<Vec<Team>>(db_keys::TEAMS)?
-        .ok_or_else(|| SavesManagementError::LoadError("Teams not found in save".to_string()))?;
+    let teams = save_slot.load_entry::<Vec<Team>>(db_keys::TEAMS)?;
     for team in teams {
         world.push((team, Dirty));
     }
 
     info!("Loading company...");
-    let company = save_slot.load_entry::<Company>(db_keys::COMPANY)?
-        .ok_or_else(|| SavesManagementError::LoadError("Company not found in save".to_string()))?;
+    let company = save_slot.load_entry::<Company>(db_keys::COMPANY)?;
     let _company_name = company.name.clone(); // Variable not used, can be removed or prefixed with _
     world.push((company, PlayerControlled, Dirty));
 
     info!("Loading tick_counter...");
-    let tick_counter = save_slot.load_entry::<TickCounter>(db_keys::TICK_COUNTER)?
-        .ok_or_else(|| SavesManagementError::LoadError("TickCounter not found in save".to_string()))?;
+    let tick_counter = save_slot.load_entry::<TickCounter>(db_keys::TICK_COUNTER)?;
     loop_tick_counter.update_from(&tick_counter);
 
-    let metadata = save_slot.load_entry::<SaveSlotMetadata>(db_keys::METADATA)?
-        .ok_or_else(|| SavesManagementError::LoadError("Metadata not found in save".to_string()))?;
+    let metadata = save_slot.load_entry::<SaveSlotMetadata>(db_keys::METADATA)?;
     save_slot.metadata = Some(metadata);
     
     //load data
@@ -345,7 +339,7 @@ fn handle_game_load(
     loop_last_update_map.clear();
     
     let app_context = resources.get::<Arc<AppContext>>()
-        .ok_or_else(|| SavesManagementError::LoadError("AppContext resource not found".to_string()))?;
+        .ok_or_else(|| SavesManagementError::Io(io::Error::new(io::ErrorKind::NotFound, "AppContext resource not found")))?;
     info!("emit_done_setup_event");
     emit_app_event(&app_context.app_handle, AppEventType::InitDone);
 
