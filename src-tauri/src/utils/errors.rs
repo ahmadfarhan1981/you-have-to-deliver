@@ -14,6 +14,7 @@ pub enum LoadDataFromDBError{
     Decoding(bincode::error::DecodeError),
     MissingHandle,
     Db(sled::Error),
+    KeyNotFound(String)
 }
 
 impl fmt::Display for LoadDataFromDBError {
@@ -22,6 +23,7 @@ impl fmt::Display for LoadDataFromDBError {
             LoadDataFromDBError::Decoding(e) => write!(f, "Decoding failed: {}", e),
             LoadDataFromDBError::MissingHandle => write!(f, "Database handle is missing"),
             LoadDataFromDBError::Db(e) => write!(f, "Database load failed: {}", e),
+            LoadDataFromDBError::KeyNotFound(key) => write!(f, "Key '{}' not found in database.", key )
         }
     }
 }
@@ -30,8 +32,9 @@ impl std::error::Error for LoadDataFromDBError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         match self {
             LoadDataFromDBError::Decoding(e) => Some(e),
-            LoadDataFromDBError::MissingHandle => None,
             LoadDataFromDBError::Db(e) => Some(e),
+            LoadDataFromDBError::MissingHandle => None,
+            LoadDataFromDBError::KeyNotFound(_) => None,
         }
     }
 }

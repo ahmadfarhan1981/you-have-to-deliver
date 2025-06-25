@@ -222,31 +222,61 @@ impl SaveSlot {
     
 
     /// Load and decode a value from the sled database using the given key.
+    /// # Arguments
     ///
-    /// Returns `Ok(None)` if the key does not exist.
+    /// * `key` - The key to look up in the database.
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded value `T` if the key is found and decoding is successful.
+    ///
+    /// # Errors
+    ///
+    /// This function will return an error in the following cases:
+    /// * `LoadDataFromDBError::MissingHandle` - If the database handle on the `SaveSlot` is not open.
+    /// * `LoadDataFromDBError::KeyNotFound` - If the requested `key` does not exist in the database.
+    /// * `LoadDataFromDBError::Db` - If there is an error reading from the Sled database.
+    /// * `LoadDataFromDBError::Decoding` - If the data retrieved from the database cannot be decoded into type `T`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// // Assuming `save_slot` is an initialized SaveSlot with an open DB handle
+    /// // and "player_stats" key exists.
+    /// #[derive(bincode::Decode)]
+    /// struct PlayerStats { level: u32, health: u32 }
+    ///
+    /// match save_slot.load_entry::<PlayerStats>("player_stats") {
+    ///     Ok(stats) => println!("Player level: {}", stats.level),
+    ///     Err(e) => eprintln!("Failed to load player stats: {:?}", e),
+    /// }
+    /// ```
     pub fn load_entry<T>(
         &self,
         key: &str,
-    ) -> Result<Option<T>, LoadDataFromDBError>
+    ) -> Result<T, LoadDataFromDBError>
     where
         T: bincode::Decode<()>,
     {
         let handle = self.handle.as_ref().ok_or(LoadDataFromDBError::MissingHandle)?;
 
-        match handle.get(key) {
-            Ok(Some(bytes)) => {
-                match decode_from_slice::<T, _>(&bytes, standard()) {
-                    Ok((value, _)) => Ok(Some(value)),
-                    Err(e) => {
-                        error!("Failed to decode key '{}': {}", key, e);
-                        Err(LoadDataFromDBError::Decoding(e))
-                    }
-                }
+        let bytes = match handle.get(key) {
+            Ok(Some(bytes)) => bytes,
+            Ok(None) => {
+                warn!("Key '{}' not found in database.", key);
+                return Err(LoadDataFromDBError::KeyNotFound(key.to_string()));
             }
-            Ok(None) => Ok(None),
             Err(e) => {
                 error!("Failed to load key '{}': {}", key, e);
-                Err(LoadDataFromDBError::Db(e))
+                return Err(LoadDataFromDBError::Db(e));
+            }
+        };
+
+        match decode_from_slice::<T, _>(&bytes, standard()) {
+            Ok((value, _)) => Ok(value),
+            Err(e) => {
+                error!("Failed to decode key '{}': {}", key, e);
+                Err(LoadDataFromDBError::Decoding(e))
             }
         }
     }
