@@ -1,1 +1,0 @@
-pub const COMPANY_SNAPSHOT_EVENT_NAME:&'static str = "company_snapshot";

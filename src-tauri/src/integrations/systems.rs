@@ -3,9 +3,7 @@ use crate::integrations::snapshots::person::PersonSnapshot;
 use crate::integrations::snapshots::skills::SkillSetSnapshot;
 use crate::integrations::snapshots::snapshots::SnapshotState;
 use crate::integrations::snapshots::team::TeamSnapshot;
-use crate::integrations::snapshots_emitter::snapshots_emitter::{
-    SnapshotEmitRegistry, SnapshotFieldEmitter,
-};
+use crate::integrations::snapshots_emitter::snapshots_emitter::{SnapshotEmitRegistry, SnapshotEvent, SnapshotFieldEmitter};
 use crate::sim::company::company::{Company, PlayerControlled};
 use crate::sim::game_speed::components::GameSpeedManager;
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
@@ -28,8 +26,6 @@ use std::sync::Arc;
 use tracing::{debug, info, warn};
 use tracing::field::debug;
 use tracing_subscriber::registry;
-use crate::constants::COMPANY_SNAPSHOT_EVENT_NAME;
-use crate::integrations::events::snapshot_events;
 use crate::integrations::snapshots::debug_display::DebugDisplayEntrySnapshot;
 use crate::integrations::snapshots::stress::StressSnapshot;
 use crate::integrations::snapshots::stress_history::StressHistorySnapshot;
@@ -69,7 +65,7 @@ pub fn push_game_speed_snapshots(
 pub fn push_company_to_integration(
     #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] app_state: &Arc<SnapshotState>,
-    #[resource] last_update_map: &Arc<DashMap<&'static str, u64>>,
+    #[resource] emit_registry: &Arc<SnapshotEmitRegistry>,
     entity: &Entity,
     company: &Company,                         // Live company data from ECS
     _player_controlled_tag: &PlayerControlled, // used for query filtering
@@ -85,7 +81,7 @@ pub fn push_company_to_integration(
     // 2. Clone the data *inside* the Arc to get a mutable CompanySnapshot.
     //    This `mutable_snapshot_data` will be compared and potentially updated by `replace_if_changed`.
     let mut mutable_snapshot_data = (**current_arc_snapshot).clone();
-    info!("{:?} -- Snaphot: {:?} data: {:?}", COMPANY_SNAPSHOT_EVENT_NAME, mutable_snapshot_data, company);
+    info!("{:?} -- Snaphot: {:?} data: {:?}", SnapshotEvent::Company.as_str(), mutable_snapshot_data, company);
     // 3. Call `replace_if_changed`.
     //    - `&mut mutable_snapshot_data`: the snapshot to potentially update.
     //    - `company.clone()`: creates an owned `Company` instance from the `&Company` reference.
@@ -103,7 +99,7 @@ pub fn push_company_to_integration(
             .company
             .value
             .store(Arc::new(Arc::new(mutable_snapshot_data)));
-        last_update_map.insert(COMPANY_SNAPSHOT_EVENT_NAME, tick_counter.value());
+        emit_registry .mark_data_updated(SnapshotEvent::Company, tick_counter.value());
         debug!("Company '{}' snapshot updated.", company.name);
     } else {
         debug!("Company '{}' snapshot unchanged.", company.name);
@@ -234,7 +230,7 @@ pub fn push_persons_to_integration(
 pub fn push_teams_to_integration(
     #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] app_state: &Arc<SnapshotState>,
-    #[resource] data_last_update: &Arc<DashMap<&'static str, u64>>,
+    #[resource] emit_registry: &Arc<SnapshotEmitRegistry>,
     entity: &Entity,
     team: &Team,
     _dirty: &Dirty,
@@ -253,14 +249,14 @@ pub fn push_teams_to_integration(
             if changed {
                 info!("Existing team '{}' snapshot changed. Updating..", team.name);
                 // existing_team.updated = current_tick;
-                data_last_update.insert("teams_snapshot", current_tick);
+                emit_registry.mark_data_updated(SnapshotEvent::Teams, current_tick);
             }
         }
         Entry::Vacant(vacant) => {
             info!("New teamL {}. Updating..", team.name);
             let team = TeamSnapshot::from(team);
             vacant.insert(team);
-            data_last_update.insert("teams_snapshot", current_tick);
+            emit_registry.mark_data_updated(SnapshotEvent::Teams, current_tick);
         }
     };
     cmd.remove_component::<Dirty>(*entity);
@@ -361,7 +357,7 @@ pub fn push_stress_level_to_integration(
 pub fn push_stress_history_to_integration(
     #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] app_state: &Arc<SnapshotState>,
-    #[resource] last_update_map: &Arc<dashmap::DashMap<&'static str, u64>>,
+    #[resource] emit_registry: &Arc<SnapshotEmitRegistry>,
     person :&Person,
     stress_level: &StressLevel,
 ) {
@@ -391,5 +387,5 @@ pub fn push_stress_history_to_integration(
             vacant.insert(s);
         }
     };
-    last_update_map.insert(snapshot_events::STRESS_HISTORY_SNAPSHOT, current_tick);
+    emit_registry.mark_data_updated(SnapshotEvent::StressHistory, current_tick);
 }

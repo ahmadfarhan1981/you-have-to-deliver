@@ -99,8 +99,6 @@ pub fn run_simulation_thread(config: SimThreadConfig) {
     //resources shared with main loop and the ECS
     let load_game = Arc::new(LoadGame::default());
     resources.insert(Arc::clone(&load_game));
-    let last_update_map = Arc::new(DashMap::<&'static str, u64>::new());
-    resources.insert(Arc::clone(&last_update_map));//last update map
     
     // Clones for the loop
     let loop_sim_manager = Arc::clone(&sim_manager);
@@ -111,7 +109,6 @@ pub fn run_simulation_thread(config: SimThreadConfig) {
     let loop_load_game = Arc::clone(&load_game);
     let loop_snapshot_registry = Arc::clone(&sim_snapshot_registry);
     let loop_snapshot_state = Arc::clone(&sim_snapshot_state);
-    let loop_last_update_map = Arc::clone(&last_update_map);
     #[cfg(debug_assertions)]
     {
         // --- Start of new code for console input ---
@@ -187,7 +184,7 @@ pub fn run_simulation_thread(config: SimThreadConfig) {
             if loop_load_game.should_load.load(Ordering::Relaxed) { 
                 if let Err(e) = handle_game_load(
                     &mut world, &mut resources, &loop_load_game, &loop_tick_counter, &loop_sim_manager,
-                    &loop_snapshot_state, &loop_snapshot_registry, &loop_last_update_map, &mut game_schedules
+                    &loop_snapshot_state, &loop_snapshot_registry, &mut game_schedules
                 ) {
                     error!("Failed to load game: {:?}", e);
                 }
@@ -256,7 +253,6 @@ fn handle_game_load(
     loop_sim_manager: &Arc<SimManager>,
     loop_snapshot_state: &Arc<SnapshotState>,
     loop_snapshot_registry: &Arc<SnapshotEmitRegistry>,
-    loop_last_update_map: &Arc<DashMap<&'static str, u64>>,
     game_schedules: &mut GameSchedules,
 ) -> Result<(), SavesManagementError> {
     //switch to save slot.
@@ -335,8 +331,7 @@ fn handle_game_load(
     loop_snapshot_state.reset();
     //reset emitters
     loop_snapshot_registry.reset();
-    //reset last update map
-    loop_last_update_map.clear();
+    
     
     let app_context = resources.get::<Arc<AppContext>>()
         .ok_or_else(|| SavesManagementError::Io(io::Error::new(io::ErrorKind::NotFound, "AppContext resource not found")))?;
