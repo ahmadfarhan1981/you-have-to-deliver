@@ -14,23 +14,23 @@ use crate::sim::person::stats::Stats;
 use crate::sim::registries::registry::Registry;
 use crate::sim::resources::global::TickCounter;
 use crate::sim::sim_date::sim_date::SimDate;
+use crate::sim::systems::global::UsedProfilePictureRegistry;
 use crate::sim::team::components::{Team, TeamId};
+use crate::utils::errors::LoadDataFromDBError;
+use crate::utils::errors::SavesManagementError::TimeError;
 use bincode::error::EncodeError;
 use bincode::{encode_to_vec, Decode, Encode};
+use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
 use legion::{query, system, Entity, IntoQuery, Query, Resources, World};
+use parking_lot::RwLock;
 use rand_distr::num_traits::ToPrimitive;
 use serde::{Deserialize, Serialize};
-use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
+use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
-use legion::systems::CommandBuffer;
-use parking_lot::RwLock;
 use tauri::utils::acl::Commands;
 use tracing::{error, info, warn};
-use crate::utils::errors::SavesManagementError::TimeError;
-use crate::sim::systems::global::UsedProfilePictureRegistry;
-use crate::utils::errors::LoadDataFromDBError;
 // Added for logging
 
 /// Represents the data of an employee that can be saved or transferred.

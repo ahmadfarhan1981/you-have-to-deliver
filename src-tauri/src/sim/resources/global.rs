@@ -1,8 +1,8 @@
 use crate::sim::sim_date::sim_date::SimDate;
-use std::path::PathBuf;
-use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 #[derive(Default, Serialize, Deserialize, Encode, Decode)]
 pub struct TickCounter {

@@ -1,6 +1,6 @@
+use crate::integrations::snapshots::tick::TickSnapshot;
 use serde::Serialize;
 use std::sync::atomic::{AtomicU8, Ordering};
-use crate::integrations::snapshots::tick::TickSnapshot;
 
 #[derive(Debug, Default, Serialize)]
 pub struct GameSpeedSnapshot {

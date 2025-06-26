@@ -1,6 +1,9 @@
 use crate::integrations::snapshots::company::CompanySnapshot;
+use crate::integrations::snapshots::debug_display::DebugDisplayEntrySnapshot;
 use crate::integrations::snapshots::game_speed::GameSpeedSnapshot;
 use crate::integrations::snapshots::person::PersonSnapshot;
+use crate::integrations::snapshots::stress::StressSnapshot;
+use crate::integrations::snapshots::stress_history::StressHistorySnapshot;
 use crate::integrations::snapshots::team::TeamSnapshot;
 use crate::integrations::snapshots::tick::TickSnapshot;
 use arc_swap::ArcSwap;
@@ -8,10 +11,6 @@ use dashmap::DashMap;
 use serde::Serialize;
 use std::hash::Hash;
 use std::sync::Arc;
-use crate::integrations::snapshots::debug_display::DebugDisplayEntrySnapshot;
-use crate::integrations::snapshots::stress::StressSnapshot;
-use crate::integrations::snapshots::stress_history::StressHistorySnapshot;
-use crate::sim::person::morale::StressLevel;
 
 /// this is tha main integration state
 #[derive(Debug)]

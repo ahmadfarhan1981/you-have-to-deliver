@@ -60,9 +60,9 @@ use action_queues::game_speed_manager::{
     decrease_speed, handle_game_speed_manager_queue_system, increase_speed, set_game_speed,
 };
 use action_queues::sim_manager;
-use action_queues::sim_manager::{ handle_new_game_manager_queue_system, handle_sim_manager_queue_system, SimManager};
+use action_queues::sim_manager::{handle_new_game_manager_queue_system, handle_sim_manager_queue_system, SimManager};
 
-use crate::action_queues::sim_manager::{ test_sim_manager_system};
+use crate::action_queues::sim_manager::test_sim_manager_system;
 use crate::db::init::{self, SavesDirectory};
 use crate::integrations::events::{emit_app_event, AppEventType};
 use crate::integrations::snapshots::company::CompanySnapshot;
@@ -75,7 +75,7 @@ use crate::sim::new_game::new_game::{
     StartingEmployeesConfig,
 };
 use crate::sim::person::skills::SkillId;
-use crate::sim::registries::registry::{Registry};
+use crate::sim::registries::registry::Registry;
 use crate::sim::team::components::TeamId;
 use crate::sim::utils::debugging::clear_debug_display_system;
 use crate::sim::utils::sim_reset::ResetRequest;

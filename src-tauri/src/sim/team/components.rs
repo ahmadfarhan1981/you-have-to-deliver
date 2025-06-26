@@ -1,10 +1,10 @@
-use std::task::Context;
+use crate::sim::person::components::{Person, PersonId};
+use crate::sim::utils::snapshots::convert_dashset_to_vec;
 use bincode::{Decode, Encode};
 use dashmap::DashSet;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use std::task::Context;
 use tracing::{debug, info};
-use crate::sim::person::components::{Person, PersonId};
-use crate::sim::utils::snapshots::convert_dashset_to_vec;
 
 #[derive(Debug, Serialize, Deserialize, Clone, Default, Eq, PartialEq, Hash, Copy, Encode, Decode, PartialOrd, Ord)]
 pub struct TeamId(pub u32);

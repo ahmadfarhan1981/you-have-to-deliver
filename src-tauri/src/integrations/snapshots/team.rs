@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::sim::team::components::Team;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct TeamSnapshot {

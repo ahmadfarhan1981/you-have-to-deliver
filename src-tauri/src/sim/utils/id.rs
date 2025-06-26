@@ -19,7 +19,6 @@ impl<T> IdGenerator<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
 
     // #[test]
     // fn doubles_the_input() {

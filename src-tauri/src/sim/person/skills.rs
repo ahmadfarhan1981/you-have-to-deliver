@@ -1,8 +1,8 @@
-use std::collections::HashMap;
 use crate::master_data::skills::SkillDef;
 use crate::sim::person::stats::StatType;
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::str::FromStr;
 use strum_macros::Display;
 use tracing::{error, warn};
@@ -163,7 +163,6 @@ pub struct SkillSet {
 }
 
 pub mod ecs_components {
-    use super::*;
     #[derive(Copy, Clone, Debug, Default)]
     pub struct TierFoundational;
     #[derive(Copy, Clone, Debug, Default)]

@@ -1,5 +1,5 @@
-use std::fmt;
 use bincode::error::{DecodeError, EncodeError};
+use std::fmt;
 use std::time::SystemTimeError;
 
 #[derive(Debug)]

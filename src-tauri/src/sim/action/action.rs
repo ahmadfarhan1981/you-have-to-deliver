@@ -1,7 +1,3 @@
-use std::sync::Arc;
-use legion::{system, Entity};
-use legion::systems::CommandBuffer;
-use tracing::info;
 use crate::sim::ai::consideration::GoalName;
 use crate::sim::ai::goap::CurrentGoal;
 use crate::sim::person::components::Person;
@@ -9,6 +5,9 @@ use crate::sim::person::needs::{Energy, Hunger};
 use crate::sim::project::project::ProjectId;
 use crate::sim::resources::global::TickCounter;
 use crate::sim::sim_date::sim_date::SimDate;
+use legion::systems::CommandBuffer;
+use legion::{system, Entity};
+use std::sync::Arc;
 
 #[derive(Debug, Default)]
 pub enum ActionType {

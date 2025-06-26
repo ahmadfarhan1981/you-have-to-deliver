@@ -5,8 +5,11 @@ use crate::integrations::queues::SimCommand::TeamManager;
 
 use crate::integrations::snapshots::{person, team};
 use crate::integrations::ui::new_team;
+use crate::sim;
 use crate::sim::game_speed::components::{GameSpeed, GameSpeedManager};
 use crate::sim::person::components::{Person, PersonId};
+use crate::sim::person::utils;
+use crate::sim::person::utils::PersonLookupResult;
 use crate::sim::registries::registry::Registry;
 use crate::sim::resources::global::Dirty;
 use crate::sim::team::components::{Team, TeamId};
@@ -21,9 +24,6 @@ use std::sync::Arc;
 use std::time::Duration;
 use tracing::{debug, error, info, trace, warn};
 use tracing_subscriber::fmt::time::uptime;
-use crate::sim;
-use crate::sim::person::utils;
-use crate::sim::person::utils::PersonLookupResult;
 
 pub enum TeamManagerCommand {
     NewTeam {

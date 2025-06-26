@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::sim::person::personality_matrix::{PersonalityAxis, PersonalityMatrix};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct PersonalitySnapshot {

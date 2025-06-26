@@ -1,12 +1,17 @@
 use crate::integrations::snapshots::company::CompanySnapshot;
+use crate::integrations::snapshots::debug_display::DebugDisplayEntrySnapshot;
 use crate::integrations::snapshots::person::PersonSnapshot;
 use crate::integrations::snapshots::skills::SkillSetSnapshot;
 use crate::integrations::snapshots::snapshots::SnapshotState;
+use crate::integrations::snapshots::stress::StressSnapshot;
+use crate::integrations::snapshots::stress_history::StressHistorySnapshot;
 use crate::integrations::snapshots::team::TeamSnapshot;
 use crate::integrations::snapshots_emitter::snapshots_emitter::{SnapshotEmitRegistry, SnapshotEvent, SnapshotFieldEmitter};
+use crate::sim::action::action::ActionIntent;
 use crate::sim::company::company::{Company, PlayerControlled};
 use crate::sim::game_speed::components::GameSpeedManager;
 use crate::sim::person::components::{Person, PersonId, ProfilePicture};
+use crate::sim::person::morale::StressLevel;
 use crate::sim::person::needs::{Energy, Hunger};
 use crate::sim::person::personality_matrix::PersonalityMatrix;
 use crate::sim::person::skills::{SkillId, SkillSet};
@@ -14,6 +19,7 @@ use crate::sim::person::spawner::spawn_person;
 use crate::sim::person::stats::Stats;
 use crate::sim::resources::global::{Dirty, TickCounter};
 use crate::sim::team::components::Team;
+use crate::sim::utils::debugging::DebugDisplayComponent;
 use crate::sim::utils::snapshots::replace_if_changed;
 use arc_swap::ArcSwap;
 use dashmap::{DashMap, Entry};
@@ -23,15 +29,9 @@ use parking_lot::RwLock;
 use std::sync::atomic::Ordering;
 use std::sync::mpsc::channel;
 use std::sync::Arc;
-use tracing::{debug, info, warn};
 use tracing::field::debug;
+use tracing::{debug, info, warn};
 use tracing_subscriber::registry;
-use crate::integrations::snapshots::debug_display::DebugDisplayEntrySnapshot;
-use crate::integrations::snapshots::stress::StressSnapshot;
-use crate::integrations::snapshots::stress_history::StressHistorySnapshot;
-use crate::sim::action::action::ActionIntent;
-use crate::sim::person::morale::StressLevel;
-use crate::sim::utils::debugging::DebugDisplayComponent;
 
 #[system]
 pub fn push_game_speed_snapshots(

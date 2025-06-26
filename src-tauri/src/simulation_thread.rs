@@ -1,12 +1,29 @@
-use std::{io, sync::{atomic::Ordering, Arc}, thread, time::{Duration, Instant}};
-use std::io::BufRead;
-use std::thread::sleep;
 use dashmap::DashMap;
 use legion::{Resources, World};
 use parking_lot::RwLock;
 use spin_sleep::{SpinSleeper, SpinStrategy};
+use std::io::BufRead;
+use std::thread::sleep;
+use std::{io, sync::{atomic::Ordering, Arc}, thread, time::{Duration, Instant}};
 use tracing::{error, info, trace};
 
+use crate::action_queues::sim_manager::{SimManager, SimManagerCommand};
+use crate::action_queues::team_manager::TeamManagerCommand;
+use crate::db::constants::{db_keys, save_version};
+use crate::db::init::{SaveSlot, SaveSlotMetadata, SavesDirectory};
+use crate::integrations::events::{emit_app_event, AppEventType};
+use crate::integrations::queues::SimCommand;
+use crate::integrations::queues::SimCommand::TeamManager;
+use crate::schedules::init::GameSchedules;
+use crate::sim::action::action::ActionIntent;
+use crate::sim::company::company::{Company, PlayerControlled};
+use crate::sim::persistence::persistence::{LoadGame, SavedEmployee};
+use crate::sim::person::init::ShouldGenerateEmployees;
+use crate::sim::resources::global::Dirty;
+use crate::sim::sim_date::sim_date::SimDate;
+use crate::sim::team::components::Team;
+use crate::sim::utils::debugging::DebugDisplayComponent;
+use crate::utils::errors::SavesManagementError;
 use crate::{
     integrations::{
         queues::{QueueManager, UICommandQueues},
@@ -23,23 +40,6 @@ use crate::{
         utils::sim_reset::ResetRequest,
     },
 };
-use crate::action_queues::sim_manager::{SimManager, SimManagerCommand};
-use crate::action_queues::team_manager::TeamManagerCommand;
-use crate::db::constants::{db_keys, save_version};
-use crate::utils::errors::SavesManagementError;
-use crate::db::init::{SaveSlot, SaveSlotMetadata, SavesDirectory};
-use crate::integrations::events::{emit_app_event, AppEventType};
-use crate::integrations::queues::SimCommand;
-use crate::integrations::queues::SimCommand::TeamManager;
-use crate::schedules::init::GameSchedules;
-use crate::sim::action::action::ActionIntent;
-use crate::sim::company::company::{Company, PlayerControlled};
-use crate::sim::persistence::persistence::{LoadGame, SavedEmployee};
-use crate::sim::person::init::ShouldGenerateEmployees;
-use crate::sim::resources::global::Dirty;
-use crate::sim::sim_date::sim_date::SimDate;
-use crate::sim::team::components::Team;
-use crate::sim::utils::debugging::DebugDisplayComponent;
 
 pub struct SimThreadConfig {
     pub app_handle: tauri::AppHandle,

@@ -1,8 +1,9 @@
 use std::sync::Arc;
 
-use dashmap::DashMap;
 use legion::{Entity, Resources};
 
+use crate::db::init::SaveSlot;
+use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotEvent;
 use crate::{
     integrations::{
         snapshots::{company::CompanySnapshot, snapshots::SnapshotState},
@@ -12,16 +13,13 @@ use crate::{
         },
     },
     sim::{
-        new_game::new_game::{CompanyPreset, StartingEmployeesConfig},
-        person::{components::PersonId, skills::SkillId},
-        registries::registry::{Registry}
+        person::components::PersonId,
+        registries::registry::Registry
         ,
         systems::global::UsedProfilePictureRegistry,
         team::components::TeamId,
     },
 };
-use crate::db::init::SaveSlot;
-use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotEvent;
 
 pub fn initialize_non_shared_resources(resources: &mut Resources) {
     resources.insert(UsedProfilePictureRegistry::default());

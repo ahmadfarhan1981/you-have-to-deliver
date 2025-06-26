@@ -1,8 +1,8 @@
+use crate::sim::locations::locations::LocationId;
+use crate::sim::person::stats::StatType;
 use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::hash::Hash;
-use crate::sim::locations::locations::LocationId;
-use crate::sim::person::stats::StatType;
 // Assuming this macro is used for StatType
 
 

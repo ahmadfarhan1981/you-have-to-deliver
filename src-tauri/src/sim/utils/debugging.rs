@@ -1,5 +1,5 @@
-use std::fmt;
 use legion::system;
+use std::fmt;
 
 #[derive(Clone, Debug, Default)]
 pub struct DebugDisplayComponent {
