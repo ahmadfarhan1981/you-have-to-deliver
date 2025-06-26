@@ -24,7 +24,9 @@ use std::time::Duration;
 use tracing::field::debug;
 use tracing::{debug, error, info, trace, warn};
 use crate::db::init::{create_new_save_slot, SaveSlot, SavesDirectory};
+use crate::integrations::events::emit_app_event;
 use crate::integrations::snapshots::snapshots::SnapshotState;
+use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotEmitRegistry;
 use crate::sim::persistence::persistence::LoadGame;
 
 #[derive(Default, Debug)]
@@ -87,7 +89,7 @@ pub fn handle_new_game_manager_queue(
     #[resource] sim_manager: &Arc<SimManager>,
     #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] first_run: &Arc<FirstRun>,
-    #[resource] last_update_map: &Arc<dashmap::DashMap<&'static str, u64>>,
+    #[resource] emit_registry: &Arc<SnapshotEmitRegistry>,
     #[resource] game_speed: &Arc<RwLock<GameSpeedManager>>,
     #[resource] used_profile_picture_registry: &UsedProfilePictureRegistry,
     #[resource] person_registry: &Arc<Registry<PersonId, Entity>>,
@@ -114,7 +116,7 @@ pub fn handle_new_game_manager_queue(
                 reset_request,
                 command_queues,
                 first_run,
-                last_update_map,
+                emit_registry,
                 Some(company),
                 Some(employee),
             );
@@ -147,7 +149,7 @@ pub fn handle_new_game_manager_queue(
                 reset_request,
                 command_queues,
                 first_run,
-                last_update_map,
+                emit_registry,
                 Some(company),
                 Some(employee),
             );
@@ -221,7 +223,7 @@ impl SimManager {
         reset_request: &mut Arc<ResetRequest>,
         command_queues: &Arc<UICommandQueues>,
         firs_run: &Arc<FirstRun>,
-        last_update_map: &Arc<dashmap::DashMap<&'static str, u64>>,
+        emit_registry: &Arc<SnapshotEmitRegistry>,
         new_company_preset: Option<CompanyPreset>,
         new_employees_preset: Option<StartingEmployeesConfig>,
     ) {
@@ -231,7 +233,7 @@ impl SimManager {
         if self.is_running() {
             self.pause_sim()
         }
-        last_update_map.clear();
+        emit_registry.reset();
         firs_run.mark_as_first_run();
 
         match new_company_preset {

@@ -26,21 +26,23 @@ pub enum ExportFrequency {
     ManualOnly,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct SnapshotEmitterConfig {
     pub frequency: ExportFrequency,
-    pub event_name: &'static str,
+    pub event_name: SnapshotEvent,
     pub last_sent_tick: AtomicU64,
 }
 
 pub struct SnapshotEmitRegistry {
     pub emitters: Vec<Box<dyn SnapshotEmitter + Send + Sync>>,
+    last_update_map: DashMap<&'static str, u64>,
 }
 
 impl SnapshotEmitRegistry {
     pub fn new() -> Self {
         Self {
             emitters: Vec::new(),
+            last_update_map: DashMap::<&'static str, u64>::new(),
         }
     }
     
@@ -49,15 +51,20 @@ impl SnapshotEmitRegistry {
     }
 
     #[instrument(skip_all, level = "trace")]
-    pub fn maybe_emit_all(&self, tick: u64, last_update_map:  &DashMap<&'static str, u64>, app: &AppHandle) {
+    pub fn maybe_emit_all(&self, tick: u64, app: &AppHandle) {
         for emitter in &self.emitters {
-            let _did_emit = emitter.maybe_emit(tick, last_update_map, app);
+            let _did_emit = emitter.maybe_emit(tick, &self.last_update_map, app);
         }
+    }
+
+    pub fn mark_data_updated(&self, event: SnapshotEvent, tick: u64) {
+        self.last_update_map.insert(event.as_str(), tick);
     }
     
     pub fn reset(&self) {
         for emitter in &self.emitters {
             emitter.reset();
+            self.last_update_map.clear();
         }
     }
     
@@ -74,13 +81,12 @@ pub fn run_snapshot_emitters(
     #[resource] registry: &Arc<SnapshotEmitRegistry>,
     #[resource] app_context: &Arc<AppContext>,
     #[resource] tick_counter: &Arc<TickCounter>,
-    #[resource] data_last_update: &Arc< DashMap<&'static str, u64>>,
 ) {
     let current_tick = tick_counter.value(); // However you expose tick as u64
-    registry.maybe_emit_all(current_tick, &data_last_update, &app_context.app_handle);
+    registry.maybe_emit_all(current_tick, &app_context.app_handle);
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct SnapshotFieldEmitter<T> {
     pub field: Arc<SnapshotField<T>>,
     pub config: SnapshotEmitterConfig,
@@ -95,7 +101,7 @@ impl<T: Serialize + std::fmt::Debug> SnapshotEmitter for SnapshotFieldEmitter<T>
         };
         let mut last_update: u64 = 0;
         let mut always_emit = false;
-        match last_update_map.get(self.config.event_name){
+        match last_update_map.get(self.config.event_name.into()){
             None => {
                 trace!("Last data update time not found. Assume data always needs update {}", self.config.event_name );
                 always_emit = true;
@@ -118,7 +124,7 @@ impl<T: Serialize + std::fmt::Debug> SnapshotEmitter for SnapshotFieldEmitter<T>
         let data: &T = &*self.field.value.load();
         debug!("Data {:?} ", data );
         // info!("Snapshot field: {:?} {:?} {:?}", self.config.event_name, data,  &*self.field.value.load_full());
-        let _ = app.emit(self.config.event_name, data);
+        let _ = app.emit(self.config.event_name.into(), data);
     }
 
     fn reset(&self) {
@@ -148,7 +154,7 @@ where
         };
         let mut last_update: u64 = 0;
         let mut always_emit = false;
-        match last_update_map.get(self.config.event_name){
+        match last_update_map.get(self.config.event_name.into()){
             None => {
                 trace!("{} Last data update time not found. Assume data always needs update", self.config.event_name );
                 always_emit = true;
@@ -170,10 +176,48 @@ where
             self.config.last_sent_tick.store(tick, Ordering::Relaxed);
         }
         let all: Vec<V> = self.map.iter().map(|entry| entry.value().clone()).collect();
-        let _ = app.emit(self.config.event_name, &all);
+        let _ = app.emit(self.config.event_name.into(), &all);
     }
 
     fn reset(&self) {
         self.config.last_sent_tick.store(0, Ordering::Relaxed);
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SnapshotEvent {
+    GameSpeed,
+    Persons,
+    DebugDisplay,
+    Teams,
+    Company,
+    Stress,
+    StressHistory,
+}
+
+impl SnapshotEvent {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            SnapshotEvent::GameSpeed => "game_speed_snapshot",
+            SnapshotEvent::Persons => "persons_snapshot",
+            SnapshotEvent::DebugDisplay => "debug_display_snapshot",
+            SnapshotEvent::Teams => "teams_snapshot",
+            SnapshotEvent::Company => "company_snapshot",
+            SnapshotEvent::Stress => "stress_snapshot",
+            SnapshotEvent::StressHistory => "stress_history_snapshot",
+        }
+    }
+}
+
+// For DashMap keys, you need the string, so implement some helper traits
+impl From<SnapshotEvent> for &'static str {
+    fn from(event: SnapshotEvent) -> Self {
+        event.as_str()
+    }
+}
+
+impl std::fmt::Display for SnapshotEvent {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.as_str())
     }
 }
