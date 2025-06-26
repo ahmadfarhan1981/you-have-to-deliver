@@ -1,6 +1,5 @@
-use serde::{Deserialize, Serialize};
-use crate::sim::person::components::PersonId;
 use crate::sim::person::morale::StressLevel;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct StressSnapshot {

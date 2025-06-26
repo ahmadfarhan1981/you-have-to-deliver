@@ -1,17 +1,16 @@
+use crate::integrations::snapshots::snapshots::SnapshotState;
 use crate::sim::person::components::ProfilePicture;
-use crate::sim::person::skills::{GlobalSkill, SkillId, SkillSet};
-use crate::sim::registries::registry::Registry;
+use crate::sim::person::skills::{GlobalSkill, SkillSet};
 use crate::sim::{
     person::components::Person, person::stats::Stats, resources::global::TickCounter,
 };
+use bincode::{Decode, Encode};
 use dashmap::DashSet;
 use legion::world::SubWorld;
-use legion::{system, Entity, Query};
+use legion::{system, Query};
 use rayon::prelude::*;
 use std::fmt;
 use std::sync::Arc;
-use bincode::{Decode, Encode};
-use crate::integrations::snapshots::snapshots::SnapshotState;
 
 #[system]
 pub fn increase_sim_tick(#[resource] tick_counter: &Arc<TickCounter>) {

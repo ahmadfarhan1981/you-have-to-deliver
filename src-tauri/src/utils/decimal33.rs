@@ -111,10 +111,10 @@ impl Decimal33 {
     }
 }
 
-use std::ops::{AddAssign, SubAssign};
+use crate::utils::errors::DecimalError;
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
-use crate::utils::errors::DecimalError;
+use std::ops::{AddAssign, SubAssign};
 
 impl AddAssign for Decimal33 {
     /// Performs saturating addition and assignment.

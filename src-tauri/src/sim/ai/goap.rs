@@ -1,9 +1,9 @@
-// src/ai/goap.rs
-use std::collections::HashMap;
+use crate::sim::ai::consideration::GoalName;
 use bincode::{Decode, Encode};
 use legion::Entity;
 use serde::{Deserialize, Serialize};
-use crate::sim::ai::consideration::{GoalDefinition, GoalName};
+// src/ai/goap.rs
+use std::collections::HashMap;
 
 // --- Employee GOAP Facts (Legion Component) ---
 // This represents the employee's current beliefs about themselves and the world

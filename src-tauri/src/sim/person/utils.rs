@@ -1,12 +1,11 @@
-use std::collections::HashMap;
-use legion::{Entity, IntoQuery};
-use std::sync::Arc;
-use legion::world::SubWorld;
-use tracing::warn;
 use crate::sim::person::components::{Person, PersonId};
 use crate::sim::person::skills::SkillId;
 use crate::sim::registries::registry::Registry;
-
+use legion::world::SubWorld;
+use legion::{Entity, IntoQuery};
+use std::collections::HashMap;
+use std::sync::Arc;
+use tracing::warn;
 
 
 #[derive(Debug)]

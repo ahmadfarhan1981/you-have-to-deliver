@@ -1,10 +1,11 @@
 use bincode::{Decode, Encode};
 use rand::prelude::SliceRandom;
-use rand::Rng; // Removed unused 'rng' import, will use thread_rng
+use rand::Rng;
+use crate::utils::discreet_float::DiscreteFloat33;
+// Removed unused 'rng' import, will use thread_rng
 use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum_macros::EnumIter;
-use crate::utils::discreet_float::DiscreteFloat33;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter)]
 pub enum StatType {

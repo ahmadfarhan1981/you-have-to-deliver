@@ -1,6 +1,6 @@
+use crate::sim::person::skills::{GlobalSkill, SkillId};
 use std::collections::HashMap;
 use std::sync::OnceLock;
-use crate::sim::person::skills::{GlobalSkill, SkillId};
 
 #[derive(Debug, Clone)]
 pub struct SkillDef {

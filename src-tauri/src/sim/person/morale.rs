@@ -1,10 +1,10 @@
-use std::collections::VecDeque;
-use std::sync::Arc;
+use crate::sim::resources::global::TickCounter;
 use bincode::{Decode, Encode};
 use legion::system;
 use rand::{rng, Rng};
 use serde::{Deserialize, Serialize};
-use crate::sim::resources::global::TickCounter;
+use std::collections::VecDeque;
+use std::sync::Arc;
 
 const STRESS_HISTORY_DAYS: usize = 28;
 const MAX_DAILY_STRESS: f32 = 150.0;

@@ -13,9 +13,14 @@ use legion::world::SubWorld;
 use legion::{system, Entity, IntoQuery, Query, Resources, World};
 use std::fmt;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc};
+use std::sync::Arc;
 
+use crate::db::init::{create_new_save_slot, SaveSlot, SavesDirectory};
+use crate::integrations::events::emit_app_event;
+use crate::integrations::snapshots::snapshots::SnapshotState;
+use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotEmitRegistry;
 use crate::sim::new_game::new_game::{CompanyPreset, CompanyPresetStatic, StartingEmployeesConfig};
+use crate::sim::persistence::persistence::LoadGame;
 use crate::sim::person::init::FirstRun;
 use crate::sim::registries::registry::Registry;
 use arc_swap::ArcSwap;
@@ -23,11 +28,6 @@ use parking_lot::{Mutex, RwLock};
 use std::time::Duration;
 use tracing::field::debug;
 use tracing::{debug, error, info, trace, warn};
-use crate::db::init::{create_new_save_slot, SaveSlot, SavesDirectory};
-use crate::integrations::events::emit_app_event;
-use crate::integrations::snapshots::snapshots::SnapshotState;
-use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotEmitRegistry;
-use crate::sim::persistence::persistence::LoadGame;
 
 #[derive(Default, Debug)]
 pub enum SimManagerCommand {

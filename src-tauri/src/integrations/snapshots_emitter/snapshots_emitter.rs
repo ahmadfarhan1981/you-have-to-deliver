@@ -1,16 +1,16 @@
+use crate::integrations::snapshots::snapshots::SnapshotField;
 use crate::integrations::ui::AppContext;
 use crate::sim::resources::global::TickCounter;
+use dashmap::mapref::one::Ref;
 use dashmap::DashMap;
 use legion::system;
 use serde::Serialize;
 use std::hash::Hash;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
-use dashmap::mapref::one::Ref;
 use tauri::{AppHandle, Emitter};
-use tracing::{debug, info, instrument, trace};
 use tracing::field::debug;
-use crate::integrations::snapshots::snapshots::SnapshotField;
+use tracing::{debug, info, instrument, trace};
 
 pub trait SnapshotEmitter {
     fn maybe_emit(&self, tick: u64, last_update_map:  &DashMap<&'static str, u64>, app: &AppHandle) -> bool;

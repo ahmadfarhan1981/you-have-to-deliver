@@ -1,16 +1,15 @@
-use serde::{Deserialize, Serialize};
 use crate::integrations::snapshots::needs::{EnergySnapshot, HungerSnapshot};
 use crate::integrations::snapshots::personality::PersonalitySnapshot;
-use crate::integrations::snapshots::skills::SkillSetSnapshot;
 use crate::integrations::snapshots::profile_picture::ProfilePictureSnapshot;
+use crate::integrations::snapshots::skills::SkillSetSnapshot;
 use crate::integrations::snapshots::stats::StatsSnapshot;
 use crate::sim::person::components::{Person, ProfilePicture};
-use crate::sim::person::needs::{Energy, Hunger};
 use crate::sim::person::personality_matrix::PersonalityMatrix;
 use crate::sim::person::skills::SkillSet;
 use crate::sim::person::spawner::TalentGrade;
 use crate::sim::person::stats::Stats;
 use crate::sim::sim_date::sim_date::SimDate;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct PersonSnapshot {

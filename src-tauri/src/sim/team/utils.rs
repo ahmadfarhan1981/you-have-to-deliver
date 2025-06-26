@@ -1,13 +1,13 @@
-use std::sync::Arc;
-use legion::{Entity, IntoQuery};
-use legion::systems::CommandBuffer;
-use tracing::{info, trace, warn};
-use legion::world::SubWorld;
 use crate::sim::person::components::{Person, PersonId};
 use crate::sim::person::utils::PersonLookupResult;
 use crate::sim::registries::registry::Registry;
 use crate::sim::resources::global::Dirty;
 use crate::sim::team::components::{Team, TeamId};
+use legion::systems::CommandBuffer;
+use legion::world::SubWorld;
+use legion::{Entity, IntoQuery};
+use std::sync::Arc;
+use tracing::{info, trace, warn};
 
 pub fn creat_new_team(team_registry: &Arc<Registry<TeamId, Entity>>, commands: &mut CommandBuffer, name: String, description: String) {
     let id = team_registry.generate_id();

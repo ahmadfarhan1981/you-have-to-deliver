@@ -1,7 +1,7 @@
 use crate::sim::person::spawner::TalentGrade;
 use crate::sim::person::spawner::TalentGrade::{Apt, Basic, Brilliant, Exceptional, Gifted, Sharp};
-use std::string::ToString;
 use serde::{Deserialize, Serialize};
+use std::string::ToString;
 
 #[derive(Serialize, Deserialize)]
 pub struct NewGameConfig {

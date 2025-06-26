@@ -1,7 +1,7 @@
 // src/events.rs
 
 use serde::Serialize;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter};
 
 // --- 1. Define the Single, Generic UI Notification Payload Struct ---
 // This struct remains the same, as it's the standard format for the frontend.

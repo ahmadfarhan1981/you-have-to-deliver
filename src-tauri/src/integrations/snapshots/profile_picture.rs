@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::sim::person::components::ProfilePicture;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 pub struct ProfilePictureSnapshot {

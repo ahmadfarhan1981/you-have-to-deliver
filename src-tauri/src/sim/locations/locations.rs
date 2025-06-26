@@ -1,6 +1,6 @@
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
-use once_cell::sync::Lazy;
 
 // --- 1. LocationId Newtype ---
 // Provides type safety for location identifiers.
@@ -224,7 +224,8 @@ pub static LOCATION_GRAPH: Lazy<LocationGraph> = Lazy::new(|| {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashMap; // Ensure HashMap is in scope for tests
+    use std::collections::HashMap;
+    // Ensure HashMap is in scope for tests
 
     // --- LocationId Tests ---
     #[test]

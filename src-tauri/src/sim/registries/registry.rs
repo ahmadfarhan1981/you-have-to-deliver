@@ -1,3 +1,4 @@
+use crate::sim::person::skills::SkillId;
 use crate::sim::utils::term::{bold, cyan};
 use dashmap::DashMap;
 use std::any::type_name;
@@ -7,7 +8,6 @@ use std::hash::Hash;
 use std::sync::atomic::{AtomicU32, Ordering};
 use strum_macros::Display;
 use tracing::warn;
-use crate::sim::person::skills::SkillId;
 
 /// A generic registry that manages items with unique IDs.
 ///

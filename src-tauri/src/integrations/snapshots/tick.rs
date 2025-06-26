@@ -1,7 +1,7 @@
-use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
-use serde::{Deserialize, Serialize};
 use crate::sim::resources::global::TickCounter;
 use crate::sim::sim_date::sim_date::SimDate;
+use serde::{Deserialize, Serialize};
+use std::sync::atomic::{AtomicU16, AtomicU64, AtomicU8, Ordering};
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct TickSnapshot {

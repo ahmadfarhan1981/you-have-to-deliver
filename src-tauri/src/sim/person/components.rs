@@ -1,12 +1,11 @@
+use crate::sim::person::spawner::TalentGrade;
+use crate::sim::team::components::TeamId;
 use bincode::{Decode, Encode};
 use fmt::Display;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
-use crate::sim::person::needs::{Energy, Hunger};
-use crate::sim::person::spawner::TalentGrade;
-use crate::sim::team::components::TeamId;
 
 #[derive(Clone, Debug, Serialize, Deserialize, Encode, Decode)]
 pub struct Person {

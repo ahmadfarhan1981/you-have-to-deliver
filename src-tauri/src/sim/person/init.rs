@@ -1,6 +1,12 @@
-use std::backtrace::Backtrace;
+use crate::action_queues::game_speed_manager::GameSpeedManagerCommand::SetGameSpeed;
+use crate::action_queues::sim_manager::SimManager;
+use crate::integrations::events::{emit_app_event, AppEventType};
+use crate::integrations::snapshots::snapshots::SnapshotState;
 use crate::integrations::ui::AppContext;
 use crate::master_data::skills::{GLOBAL_SKILLS, SKILL_DEFS};
+use crate::sim::calendar::components::EventType;
+use crate::sim::company::company::{Company, PlayerControlled};
+use crate::sim::new_game::new_game::StartingEmployeesConfig;
 use crate::sim::person::components::PersonId;
 use crate::sim::person::skills::ecs_components::{
     DomainContext, DomainCoordination, DomainExecution, DomainInterpersonal, TierApplied,
@@ -9,25 +15,19 @@ use crate::sim::person::skills::ecs_components::{
 use crate::sim::person::skills::{Domain, GlobalSkill, SkillId, SkillSet, Tier};
 use crate::sim::person::spawner::bounded_normal;
 use crate::sim::person::stats::{StatType, Stats};
-use crate::sim::registries::registry::{ Registry};
+use crate::sim::registries::registry::Registry;
 use crate::sim::resources::global::{AssetBasePath, Dirty};
 use crate::sim::systems::global::UsedProfilePictureRegistry;
 use legion::query::{ComponentFilter, EntityFilter, FilterResult};
 use legion::systems::CommandBuffer;
 use legion::world::SubWorld;
 use legion::{component, system, Entity, EntityStore, IntoQuery, Query, World};
+use std::backtrace::Backtrace;
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use tracing::{info, trace};
 use tracing_subscriber::fmt::writer::WithFilter;
-use crate::action_queues::game_speed_manager::GameSpeedManagerCommand::SetGameSpeed;
-use crate::action_queues::sim_manager::SimManager;
-use crate::integrations::events::{emit_app_event, AppEventType};
-use crate::integrations::snapshots::snapshots::SnapshotState;
-use crate::sim::calendar::components::EventType;
-use crate::sim::company::company::{Company, PlayerControlled};
-use crate::sim::new_game::new_game::StartingEmployeesConfig;
 
 pub struct FirstRun {
     first : AtomicBool

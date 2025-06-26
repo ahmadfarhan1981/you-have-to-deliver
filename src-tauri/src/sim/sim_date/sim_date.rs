@@ -1,6 +1,6 @@
-use std::cmp::Ordering;
 use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 
 pub const MAX_TICK:u64 = 2_290_657_279;
 

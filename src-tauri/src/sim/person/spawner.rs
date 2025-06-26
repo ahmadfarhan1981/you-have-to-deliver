@@ -1,6 +1,9 @@
 use super::components::Person;
 use super::stats::{StatType, Stats, StatsConfig};
+use crate::sim::ai::goap::CurrentGoal;
+use crate::sim::company::company::PlayerControlled;
 use crate::sim::person::components::{Gender, PersonId, ProfilePicture, ProfilePictureCategory};
+use crate::sim::person::morale::StressLevel;
 use crate::sim::person::needs::{Energy, Hunger};
 use crate::sim::person::personality_matrix::{PersonalityAxis, PersonalityMatrix};
 use crate::sim::person::skills::{GlobalSkill, SkillSet};
@@ -28,9 +31,6 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, trace};
-use crate::sim::ai::goap::CurrentGoal;
-use crate::sim::company::company::PlayerControlled;
-use crate::sim::person::morale::StressLevel;
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: i16, max: i16) -> i16 {
     let normal = Normal::new(mean, std_dev).unwrap();

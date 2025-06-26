@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::sim::company::company::Company;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize, PartialEq)]
 pub struct CompanySnapshot {

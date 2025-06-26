@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::sim::person::stats::{StatType, Stats};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct StatsSnapshot {

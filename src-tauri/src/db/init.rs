@@ -1,20 +1,21 @@
+use std::path::PathBuf;
 use tauri::Manager;
-use std::path::PathBuf; // Consolidated imports
-use serde::{Deserialize, Serialize};
-use std::{fmt, fs};
-use std::sync::Arc;
-use std::task::Context;
-use bincode::{decode_from_slice, Decode, Encode};
-// rayon::in_place_scope_fifo is unused, consider removing if not needed elsewhere
-use tracing::{error, info, trace, warn};
-use crate::utils::errors::{BincodeError, SavesManagementError};
+use crate::db::constants::{db_keys, save_version, GAMESTATE_DB_FILENAME};
 use crate::db::{self};
 use crate::sim::sim_date::sim_date::SimDate;
-use std::time::{SystemTime, UNIX_EPOCH};
-use bincode::config::standard;
-use sled::{Db, IVec};
-use crate::db::constants::{db_keys, save_version, GAMESTATE_DB_FILENAME};
+use crate::utils::errors::{BincodeError, SavesManagementError};
 use crate::utils::errors::{LoadDataFromDBError, SaveDataToDBError};
+use bincode::config::standard;
+use bincode::{decode_from_slice, Decode, Encode};
+// Consolidated imports
+use serde::{Deserialize, Serialize};
+use sled::{Db, IVec};
+use std::sync::Arc;
+use std::task::Context;
+use std::time::{SystemTime, UNIX_EPOCH};
+use std::{fmt, fs};
+// rayon::in_place_scope_fifo is unused, consider removing if not needed elsewhere
+use tracing::{error, info, trace, warn};
 // For generating timestamp
 
 #[derive(Debug, Clone)]
