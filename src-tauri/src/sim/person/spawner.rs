@@ -31,6 +31,8 @@ use std::io::{BufRead, BufReader};
 use std::path::Path;
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, trace};
+use crate::sim::calendar::availability::{MonthlyAvailability, YearMonth};
+use crate::sim::sim_date::sim_date::SimDate;
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: i16, max: i16) -> i16 {
     let normal = Normal::new(mean, std_dev).unwrap();
@@ -331,6 +333,8 @@ pub fn spawn_person(
     let stats = generate_stats(tier);
     let personality_matrix = generate_personality_matrix();
     let skillset = assign_skills(&stats, &global_skills);
+    let mut monthly_availability = MonthlyAvailability::default();
+    monthly_availability.get_or_create_month_for_date(&SimDate::from(current_tick));
     let entity = cmd.push((
         person,
         stats,
@@ -343,6 +347,7 @@ pub fn spawn_person(
         DebugDisplayComponent::default(),
         CurrentGoal::default(),
         StressLevel::default(),
+        monthly_availability,
         PlayerControlled,
     ));
     person_registry.insert(id, entity);
