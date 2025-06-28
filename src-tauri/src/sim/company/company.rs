@@ -7,4 +7,13 @@ pub struct Company {
     pub slogan: String,
 }
 
+
+pub struct WorkHourPolicy{
+    daily_required_hours: u32,
+    weekly_required_hours: u32,
+    required_hours : u64,
+    required_days: u8,
+    
+}
+
 pub struct PlayerControlled;
