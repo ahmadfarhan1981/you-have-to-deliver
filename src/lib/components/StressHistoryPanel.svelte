@@ -12,7 +12,7 @@
 
 
     $: stress = $stressSnapshots.find((s)=>s.person_id===$personStore.person_id)
-    $: stressHistory = $stressHistorySnapshots.find((s)=>s.person_id===$personStore.person_id)
+    $: stressHistory = $stressHistorySnapshots.find((s)=>s.person_id===$personStore.person_id)!
 
 
     // Helper function to get stress level color
@@ -145,7 +145,7 @@
 <!--                </div>-->
                 <div class="mt-1">
                     <!-- Mini sparkline -->
-                    {stressHistory.felt_stress_history.length}
+                    {stressHistory.felt_stress_history && stressHistory.felt_stress_history.length}
                     <div class="flex items-end space-x-0.5 h-3">
                         {#each stressHistory.felt_stress_history as point, i}
                             <div
