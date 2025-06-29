@@ -6,6 +6,7 @@ pub mod db_keys {
     pub const TICK_COUNTER: &str = "tick_counter";
     pub const USED_PROFILE_PICTURES: &str = "used_profile_pictures";
     pub const EMPLOYEES_LIST: &str = "employees_list";
+    pub const CALENDAR_EVENTS: &str = "calendar_events";
 }
 
 pub mod save_version{

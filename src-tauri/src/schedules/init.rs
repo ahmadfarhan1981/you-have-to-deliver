@@ -6,6 +6,7 @@ use crate::integrations::snapshots_emitter::snapshots_emitter::run_snapshot_emit
 use crate::integrations::systems::{push_company_to_integration_system, push_debug_displays_to_integration_system, push_game_speed_snapshots_system, push_needs_to_integration_system, push_persons_to_integration_system, push_stress_history_to_integration_system, push_stress_level_to_integration_system, push_teams_to_integration_system, tick_needs_system};
 use crate::sim::action::action::{decide_action_system, execute_action_system};
 use crate::sim::ai::consideration::goal_selection_system;
+use crate::sim::calendar::systems::sync_registry_from_calendar_event_system;
 use crate::sim::persistence::persistence::{save_game_state_system, sync_registry_from_person_system, sync_registry_from_team_system};
 use crate::sim::person::init::{emit_done_setup_event_system, generate_employees_system, init_company_system, unset_first_run_flag_system};
 use crate::sim::person::morale::{daily_stress_reset_system, update_stress_system};
@@ -126,6 +127,8 @@ pub fn init_schedules() -> GameSchedules {
         .add_system(sync_registry_from_person_system())
         .flush()
         .add_system(sync_registry_from_team_system())
+        .flush()
+        .add_system(sync_registry_from_calendar_event_system())
         .build();
     
     GameSchedules {

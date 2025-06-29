@@ -4,18 +4,19 @@ use crate::sim::calendar::availability::{MonthlyAvailability, YearMonth};
 use crate::sim::sim_date::sim_date::SimDate;
 use super::calendar_event::CalendarEvent;
 use super::interval_tree::IntervalTree;
+use super::calendar_event_id::CalendarEventId;
 
 // Optimized lookup structure for queries
 #[derive(Debug, Default)]
 pub struct CalendarIndex {
     // Map from year-week to events that occur on that week
-    pub events_by_week: BTreeMap<(u16, u8), Vec<u64>>,
+    pub events_by_week: BTreeMap<(u16, u8), Vec<CalendarEventId>>,
     // Map from absolute tick to events at that time
-    pub events_by_tick: BTreeMap<u64, Vec<u64>>,
+    pub events_by_tick: BTreeMap<u64, Vec<CalendarEventId>>,
     // Map from participant to their events
-    pub events_by_participant: HashMap<PersonId, Vec<u64>>,
+    pub events_by_participant: HashMap<PersonId, Vec<CalendarEventId>>,
     // All events by ID for quick lookup
-    pub events: HashMap<u64, CalendarEvent>,
+    pub events: HashMap<CalendarEventId, CalendarEvent>,
 
     // Month-aware availability tracking
     pub availability_matrix: HashMap<PersonId, MonthlyAvailability>,
@@ -72,7 +73,7 @@ impl CalendarIndex {
             }
 
             // Add to interval tree
-            self.time_ranges.insert(start_tick, end_tick, event_id);
+            self.time_ranges.insert(start_tick, end_tick, event_id.0);
         }
 
         // Index by participants
@@ -83,22 +84,22 @@ impl CalendarIndex {
         self.events.insert(event_id, event);
     }
 
-    pub fn remove_event(&mut self, event_id: u64) {
+    pub fn remove_event(&mut self, event_id: CalendarEventId) {
         if let Some(event) = self.events.remove(&event_id) {
             // Remove from all indices
             for week_events in self.events_by_week.values_mut() {
-                week_events.retain(|&id| id != event_id);
+                week_events.retain(|id| id != &event_id);
             }
 
             for tick_events in self.events_by_tick.values_mut() {
-                tick_events.retain(|&id| id != event_id);
+                tick_events.retain(|id| id != &event_id);
             }
 
             for participant_events in self.events_by_participant.values_mut() {
-                participant_events.retain(|&id| id != event_id);
+                participant_events.retain(|id| id != &event_id);
             }
 
-            self.time_ranges.remove_event(event_id);
+            self.time_ranges.remove_event(event_id.0);
 
             // Update availability matrix (set back to free)
             let current_date = SimDate::default(); // You might want to pass current date
@@ -165,7 +166,7 @@ impl CalendarIndex {
                 // Find which specific events are conflicting
                 let conflicting_events:Vec<_> = self.time_ranges.query_overlapping(start_tick, end_tick)
                     .into_iter()
-                    .filter_map(|event_id| self.events.get(&event_id))
+                    .filter_map(|event_id| self.events.get(&CalendarEventId::new(event_id)))
                     .filter(|event| event.details.participants.iter().any(|p| p.person_id == person))
                     .collect();
 
@@ -183,7 +184,7 @@ impl CalendarIndex {
         self.events_by_week.get(&week_key)
             .map(|event_ids| {
                 event_ids.iter()
-                    .filter_map(|&id| self.events.get(&id))
+                    .filter_map(|id| self.events.get(id))
                     .collect()
             })
             .unwrap_or_default()
@@ -194,7 +195,7 @@ impl CalendarIndex {
         self.events_by_tick.get(&tick)
             .map(|event_ids| {
                 event_ids.iter()
-                    .filter_map(|&id| self.events.get(&id))
+                    .filter_map(|id| self.events.get(id))
                     .collect()
             })
             .unwrap_or_default()

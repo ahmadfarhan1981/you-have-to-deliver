@@ -18,6 +18,7 @@ use crate::{
         ,
         systems::global::UsedProfilePictureRegistry,
         team::components::TeamId,
+        calendar::components::CalendarEventId,
     },
 };
 
@@ -31,6 +32,10 @@ pub fn initialize_non_shared_resources(resources: &mut Resources) {
     
     resources.insert(Arc::new(Registry::<TeamId, Entity>::with_name(
         "Team registry",
+    )));
+
+    resources.insert(Arc::new(Registry::<CalendarEventId, Entity>::with_name(
+        "Calendar Event registry",
     )));
     
     // resources.insert(Arc::new(DashMap::<&'static str, u64>::new()));//last update map

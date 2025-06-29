@@ -13,6 +13,8 @@ pub mod helpers;
 mod sim_date_extensions;
 pub mod event_details;
 pub mod recurring_event_template;
+pub mod calendar_event_id;
+pub mod calendar_event_registry;
 
 pub use recurrence_pattern::RecurrencePattern;
 pub use attendance_status::AttendanceStatus;
@@ -28,12 +30,14 @@ pub use calendar_system::CalendarSystem;
 pub use helpers::schedule_meeting;
 pub use event_details::EventDetails;
 pub use recurring_event_template::RecurringEventTemplate;
+pub use calendar_event_id::CalendarEventId;
+pub use calendar_event_registry::CalendarEventRegistry;
 
 #[cfg(test)]
 mod tests {
     use crate::sim::sim_date::sim_date::SimDate;
     use super::*;
-    use crate::sim::calendar::availability::MonthlyAvailability;
+    use crate::sim::calendar::availability::{MonthlyAvailability, YearMonth};
 
     #[test]
     fn test_simdate_month_calculation() {
@@ -58,8 +62,8 @@ mod tests {
     #[test]
     fn test_availability_bitset_cross_month() {
         let mut availability = MonthlyAvailability::new();
-        availability.ensure_month(1, 1);
-        availability.ensure_month(1, 2);
+        availability.get_or_create_month(YearMonth::new(1, 1));
+        availability.get_or_create_month(YearMonth::new(1, 2));
 
         // Event that spans from end of month 1 to beginning of month 2
         let end_of_month1 = SimDate { year: 1, week: 4, day: 7, quarter_tick: 95 }; // Almost end of month 1
