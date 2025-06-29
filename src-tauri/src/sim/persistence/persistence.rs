@@ -31,6 +31,7 @@ use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::utils::acl::Commands;
 use tracing::{error, info, warn};
+use crate::sim::calendar::components::CalendarEvent;
 // Added for logging
 
 /// Represents the data of an employee that can be saved or transferred.
@@ -84,6 +85,7 @@ pub fn save_game_state(
     )>,
     company_query: &mut Query<(&Company, &PlayerControlled)>,
     team_query: &mut Query<(&Team)>,
+    calendar_event_query: &mut Query<(&CalendarEvent)>,
 ) {
     if !sim_manager.has_save_slot() {
         warn!("No active save slot");
@@ -153,6 +155,9 @@ pub fn save_game_state(
         let teams: Vec<Team> = team_query.iter(world).map(|t| t.clone()).collect();
         current_save.save_entry(db_keys::TEAMS, &teams);
 
+        let calendar_events: Vec<CalendarEvent> = calendar_event_query.iter(world).map(|t| t.clone()).collect();
+        current_save.save_entry(db_keys::CALENDAR_EVENTS, &calendar_events);
+        
         current_save.save_entry(db_keys::TICK_COUNTER, current_tick);
 
         let metadata = SaveSlotMetadata {
@@ -167,8 +172,9 @@ pub fn save_game_state(
         };
         current_save.save_entry(db_keys::METADATA, &metadata);
         
-        
         current_save.save_entry(db_keys::USED_PROFILE_PICTURES, used_profile_pictures);
+        
+        
         
         // match current_save.load_entry::<TickCounter>(db_keys::TICK_COUNTER){
         //     Ok(Some(tick)) => {

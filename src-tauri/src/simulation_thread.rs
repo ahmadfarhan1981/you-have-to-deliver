@@ -16,6 +16,7 @@ use crate::integrations::queues::SimCommand;
 use crate::integrations::queues::SimCommand::TeamManager;
 use crate::schedules::init::GameSchedules;
 use crate::sim::action::action::ActionIntent;
+use crate::sim::calendar::components::CalendarEvent;
 use crate::sim::company::company::{Company, PlayerControlled};
 use crate::sim::persistence::persistence::{LoadGame, SavedEmployee};
 use crate::sim::person::init::ShouldGenerateEmployees;
@@ -303,6 +304,12 @@ fn handle_game_load(
     let teams = save_slot.load_entry::<Vec<Team>>(db_keys::TEAMS)?;
     for team in teams {
         world.push((team, Dirty));
+    }
+    
+    info!("Loading calendar events");
+    let calendar_events: Vec<CalendarEvent> =save_slot.load_entry::<Vec<CalendarEvent>>(db_keys::CALENDAR_EVENTS)?;
+    for calendar_event in calendar_events{
+        world.push((calendar_event, Dirty));
     }
 
     info!("Loading company...");

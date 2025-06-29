@@ -1,12 +1,17 @@
+use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use crate::sim::sim_date::sim_date::SimDate;
 use super::recurrence_pattern::RecurrencePattern;
 use super::event_details::EventDetails;
 use super::calendar_event::CalendarEvent;
+use super::calendar_event_id::CalendarEventId;
 
+
+#[derive(Debug, Clone, Serialize, Deserialize, Copy, PartialEq, Eq, Hash, Encode, Decode)]
+pub struct RecurringEventTemplateId(pub u64);
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RecurringEventTemplate {
-    pub id: u64,
+    pub id: RecurringEventTemplateId,
     pub start_date: SimDate,
     pub end_date: SimDate,
     pub recurrence: RecurrencePattern,
@@ -21,7 +26,7 @@ impl RecurringEventTemplate {
         while current_date <= self.end_date && current_date <= end_date {
             if current_date >= start_date {
                 let event = CalendarEvent {
-                    id: rand::random(),
+                    id: CalendarEventId::new(rand::random()),
                     start_time: current_date,
                     details: self.details.clone(),
                     template_id: Some(self.id),
