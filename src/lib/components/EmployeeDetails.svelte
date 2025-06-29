@@ -26,9 +26,12 @@
     $: person = $personStore;
     const tabItems = [
         { id: 'overview', label: 'Overview' },
-        { id: 'statsSkills', label: 'Stats & Skills' },
-        { id: 'detailsSchedule', label: 'Details & Schedule' },
-        { id: 'performanceProjects', label: 'Performance & Projects' },
+        { id: 'stats', label: 'Stats' },
+        { id: 'skills', label: 'Skills' },
+        { id: 'personality', label: 'Personality' },
+        { id: 'schedule', label: 'Schedule' },
+        {id:'stress', label: 'Stress'},
+        { id: 'performance', label: 'Performance' },
     ];
     let currentActiveTabId = tabItems[0].id;
 </script>
@@ -64,39 +67,58 @@
     <div class="border-t border-gray-300"></div>
     <TabComponent items={tabItems} bind:activeTabId={currentActiveTabId} />
     <div class="grid grid-cols-3 gap-6 mt-3">
+        {#if currentActiveTabId === "overview" }
+            <div class="ml-2">
+                <PersonOverviewPanel person={person}/>
+
+            </div>
+        {/if}
+        {#if currentActiveTabId === "stats" }
+            <div class="col-span-1 ml-1">
+                <StatPanel personStore={personStore}/>
+
+            </div>
+        {/if}
+        {#if currentActiveTabId === "skills" }
+            <div class="col-span-1">
+                <SkillsPanel personStore={personStore}/>
+            </div>
+        {/if}
+        {#if currentActiveTabId === "personality" }
+            <div>
+                <PersonalityMatrixPanel personality={person.personality}/>
+            </div>
+        {/if}
+        {#if currentActiveTabId === "stress" }
+            <div>
+                <StressPanel personStore={personStore} />
+                <StressHistoryPanel personStore={personStore} />
+            </div>
+        {/if}
+        {#if currentActiveTabId === "schedule" }
+            <div class="m-1">
+                <DayCalendarPanel />
+                <!--            <CalendarPanel  currentMonthView="1" currentYear="1"/>-->
+            </div>
+        {/if}
+        {#if currentActiveTabId === "performance" }
+            <div>
+                <PerformanceHistory/>
+            </div>
+            <div>
+                <ProjectPanel/>
+            </div>
+        {/if}
 
 
-        <div>
-            <PersonOverviewPanel person={person}/>
-            <PersonalityMatrixPanel personality={person.personality}/>
-<!--            <CalendarPanel  currentMonthView="1" currentYear="1"/>-->
-
-        </div>
 
 
-        <div class="col-span-1">
-            <StatPanel personStore={personStore}/>
 
-        </div>
-        <div>
-            <StressPanel personStore={personStore} />
-            <StressHistoryPanel personStore={personStore} />
 
-            <DayCalendarPanel />
-        </div>
 
-        <div class="col-span-1">
-            <SkillsPanel personStore={personStore}/>
-        </div>
-        <div>
-            <PersonalityMatrixPanel personality={person.personality}/>
-        </div>
-        <div>
-            <PerformanceHistory/>
-        </div>
-        <div>
-            <ProjectPanel/>
-        </div>
+
+
+
     </div>
 {:else }
     <h2>NOTHING</h2>

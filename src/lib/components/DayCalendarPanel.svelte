@@ -1,29 +1,122 @@
-<!--<head>-->
-<!--    <meta charset="UTF-8">-->
-<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
-<!--    <title>DevCorp - Day View Panel</title>-->
-<!--    <script src="https://cdn.tailwindcss.com"></script>-->
-<!--    <script>-->
-<!--        tailwind.config = {-->
-<!--            theme: {-->
-<!--                extend: {-->
-<!--                    colors: {-->
-<!--                        'devcorp-dark': '#1a1f2e',-->
-<!--                        'devcorp-darker': '#151a26',-->
-<!--                        'devcorp-blue': '#2d3748',-->
-<!--                        'devcorp-accent': '#4299e1',-->
-<!--                        'devcorp-green': '#48bb78',-->
-<!--                        'devcorp-orange': '#ed8936',-->
-<!--                        'devcorp-red': '#f56565',-->
-<!--                        'devcorp-purple': '#9f7aea'-->
-<!--                    }-->
-<!--                }-->
-<!--            }-->
-<!--        }-->
-<!--    </script>-->
-<!--</head>-->
+<script lang="ts">
+	import { onMount } from 'svelte';
+	// const timesOfDay = Array.from({ length: 96 }, (_, i) => i + 1); // This will be replaced by hourly logic
 
-<!-- Demo Layout showing 3-column integration -->
+	type CalendarEvent = {
+		title: string;
+		startTime: number; // 1-96, where 1 is 00:00-00:15
+		duration: number; // in 15-minute blocks
+		type: string; // e.g., 'meeting', 'call', 'break'
+	};
+
+	type SlotState =
+		| { status: 'empty' }
+		| { status: 'start'; event: CalendarEvent }
+		| { status: 'continuation' };
+
+	const sampleEvents: CalendarEvent[] = [
+		// 9:00 AM Block
+		{ title: 'Daily Standup', startTime: 37, duration: 1, type: 'green' }, // 9:00 - 9:15
+		{ title: 'Quick Sync', startTime: 39, duration: 1, type: 'blue' }, // 9:30 - 9:45
+		// 10:00 AM Block
+		{ title: 'Code Review Session', startTime: 41, duration: 3, type: 'purple' }, // 10:00 - 10:45
+		{ title: 'Project Sync', startTime: 44, duration: 2, type: 'yellow' }, // 10:45 - 11:15 (Cross-hour)
+		// 12:00 PM Block
+		{ title: 'Lunch Break', startTime: 49, duration: 4, type: 'gray' }, // 12:00 - 13:00
+		// Multi-hour event
+		{ title: 'Deep Work Session', startTime: 53, duration: 8, type: 'indigo' }, // 13:00 - 15:00
+		// 4:00 PM Block
+		{ title: 'Client Call', startTime: 65, duration: 1, type: 'orange' }, // 16:00 - 16:15
+		{ title: 'Follow-up Notes', startTime: 66, duration: 1, type: 'red' }, // 16:15 - 16:30
+		{ title: 'Email Review', startTime: 67, duration: 1, type: 'indigo' }, // 16:30 - 16:45
+		{ title: 'Tomorrow Planning', startTime: 68, duration: 1, type: 'pink' } // 16:45 - 17:00
+	];
+
+	const getEventTypeStyles = (type: string) => {
+		const styles: { [key: string]: { container: string; text: string } } = {
+			green: { container: 'bg-green-100 border-green-500', text: 'text-green-700' },
+			blue: { container: 'bg-blue-100 border-blue-500', text: 'text-blue-700' },
+			purple: { container: 'bg-purple-100 border-purple-500', text: 'text-purple-700' },
+			gray: { container: 'bg-gray-100 border-gray-400', text: 'text-gray-600' },
+			yellow: { container: 'bg-yellow-100 border-yellow-500', text: 'text-yellow-700' },
+			orange: { container: 'bg-orange-100 border-orange-500', text: 'text-orange-700' },
+			red: { container: 'bg-red-100 border-red-500', text: 'text-red-700' },
+			indigo: { container: 'bg-indigo-100 border-indigo-500', text: 'text-indigo-700' },
+			pink: { container: 'bg-pink-100 border-pink-500', text: 'text-pink-700' }
+		};
+
+		return styles[type] || styles['gray'];
+	};
+
+	const formatTime = (timeSlot: number): string => {
+		const index = timeSlot - 1;
+		const totalMinutes = index * 15;
+		const hour = Math.floor(totalMinutes / 60);
+		const minute = totalMinutes % 60;
+
+		const paddedHour = String(hour).padStart(2, '0');
+		const paddedMinute = String(minute).padStart(2, '0');
+
+		return `${paddedHour}:${paddedMinute}`;
+	};
+
+	let currentTime = 1; // 1-96, represents the current 15-minute block
+
+	onMount(() => {
+		const timer = setInterval(() => {
+			currentTime = (currentTime % 96) + 1;
+		}, 500); // Update every second for testing
+
+		return () => {
+			clearInterval(timer);
+		};
+	});
+
+	/**
+	 * Calculates the dynamic height for an event block to span multiple time slots.
+	 * It accounts for the height of each slot (h-3 -> 0.75rem) and the space between them (space-y-1 -> 0.25rem).
+	 * @param duration - The number of 15-minute slots the event occupies.
+	 * @returns A string for the inline style property, e.g., "height: 2.75rem;".
+	 */
+	const calculateEventHeight = (duration: number): string => {
+		const slotHeightRem = 0.75; // from h-3
+		const gapHeightRem = 0.25; // from space-y-1
+		const totalHeight = duration * slotHeightRem + (duration - 1) * gapHeightRem;
+		return `height: ${totalHeight}rem;`;
+	};
+
+	export let events: CalendarEvent[] = sampleEvents;
+
+	// Reactive declaration: This block re-runs whenever `events` changes.
+	// It creates a 96-slot representation of the day.
+	let slots: SlotState[] = [];
+	$: {
+		// 1. Initialize an array of 96 empty slots.
+		const newSlots: SlotState[] = Array(96)
+			.fill(null)
+			.map(() => ({ status: 'empty' }));
+
+		// 2. Populate the slots array based on the events.
+		for (const event of events) {
+			if (event.startTime >= 1 && event.startTime <= 96) {
+				// Mark the start of the event.
+				newSlots[event.startTime - 1] = { status: 'start', event: event };
+
+				// 3. Mark subsequent slots as 'continuation'.
+				for (let i = 1; i < event.duration; i++) {
+					const continuationIndex = event.startTime - 1 + i;
+					if (continuationIndex < 96) {
+						newSlots[continuationIndex] = { status: 'continuation' };
+					}
+				}
+			}
+		}
+		slots = newSlots;
+	}
+</script>
+ <!-- <div class="h-3 bg-green-100 border-l-2 border-green-500 rounded-r flex items-center px-1">
+                            <span class="text-xs text-green-700 font-medium truncate">Daily Standup</span>
+                        </div> -->
 
 <div class="bg-white rounded-lg shadow-sm border border-gray-200 font-sans">
     <!-- Panel Header -->
@@ -46,219 +139,68 @@
 
     <!-- Time Slots with 15-minute support -->
     <div class="max-h-80 overflow-y-auto">
-        <!-- 8:00 AM Hour Block -->
-        <div class="border-b border-gray-100">
-            <div class="flex">
-                <div class="w-16 p-2 text-xs text-gray-400 flex items-start border-r border-gray-100">
-                    8:00
-                </div>
-                <div class="flex-1 p-1">
-                    <!-- 15-minute slots in this hour -->
-                    <div class="space-y-1">
-                        <!-- 8:00-8:15 -->
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <!-- 8:15-8:30 -->
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <!-- 8:30-8:45 -->
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <!-- 8:45-9:00 -->
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+	{#each Array(24) as _, hour}
+		{@const startSlotOfHour = hour * 4 + 1}
+		{@const isCurrentHour = currentTime >= startSlotOfHour && currentTime < startSlotOfHour + 4}
 
-        <!-- 9:00 AM Hour Block with Events -->
-        <div class="border-b border-gray-100">
-            <div class="flex">
-                <div class="w-16 p-2 text-xs text-gray-400 flex items-start border-r border-gray-100">
-                    9:00
-                </div>
-                <div class="flex-1 p-1">
-                    <div class="space-y-1">
-                        <!-- 9:00-9:15 - Daily Standup -->
-                        <div class="h-3 bg-green-100 border-l-2 border-green-500 rounded-r flex items-center px-1">
-                            <span class="text-xs text-green-700 font-medium truncate">Daily Standup</span>
-                        </div>
-                        <!-- 9:15-9:30 - Empty -->
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <!-- 9:30-9:45 - Quick Sync -->
-                        <div class="h-3 bg-blue-100 border-l-2 border-blue-500 rounded-r flex items-center px-1">
-                            <span class="text-xs text-blue-700 font-medium truncate">Quick Sync</span>
-                        </div>
-                        <!-- 9:45-10:00 - Empty -->
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+		<div class="flex border-b border-gray-100" class:bg-blue-50={isCurrentHour}>
+			<!-- Time Label -->
+			<div
+				class="w-16 p-2 text-xs flex items-start border-r border-gray-100"
+				class:text-blue-600={isCurrentHour}
+				class:font-medium={isCurrentHour}
+				class:text-gray-400={!isCurrentHour}
+			>
+				{formatTime(startSlotOfHour)}
+			</div>
 
-        <!-- 10:00 AM Hour Block with Long Event -->
-        <div class="border-b border-gray-100">
-            <div class="flex">
-                <div class="w-16 p-2 text-xs text-gray-400 flex items-start border-r border-gray-100">
-                    10:00
-                </div>
-                <div class="flex-1 p-1">
-                    <div class="space-y-1">
-                        <!-- 10:00-10:45 - Code Review (3 slots) -->
-                        <div class="h-10 bg-purple-100 border-l-2 border-purple-500 rounded-r flex items-center px-2">
-                            <div class="flex-1">
-                                <div class="text-xs font-medium text-purple-700">Code Review Session</div>
-                                <div class="text-xs text-gray-500">Login Feature - 45min</div>
-                            </div>
-                        </div>
-                        <!-- 10:45-11:00 - Empty -->
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+			<!-- Slots Container -->
+			<div class="flex-1 p-1 relative">
+				<div class="space-y-1">
+					{#each Array(4) as __, i}
+						{@const timeSlot = startSlotOfHour + i}
+						{@const slotState = slots[timeSlot - 1]}
 
-        <!-- 11:00 AM Hour Block -->
-        <div class="border-b border-gray-100">
-            <div class="flex">
-                <div class="w-16 p-2 text-xs text-gray-400 flex items-start border-r border-gray-100">
-                    11:00
-                </div>
-                <div class="flex-1 p-1">
-                    <div class="space-y-1">
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
+						{#if slotState.status === 'start'}
+							{@const event = slotState.event}
+							{@const styles = getEventTypeStyles(event.type)}
+							<!-- Event Block -->
+							<div
+								class="absolute left-1 right-1 border-l-2 rounded-r flex items-center {styles.container}"
+								style="top: {i * 1}rem; {calculateEventHeight(event.duration)}"
+							>
+								<div class="flex items-center justify-between w-full px-2">
+									<div class="flex-1 min-w-0">
+										<div class="text-xs font-medium truncate {styles.text}">{event.title}</div>
+										{#if event.duration > 2}
+											<div class="text-xs text-gray-500">{event.duration * 15}min</div>
+										{/if}
+									</div>
+									{#if currentTime >= event.startTime && currentTime < event.startTime + event.duration}
+										<div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+									{/if}
+								</div>
+							</div>
+							<!-- Placeholder for layout -->
+							<div class="h-3"></div>
+						{:else if slotState.status === 'continuation'}
+							<!-- Placeholder for layout -->
+							<div class="h-3"></div>
+						{:else}
+							<!-- Empty Slot -->
+							<div class="h-3 bg-gray-50 rounded flex items-center justify-end">
+								{#if timeSlot === currentTime}
+									<div class="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-1"></div>
+								{/if}
+							</div>
+						{/if}
+					{/each}
+				</div>
+			</div>
+		</div>
+	{/each}
+</div>
 
-        <!-- 12:00 PM Hour Block with Lunch -->
-        <div class="border-b border-gray-100">
-            <div class="flex">
-                <div class="w-16 p-2 text-xs text-gray-400 flex items-start border-r border-gray-100">
-                    12:00
-                </div>
-                <div class="flex-1 p-1">
-                    <div class="space-y-1">
-                        <!-- Full hour lunch -->
-                        <div class="h-14 bg-gray-100 border-l-2 border-gray-400 rounded-r flex items-center px-2">
-                            <div class="text-xs font-medium text-gray-600">Lunch Break</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 1:00 PM Hour Block -->
-        <div class="border-b border-gray-100">
-            <div class="flex">
-                <div class="w-16 p-2 text-xs text-gray-400 flex items-start border-r border-gray-100">
-                    1:00
-                </div>
-                <div class="flex-1 p-1">
-                    <div class="space-y-1">
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2:00 PM Hour Block - Current Time with Multiple Events -->
-        <div class="border-b border-gray-100 bg-blue-50">
-            <div class="flex">
-                <div class="w-16 p-2 text-xs text-blue-600 flex items-start border-r border-gray-100 font-medium">
-                    2:00
-                </div>
-                <div class="flex-1 p-1">
-                    <div class="space-y-1">
-                        <!-- 2:00-2:30 - All Hands Meeting (2 slots) -->
-                        <div class="h-7 bg-green-100 border-l-2 border-green-500 rounded-r flex items-center px-2">
-                            <div class="flex items-center justify-between w-full">
-                                <div class="flex-1">
-                                    <div class="text-xs font-medium text-green-700">All Hands Meeting</div>
-                                    <div class="text-xs text-gray-500">Conference Room A</div>
-                                </div>
-                                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            </div>
-                        </div>
-                        <!-- 2:30-2:45 - Team Check-in -->
-                        <div class="h-3 bg-gray-50 rounded"></div>
-
-                        <!-- 2:45-3:00 - Empty -->
-                        <div class="h-3 bg-yellow-100 border-l-2 border-yellow-500 rounded-r flex items-center px-1">
-                            <span class="text-xs text-yellow-700 font-medium truncate">Team Check-in</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 3:00 PM Hour Block -->
-        <div class="border-b border-gray-100">
-            <div class="flex">
-                <div class="w-16 p-2 text-xs text-gray-400 flex items-start border-r border-gray-100">
-                    3:00
-                </div>
-                <div class="flex-1 p-1">
-                    <div class="space-y-1">
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 4:00 PM Hour Block with Back-to-Back Events -->
-        <div class="border-b border-gray-100">
-            <div class="flex">
-                <div class="w-16 p-2 text-xs text-gray-400 flex items-start border-r border-gray-100">
-                    4:00
-                </div>
-                <div class="flex-1 p-1">
-                    <div class="space-y-1">
-                        <!-- 4:00-4:15 - Client Call -->
-                        <div class="h-3 bg-orange-100 border-l-2 border-orange-500 rounded-r flex items-center px-1">
-                            <span class="text-xs text-orange-700 font-medium truncate">Client Call</span>
-                        </div>
-                        <!-- 4:15-4:30 - Follow-up -->
-                        <div class="h-3 bg-red-100 border-l-2 border-red-500 rounded-r flex items-center px-1">
-                            <span class="text-xs text-red-700 font-medium truncate">Follow-up Notes</span>
-                        </div>
-                        <!-- 4:30-4:45 - Email Review -->
-                        <div class="h-3 bg-indigo-100 border-l-2 border-indigo-500 rounded-r flex items-center px-1">
-                            <span class="text-xs text-indigo-700 font-medium truncate">Email Review</span>
-                        </div>
-                        <!-- 4:45-5:00 - Planning -->
-                        <div class="h-3 bg-pink-100 border-l-2 border-pink-500 rounded-r flex items-center px-1">
-                            <span class="text-xs text-pink-700 font-medium truncate">Tomorrow Planning</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 5:00 PM Hour Block -->
-        <div class="border-b border-gray-100">
-            <div class="flex">
-                <div class="w-16 p-2 text-xs text-gray-400 flex items-start border-r border-gray-100">
-                    5:00
-                </div>
-                <div class="flex-1 p-1">
-                    <div class="space-y-1">
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                        <div class="h-3 bg-gray-50 rounded"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Panel Footer -->
     <div class="p-3 border-t border-gray-200 bg-gray-50">
@@ -279,383 +221,3 @@
         </div>
     </div>
 </div>
-
-
-        <!-- Column 2: Day Schedule Panel -->
-<!--<div class="bg-white rounded-lg shadow-sm border border-gray-200 font-sans">-->
-<!--    &lt;!&ndash; Panel Header &ndash;&gt;-->
-<!--    <div class="p-4 border-b border-gray-200">-->
-<!--        <div class="flex items-center justify-between">-->
-<!--            <div>-->
-<!--                <h3 class="text-lg font-semibold text-gray-800">Today's Schedule</h3>-->
-<!--                <p class="text-sm text-gray-500">Tuesday, January 9, 2024</p>-->
-<!--            </div>-->
-<!--            <div class="flex items-center space-x-2">-->
-<!--                <button class="p-1 hover:bg-gray-100 rounded text-gray-600">-->
-<!--                    <span class="text-sm">←</span>-->
-<!--                </button>-->
-<!--                <button class="p-1 hover:bg-gray-100 rounded text-gray-600">-->
-<!--                    <span class="text-sm">→</span>-->
-<!--                </button>-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>-->
-
-<!--    &lt;!&ndash; Time Slots &ndash;&gt;-->
-<!--    <div class="max-h-80 overflow-y-auto">-->
-<!--        &lt;!&ndash; 8:00 AM &ndash;&gt;-->
-<!--        <div class="flex border-b border-gray-100 h-12">-->
-<!--            <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-100">-->
-<!--                8:00-->
-<!--            </div>-->
-<!--            <div class="flex-1 p-2">-->
-<!--                &lt;!&ndash; Empty slot &ndash;&gt;-->
-<!--            </div>-->
-<!--        </div>-->
-
-<!--        &lt;!&ndash; 9:00 AM &ndash;&gt;-->
-<!--        <div class="flex border-b border-gray-100 h-12">-->
-<!--            <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-100">-->
-<!--                9:00-->
-<!--            </div>-->
-<!--            <div class="flex-1 p-2">-->
-<!--                <div class="bg-green-50 border-l-2 border-green-500 px-2 py-1 h-full flex items-center rounded-r">-->
-<!--                    <div>-->
-<!--                        <div class="text-xs font-medium text-green-700">Daily Standup</div>-->
-<!--                        <div class="text-xs text-gray-500">Team Alpha</div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-
-<!--        &lt;!&ndash; 10:00 AM &ndash;&gt;-->
-<!--        <div class="flex border-b border-gray-100 h-12">-->
-<!--            <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-100">-->
-<!--                10:00-->
-<!--            </div>-->
-<!--            <div class="flex-1 p-2">-->
-<!--                <div class="bg-purple-50 border-l-2 border-purple-500 px-2 py-1 h-full flex items-center rounded-r">-->
-<!--                    <div>-->
-<!--                        <div class="text-xs font-medium text-purple-700">Code Review</div>-->
-<!--                        <div class="text-xs text-gray-500">Login Feature</div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-
-<!--        &lt;!&ndash; 11:00 AM &ndash;&gt;-->
-<!--        <div class="flex border-b border-gray-100 h-12">-->
-<!--            <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-100">-->
-<!--                11:00-->
-<!--            </div>-->
-<!--            <div class="flex-1 p-2">-->
-<!--                &lt;!&ndash; Empty slot &ndash;&gt;-->
-<!--            </div>-->
-<!--        </div>-->
-
-<!--        &lt;!&ndash; 12:00 PM &ndash;&gt;-->
-<!--        <div class="flex border-b border-gray-100 h-12">-->
-<!--            <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-100">-->
-<!--                12:00-->
-<!--            </div>-->
-<!--            <div class="flex-1 p-2">-->
-<!--                <div class="bg-gray-50 border-l-2 border-gray-400 px-2 py-1 h-full flex items-center rounded-r">-->
-<!--                    <div>-->
-<!--                        <div class="text-xs font-medium text-gray-600">Lunch Break</div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-
-<!--        &lt;!&ndash; 1:00 PM &ndash;&gt;-->
-<!--        <div class="flex border-b border-gray-100 h-12">-->
-<!--            <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-100">-->
-<!--                1:00-->
-<!--            </div>-->
-<!--            <div class="flex-1 p-2">-->
-<!--                &lt;!&ndash; Empty slot &ndash;&gt;-->
-<!--            </div>-->
-<!--        </div>-->
-
-<!--        &lt;!&ndash; 2:00 PM - Current Meeting &ndash;&gt;-->
-<!--        <div class="flex border-b border-gray-100 h-12 bg-blue-50">-->
-<!--            <div class="w-16 p-2 text-xs text-blue-600 flex items-center border-r border-gray-100 font-medium">-->
-<!--                2:00-->
-<!--            </div>-->
-<!--            <div class="flex-1 p-2">-->
-<!--                <div class="bg-green-100 border-l-2 border-green-500 px-2 py-1 h-full flex items-center rounded-r">-->
-<!--                    <div class="flex items-center justify-between w-full">-->
-<!--                        <div>-->
-<!--                            <div class="text-xs font-medium text-green-700">All Hands Meeting</div>-->
-<!--                            <div class="text-xs text-gray-500">Conference Room A</div>-->
-<!--                        </div>-->
-<!--                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-
-<!--        &lt;!&ndash; 3:00 PM &ndash;&gt;-->
-<!--        <div class="flex border-b border-gray-100 h-12">-->
-<!--            <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-100">-->
-<!--                3:00-->
-<!--            </div>-->
-<!--            <div class="flex-1 p-2">-->
-<!--                &lt;!&ndash; Empty slot &ndash;&gt;-->
-<!--            </div>-->
-<!--        </div>-->
-
-<!--        &lt;!&ndash; 4:00 PM &ndash;&gt;-->
-<!--        <div class="flex border-b border-gray-100 h-12">-->
-<!--            <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-100">-->
-<!--                4:00-->
-<!--            </div>-->
-<!--            <div class="flex-1 p-2">-->
-<!--                <div class="bg-orange-50 border-l-2 border-orange-500 px-2 py-1 h-full flex items-center rounded-r">-->
-<!--                    <div>-->
-<!--                        <div class="text-xs font-medium text-orange-700">Client Call</div>-->
-<!--                        <div class="text-xs text-gray-500">Project Update</div>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-
-<!--        &lt;!&ndash; 5:00 PM &ndash;&gt;-->
-<!--        <div class="flex border-b border-gray-100 h-12">-->
-<!--            <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-100">-->
-<!--                5:00-->
-<!--            </div>-->
-<!--            <div class="flex-1 p-2">-->
-<!--                &lt;!&ndash; Empty slot &ndash;&gt;-->
-<!--            </div>-->
-<!--        </div>-->
-
-<!--        &lt;!&ndash; 6:00 PM &ndash;&gt;-->
-<!--        <div class="flex h-12">-->
-<!--            <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-100">-->
-<!--                6:00-->
-<!--            </div>-->
-<!--            <div class="flex-1 p-2">-->
-<!--                &lt;!&ndash; Empty slot &ndash;&gt;-->
-<!--            </div>-->
-<!--        </div>-->
-<!--    </div>-->
-
-<!--    &lt;!&ndash; Panel Footer &ndash;&gt;-->
-<!--    <div class="p-3 border-t border-gray-200 bg-gray-50">-->
-<!--        <div class="flex items-center justify-between text-xs">-->
-<!--            <div class="flex items-center space-x-4">-->
-<!--                <div class="flex items-center space-x-1">-->
-<!--                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>-->
-<!--                    <span class="text-gray-600">4 meetings</span>-->
-<!--                </div>-->
-<!--                <div class="flex items-center space-x-1">-->
-<!--                    <div class="w-2 h-2 bg-orange-500 rounded-full"></div>-->
-<!--                    <span class="text-gray-600">1 call</span>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--            <button class="text-blue-600 hover:text-blue-700 font-medium">-->
-<!--                + Add Event-->
-<!--            </button>-->
-<!--        </div>-->
-<!--    </div>-->
-<!--</div>-->
-
-<!--- Old panel --->
-
-<!--        <div class="bg-[#2a2f3e] rounded-lg border border-gray-700  text-white font-sans">-->
-<!--            &lt;!&ndash; Panel Header &ndash;&gt;-->
-<!--            <div class="p-4 border-b border-gray-700">-->
-<!--                <div class="flex items-center justify-between">-->
-<!--                    <div>-->
-<!--                        <h3 class="text-lg font-semibold">Today's Schedule</h3>-->
-<!--                        <p class="text-sm text-gray-400">Tuesday, January 9, 2024</p>-->
-<!--                    </div>-->
-<!--                    <div class="flex items-center space-x-2">-->
-<!--                        <button class="p-1 hover:bg-[#2d3748] rounded">-->
-<!--                            <span class="text-sm">←</span>-->
-<!--                        </button>-->
-<!--                        <button class="p-1 hover:bg-[#2d3748] rounded">-->
-<!--                            <span class="text-sm">→</span>-->
-<!--                        </button>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-
-<!--            &lt;!&ndash; Time Slots &ndash;&gt;-->
-<!--            <div class="max-h-80 overflow-y-auto">-->
-<!--                &lt;!&ndash; 8:00 AM &ndash;&gt;-->
-<!--                <div class="flex border-b border-gray-700 h-12">-->
-<!--                    <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-700">-->
-<!--                        8:00-->
-<!--                    </div>-->
-<!--                    <div class="flex-1 p-2">-->
-<!--                        &lt;!&ndash; Empty slot &ndash;&gt;-->
-<!--                    </div>-->
-<!--                </div>-->
-
-<!--                &lt;!&ndash; 9:00 AM &ndash;&gt;-->
-<!--                <div class="flex border-b border-gray-700 h-12">-->
-<!--                    <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-700">-->
-<!--                        9:00-->
-<!--                    </div>-->
-<!--                    <div class="flex-1 p-2">-->
-<!--                        <div class="bg-[#48bb78]/20 border-l-2 border-[#48bb78] px-2 py-1 h-full flex items-center">-->
-<!--                            <div>-->
-<!--                                <div class="text-xs font-medium text-[#48bb78]">Daily Standup</div>-->
-<!--                                <div class="text-xs text-gray-400">Team Alpha</div>-->
-<!--                            </div>-->
-<!--                            <div>-->
-<!--                                <div class="text-xs font-medium text-[#48bb78]">Daily Standup</div>-->
-<!--                                <div class="text-xs text-gray-400">Team Alpha</div>-->
-<!--                            </div>-->
-<!--                            <div>-->
-<!--                                <div class="text-xs font-medium text-[#48bb78]">Daily Standup</div>-->
-<!--                                <div class="text-xs text-gray-400">Team Alpha</div>-->
-<!--                            </div>-->
-<!--                            <div>-->
-<!--                                <div class="text-xs font-medium text-[#48bb78]">Daily Standup</div>-->
-<!--                                <div class="text-xs text-gray-400">Team Alpha</div>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-
-<!--                &lt;!&ndash; 10:00 AM &ndash;&gt;-->
-<!--                <div class="flex border-b border-gray-700 h-12">-->
-<!--                    <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-700">-->
-<!--                        10:00-->
-<!--                    </div>-->
-<!--                    <div class="flex-1 p-2">-->
-<!--                        <div class="bg-[#9f7aea]/20 border-l-2 border-[#9f7aea] px-2 py-1 h-full flex items-center">-->
-<!--                            <div>-->
-<!--                                <div class="text-xs font-medium text-[#9f7aea]">Code Review</div>-->
-<!--                                <div class="text-xs text-gray-400">Login Feature</div>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-
-<!--                &lt;!&ndash; 11:00 AM &ndash;&gt;-->
-<!--                <div class="flex border-b border-gray-700 h-12">-->
-<!--                    <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-700">-->
-<!--                        11:00-->
-<!--                    </div>-->
-<!--                    <div class="flex-1 p-2">-->
-<!--                        &lt;!&ndash; Empty slot &ndash;&gt;-->
-<!--                    </div>-->
-<!--                </div>-->
-
-<!--                &lt;!&ndash; 12:00 PM &ndash;&gt;-->
-<!--                <div class="flex border-b border-gray-700 h-12">-->
-<!--                    <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-700">-->
-<!--                        12:00-->
-<!--                    </div>-->
-<!--                    <div class="flex-1 p-2">-->
-<!--                        <div class="bg-gray-600 bg-opacity-20 border-l-2 border-gray-500 px-2 py-1 h-full flex items-center">-->
-<!--                            <div>-->
-<!--                                <div class="text-xs font-medium text-gray-300">Lunch Break</div>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-
-<!--                &lt;!&ndash; 1:00 PM &ndash;&gt;-->
-<!--                <div class="flex border-b border-gray-700 h-12">-->
-<!--                    <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-700">-->
-<!--                        1:00-->
-<!--                    </div>-->
-<!--                    <div class="flex-1 p-2">-->
-<!--                        &lt;!&ndash; Empty slot &ndash;&gt;-->
-<!--                    </div>-->
-<!--                </div>-->
-
-<!--                &lt;!&ndash; 2:00 PM &ndash;&gt;-->
-<!--                <div class="flex border-b border-gray-700 h-12 bg-[#2d3748] bg-opacity-10">-->
-<!--                    <div class="w-16 p-2 text-xs text-[#4299e1] flex items-center border-r border-gray-700">-->
-<!--                        2:00-->
-<!--                    </div>-->
-<!--                    <div class="flex-1 p-2">-->
-<!--                        <div class="bg-[#48bb78]/30 border-l-2 border-[#48bb78] px-2 py-1 h-full flex items-center">-->
-<!--                            <div class="flex items-center justify-between w-full">-->
-<!--                                <div>-->
-<!--                                    <div class="text-xs font-medium text-[#48bb78]">All Hands Meeting</div>-->
-<!--                                    <div class="text-xs text-gray-400">Conference Room A</div>-->
-<!--                                </div>-->
-<!--                                <div class="w-2 h-2 bg-[#48bb78] rounded-full animate-pulse"></div>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-
-<!--                &lt;!&ndash; 3:00 PM &ndash;&gt;-->
-<!--                <div class="flex border-b border-gray-700 h-12">-->
-<!--                    <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-700">-->
-<!--                        3:00-->
-<!--                    </div>-->
-<!--                    <div class="flex-1 p-2">-->
-<!--                        &lt;!&ndash; Empty slot &ndash;&gt;-->
-<!--                    </div>-->
-<!--                </div>-->
-
-<!--                &lt;!&ndash; 4:00 PM &ndash;&gt;-->
-<!--                <div class="flex border-b border-gray-700 h-12">-->
-<!--                    <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-700">-->
-<!--                        4:00-->
-<!--                    </div>-->
-<!--                    <div class="flex-1 p-2">-->
-<!--                        <div class="bg-[#ed8936]/20 bg-opacity-20 border-l-2 border-[#ed8936] px-2 py-1 h-full flex items-center">-->
-<!--                            <div>-->
-<!--                                <div class="text-xs font-medium text-[#ed8936]">Client Call</div>-->
-<!--                                <div class="text-xs text-gray-400">Project Update</div>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
-
-<!--                &lt;!&ndash; 5:00 PM &ndash;&gt;-->
-<!--                <div class="flex border-b border-gray-700 h-12">-->
-<!--                    <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-700">-->
-<!--                        5:00-->
-<!--                    </div>-->
-<!--                    <div class="flex-1 p-2">-->
-<!--                        &lt;!&ndash; Empty slot &ndash;&gt;-->
-<!--                    </div>-->
-<!--                </div>-->
-
-<!--                &lt;!&ndash; 6:00 PM &ndash;&gt;-->
-<!--                <div class="flex h-12">-->
-<!--                    <div class="w-16 p-2 text-xs text-gray-400 flex items-center border-r border-gray-700">-->
-<!--                        6:00-->
-<!--                    </div>-->
-<!--                    <div class="flex-1 p-2">-->
-<!--                        &lt;!&ndash; Empty slot &ndash;&gt;-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-
-<!--            &lt;!&ndash; Panel Footer &ndash;&gt;-->
-<!--            <div class="p-3 border-t border-gray-700 bg-[#2d3748] bg-opacity-20">-->
-<!--                <div class="flex items-center justify-between text-xs">-->
-<!--                    <div class="flex items-center space-x-4">-->
-<!--                        <div class="flex items-center space-x-1">-->
-<!--                            <div class="w-2 h-2 bg-[#48bb78] rounded-full"></div>-->
-<!--                            <span class="text-gray-400">4 meetings</span>-->
-<!--                        </div>-->
-<!--                        <div class="flex items-center space-x-1">-->
-<!--                            <div class="w-2 h-2 bg-[#ed8936] rounded-full"></div>-->
-<!--                            <span class="text-gray-400">1 call</span>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                    <button class="text-[#4299e1] hover:text-blue-300 font-medium">-->
-<!--                        + Add Event-->
-<!--                    </button>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </div>-->
-
-
-
-
-
-
