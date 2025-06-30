@@ -107,6 +107,15 @@ pub fn initialize_emit_registries(
             last_sent_tick: Default::default(),
         },
     };
+
+    let working_hours_emitter = SnapshotCollectionEmitter {
+        map: Arc::clone(&main_snapshot_state.working_hours),
+        config: SnapshotEmitterConfig {
+            frequency: ExportFrequency::EveryNTicks(8),
+            event_name: SnapshotEvent::MonthlyAvailability,
+            last_sent_tick: Default::default(),
+        },
+    };
     snapshot_registry.register(company_snapshots_emitter);
     snapshot_registry.register(game_speed_snapshots_emitter);
     snapshot_registry.register(person_snapshots_emitter);
@@ -114,6 +123,7 @@ pub fn initialize_emit_registries(
     snapshot_registry.register(debug_display_snapshots_emitter);
     snapshot_registry.register(stress_snapshots_emitter);
     snapshot_registry.register(stress_history_snapshots_emitter);
+    snapshot_registry.register(working_hours_emitter);
 
 
     snapshot_registry
