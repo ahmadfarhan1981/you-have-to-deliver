@@ -9,6 +9,8 @@ jobs:
   cargo-test:
     runs-on: ubuntu-latest
     steps:
+      - name: Install libglib2.0-dev
+        run: sudo apt-get update && sudo apt-get install -y libglib2.0-dev
       - uses: actions/checkout@v4
       - uses: actions-rs/toolchain@v1
         with:
