@@ -247,6 +247,10 @@ impl<T> Clone for SnapshotField<T> {
     }
 }
 
+// NOTE: SnapshotCollection is currently unused.
+// It was prototyped for symmetry with SnapshotField, but direct DashMap use is more practical.
+// Keeping it around in case future abstractions or save/load tools benefit from a wrapper.
+
 pub struct SnapshotCollection<K, V>
 where
     K: Eq + Hash + Clone,

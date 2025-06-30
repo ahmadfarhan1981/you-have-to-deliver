@@ -23,7 +23,6 @@ pub struct SnapshotState {
     pub debug_display: Arc<DashMap<u32, Vec<DebugDisplayEntrySnapshot>>>,
     pub stress_level: Arc<DashMap<u32, StressSnapshot>>,
     pub stress_history: Arc<DashMap<u32, StressHistorySnapshot>>,
-    pub monthly_availability: Arc<DashMap<u32, Vec<MonthlyAvailability>>>,
 
 }
 
