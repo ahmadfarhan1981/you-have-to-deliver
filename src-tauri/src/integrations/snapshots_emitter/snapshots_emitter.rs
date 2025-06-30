@@ -1,4 +1,3 @@
-use crate::integrations::snapshots::snapshots::SnapshotField;
 use crate::integrations::ui::AppContext;
 use crate::sim::resources::global::TickCounter;
 use dashmap::mapref::one::Ref;
@@ -11,6 +10,7 @@ use std::sync::Arc;
 use tauri::{AppHandle, Emitter};
 use tracing::field::debug;
 use tracing::{debug, info, instrument, trace};
+use arc_swap::ArcSwap;
 
 pub trait SnapshotEmitter {
     fn maybe_emit(&self, tick: u64, last_update_map:  &DashMap<&'static str, u64>, app: &AppHandle) -> bool;
@@ -193,6 +193,8 @@ pub enum SnapshotEvent {
     Company,
     Stress,
     StressHistory,
+    MonthlyAvailability,
+    CalendarEvents
 }
 
 impl SnapshotEvent {
@@ -205,6 +207,8 @@ impl SnapshotEvent {
             SnapshotEvent::Company => "company_snapshot",
             SnapshotEvent::Stress => "stress_snapshot",
             SnapshotEvent::StressHistory => "stress_history_snapshot",
+            SnapshotEvent::MonthlyAvailability => "monthly_availability_snapshot",
+            SnapshotEvent::CalendarEvents => "calendar_events_snapshot"
         }
     }
 }
@@ -219,5 +223,44 @@ impl From<SnapshotEvent> for &'static str {
 impl std::fmt::Display for SnapshotEvent {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.as_str())
+    }
+}
+
+#[derive(Debug, Default)]
+pub struct SnapshotField<T> {
+    pub value: ArcSwap<Arc<T>>,
+}
+
+impl<T> From<T> for SnapshotField<T> {
+    fn from(value: T) -> Self {
+        Self {
+            value: ArcSwap::from_pointee(value.into()),
+        }
+    }
+}
+
+impl<T> Clone for SnapshotField<T> {
+    fn clone(&self) -> Self {
+        Self {
+            value: ArcSwap::from(self.value.load_full()),
+        }
+    }
+}
+
+pub struct SnapshotCollection<K, V>
+where
+    K: Eq + Hash + Clone,
+    V: Serialize + Clone,
+{
+    pub map: DashMap<K, V>,
+}
+
+impl<K, V> From<DashMap<K, V>> for SnapshotCollection<K, V>
+where
+    K: Eq + Hash + Clone,
+    V: Serialize + Clone,
+{
+    fn from(map: DashMap<K, V>) -> Self {
+        Self { map }
     }
 }
