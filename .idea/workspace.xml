@@ -43,9 +43,9 @@
         <option value="Tabs" />
         <option value="TabComponent" />
         <option value="StressPanel" />
-        <option value="TypeScript File" />
         <option value="StressHistoryPanel" />
         <option value="Rust File" />
+        <option value="TypeScript File" />
       </list>
     </option>
   </component>
@@ -63,6 +63,7 @@
   </component>
   <component name="ProblemsViewState">
     <option name="groupByToolId" value="true" />
+    <option name="selectedTabId" value="ProjectErrors" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
@@ -175,7 +176,11 @@
       <workItem from="1751011279452" duration="4370000" />
       <workItem from="1751126217121" duration="4623000" />
       <workItem from="1751130867418" duration="1225000" />
-      <workItem from="1751194417328" duration="1231000" />
+      <workItem from="1751194417328" duration="1878000" />
+      <workItem from="1751212949405" duration="4686000" />
+      <workItem from="1751239112375" duration="90000" />
+      <workItem from="1751239231940" duration="801000" />
+      <workItem from="1751240041125" duration="2926000" />
     </task>
     <task id="LOCAL-00001" summary="basic action">
       <option name="closed" value="true" />
@@ -193,7 +198,23 @@
       <option name="project" value="LOCAL" />
       <updated>1751130765187</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="calendar event stuff">
+      <option name="closed" value="true" />
+      <created>1751195993576</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1751195993576</updated>
+    </task>
+    <task id="LOCAL-00004" summary="calendar event stuff">
+      <option name="closed" value="true" />
+      <created>1751219174994</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1751219174994</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -214,6 +235,11 @@
           <url>file://$PROJECT_DIR$/src-tauri/src/action_queues/team_manager.rs</url>
           <line>60</line>
           <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src-tauri/src/sim/calendar/availability.rs</url>
+          <line>92</line>
+          <option name="timeStamp" value="5" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/src/lib/components/WeekCalendarPanel2.svelte</url>
