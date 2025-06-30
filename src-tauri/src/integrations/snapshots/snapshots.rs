@@ -6,9 +6,9 @@ use crate::integrations::snapshots::stress::StressSnapshot;
 use crate::integrations::snapshots::stress_history::StressHistorySnapshot;
 use crate::integrations::snapshots::team::TeamSnapshot;
 use crate::integrations::snapshots::tick::TickSnapshot;
-use arc_swap::ArcSwap;
+use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotField;
+use crate::sim::calendar::availability::MonthlyAvailability;
 use dashmap::DashMap;
-use serde::Serialize;
 use std::hash::Hash;
 use std::sync::Arc;
 
@@ -23,6 +23,7 @@ pub struct SnapshotState {
     pub debug_display: Arc<DashMap<u32, Vec<DebugDisplayEntrySnapshot>>>,
     pub stress_level: Arc<DashMap<u32, StressSnapshot>>,
     pub stress_history: Arc<DashMap<u32, StressHistorySnapshot>>,
+    pub monthly_availability: Arc<DashMap<u32, Vec<MonthlyAvailability>>>,
 
 }
 
@@ -48,43 +49,6 @@ impl Default for SnapshotState {
             stress_level: Arc::new(DashMap::<u32, StressSnapshot>::new()),
             stress_history: Arc::new(DashMap::<u32, StressHistorySnapshot>::new()),
         }
-    }
-}
-
-#[derive(Debug, Default)]
-pub struct SnapshotField<T> {
-    pub value: ArcSwap<Arc<T>>,
-}
-impl<T> From<T> for SnapshotField<T> {
-    fn from(value: T) -> Self {
-        Self {
-            value: ArcSwap::from_pointee(value.into()),
-        }
-    }
-}
-
-impl<T> Clone for SnapshotField<T> {
-    fn clone(&self) -> Self {
-        Self {
-            value: ArcSwap::from(self.value.load_full()),
-        }
-    }
-}
-
-pub struct SnapshotCollection<K, V>
-where
-    K: Eq + Hash + Clone,
-    V: Serialize + Clone,
-{
-    pub map: DashMap<K, V>,
-}
-impl<K, V> From<DashMap<K, V>> for SnapshotCollection<K, V>
-where
-    K: Eq + Hash + Clone,
-    V: Serialize + Clone,
-{
-    fn from(map: DashMap<K, V>) -> Self {
-        Self { map }
     }
 }
 

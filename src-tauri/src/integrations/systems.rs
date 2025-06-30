@@ -6,7 +6,9 @@ use crate::integrations::snapshots::snapshots::SnapshotState;
 use crate::integrations::snapshots::stress::StressSnapshot;
 use crate::integrations::snapshots::stress_history::StressHistorySnapshot;
 use crate::integrations::snapshots::team::TeamSnapshot;
-use crate::integrations::snapshots_emitter::snapshots_emitter::{SnapshotEmitRegistry, SnapshotEvent, SnapshotFieldEmitter};
+use crate::integrations::snapshots_emitter::snapshots_emitter::{
+    SnapshotEmitRegistry, SnapshotEvent, SnapshotFieldEmitter,
+};
 use crate::sim::action::action::ActionIntent;
 use crate::sim::company::company::{Company, PlayerControlled};
 use crate::sim::game_speed::components::GameSpeedManager;
@@ -32,6 +34,7 @@ use std::sync::Arc;
 use tracing::field::debug;
 use tracing::{debug, info, warn};
 use tracing_subscriber::registry;
+use crate::sim::calendar::availability::MonthlyAvailability;
 
 #[system]
 pub fn push_game_speed_snapshots(
@@ -81,7 +84,12 @@ pub fn push_company_to_integration(
     // 2. Clone the data *inside* the Arc to get a mutable CompanySnapshot.
     //    This `mutable_snapshot_data` will be compared and potentially updated by `replace_if_changed`.
     let mut mutable_snapshot_data = (**current_arc_snapshot).clone();
-    info!("{:?} -- Snaphot: {:?} data: {:?}", SnapshotEvent::Company.as_str(), mutable_snapshot_data, company);
+    info!(
+        "{:?} -- Snaphot: {:?} data: {:?}",
+        SnapshotEvent::Company.as_str(),
+        mutable_snapshot_data,
+        company
+    );
     // 3. Call `replace_if_changed`.
     //    - `&mut mutable_snapshot_data`: the snapshot to potentially update.
     //    - `company.clone()`: creates an owned `Company` instance from the `&Company` reference.
@@ -89,7 +97,6 @@ pub fn push_company_to_integration(
     //      `CompanySnapshot` has `From<Company>`.
     let changed =
         replace_if_changed::<CompanySnapshot, Company>(&mut mutable_snapshot_data, &company);
-
 
     if changed {
         // If `changed` is true, `mutable_snapshot_data` now holds the new, updated snapshot.
@@ -99,7 +106,7 @@ pub fn push_company_to_integration(
             .company
             .value
             .store(Arc::new(Arc::new(mutable_snapshot_data)));
-        emit_registry .mark_data_updated(SnapshotEvent::Company, tick_counter.value());
+        emit_registry.mark_data_updated(SnapshotEvent::Company, tick_counter.value());
         debug!("Company '{}' snapshot updated.", company.name);
     } else {
         debug!("Company '{}' snapshot unchanged.", company.name);
@@ -144,16 +151,13 @@ pub fn push_intents_and_goals_to_integration(
     entity: &Entity,
     person: &Person,
     action: Option<&ActionIntent>,
-
-){
+) {
     let registry = &app_state.persons;
     match registry.entry(person.person_id.0) {
-        Entry::Occupied(mut existing) => {
-            match action {
-                None => {}
-                Some(_) => {}
-            }
-        }
+        Entry::Occupied(mut existing) => match action {
+            None => {}
+            Some(_) => {}
+        },
         Entry::Vacant(vacant) => {
             warn!(
                 "Unexpected. No entry in person registry for {}",
@@ -162,10 +166,6 @@ pub fn push_intents_and_goals_to_integration(
         }
     };
 }
-
-
-
-
 
 #[system(for_each)]
 pub fn push_persons_to_integration(
@@ -182,7 +182,6 @@ pub fn push_persons_to_integration(
 ) {
     let current_tick = tick_counter.value();
     let registry = &app_state.persons;
-
 
     let skillset_snapshot = SkillSetSnapshot::from(skill_set);
     match registry.entry(person.person_id.0) {
@@ -262,18 +261,20 @@ pub fn push_teams_to_integration(
     cmd.remove_component::<Dirty>(*entity);
 }
 
-
-
 #[system(for_each)]
 pub fn push_debug_displays_to_integration(
     #[resource] app_state: &Arc<SnapshotState>,
-    person :&Person,
+    person: &Person,
     debug_display_component: &DebugDisplayComponent,
 ) {
     // let current_tick = tick_counter.value();
     let debug_display_registry = &app_state.debug_display;
 
-    let mut entries: Vec<DebugDisplayEntrySnapshot> = debug_display_component.entries.iter().map(|(key, val)| { DebugDisplayEntrySnapshot::new(key.clone(), val.clone())}).collect();
+    let mut entries: Vec<DebugDisplayEntrySnapshot> = debug_display_component
+        .entries
+        .iter()
+        .map(|(key, val)| DebugDisplayEntrySnapshot::new(key.clone(), val.clone()))
+        .collect();
     entries.sort_by(|a, b| a.label.cmp(&b.label));
     // info!("{:?}", entries);
 
@@ -281,20 +282,16 @@ pub fn push_debug_displays_to_integration(
         Entry::Occupied(mut existing) => {
             let existing_debug_displays = existing.get_mut();
             *existing_debug_displays = entries;
-
         }
         Entry::Vacant(vacant) => {
-            vacant.insert( entries );
+            vacant.insert(entries);
         }
     };
 
     // print_all_debug_displays(&app_state.debug_display);
-
-
-
-
-
 }
+
+
 
 pub fn print_all_debug_displays(registry: &DashMap<u32, Vec<DebugDisplayEntrySnapshot>>) {
     if registry.is_empty() {
@@ -322,24 +319,23 @@ pub fn print_all_debug_displays(registry: &DashMap<u32, Vec<DebugDisplayEntrySna
 pub fn push_stress_level_to_integration(
     #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] app_state: &Arc<SnapshotState>,
-    person :&Person,
+    person: &Person,
     stress_level: &StressLevel,
 ) {
-    
     // TODO dirty check
     let current_tick = tick_counter.value();
     let person_id = person.person_id.0;
-    
+
     let stress_level_snapshots = &app_state.stress_level;
 
     match stress_level_snapshots.entry(person_id) {
         Entry::Occupied(mut existing) => {
-            let mut  existing_snapshot = existing.get_mut();
+            let mut existing_snapshot = existing.get_mut();
             if *existing_snapshot != stress_level {
-                *existing_snapshot =StressSnapshot {
-                                        person_id,
-                                        ..StressSnapshot::from(stress_level)
-                                    }; 
+                *existing_snapshot = StressSnapshot {
+                    person_id,
+                    ..StressSnapshot::from(stress_level)
+                };
             }
         }
         Entry::Vacant(vacant) => {
@@ -350,7 +346,6 @@ pub fn push_stress_level_to_integration(
             vacant.insert(s);
         }
     };
-
 }
 
 #[system(for_each)]
@@ -358,10 +353,12 @@ pub fn push_stress_history_to_integration(
     #[resource] tick_counter: &Arc<TickCounter>,
     #[resource] app_state: &Arc<SnapshotState>,
     #[resource] emit_registry: &Arc<SnapshotEmitRegistry>,
-    person :&Person,
+    person: &Person,
     stress_level: &StressLevel,
 ) {
-    if tick_counter.current_date().quarter_tick != 1 {return}
+    if tick_counter.current_date().quarter_tick != 1 {
+        return;
+    }
 
     // TODO dirty check
     let current_tick = tick_counter.value();
@@ -371,9 +368,9 @@ pub fn push_stress_history_to_integration(
 
     match stress_history_snapshots.entry(person_id) {
         Entry::Occupied(mut existing) => {
-            let mut  existing_snapshot = existing.get_mut();
+            let mut existing_snapshot = existing.get_mut();
             if *existing_snapshot != stress_level {
-                *existing_snapshot =StressHistorySnapshot {
+                *existing_snapshot = StressHistorySnapshot {
                     person_id,
                     ..StressHistorySnapshot::from(stress_level)
                 };
