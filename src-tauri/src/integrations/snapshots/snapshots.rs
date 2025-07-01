@@ -6,6 +6,8 @@ use crate::integrations::snapshots::stress::StressSnapshot;
 use crate::integrations::snapshots::stress_history::StressHistorySnapshot;
 use crate::integrations::snapshots::team::TeamSnapshot;
 use crate::integrations::snapshots::tick::TickSnapshot;
+use crate::integrations::snapshots::working_hours::WorkingHoursSnapshot;
+use std::vec::Vec;
 use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotField;
 use crate::sim::calendar::availability::MonthlyAvailability;
 use dashmap::DashMap;
@@ -23,6 +25,7 @@ pub struct SnapshotState {
     pub debug_display: Arc<DashMap<u32, Vec<DebugDisplayEntrySnapshot>>>,
     pub stress_level: Arc<DashMap<u32, StressSnapshot>>,
     pub stress_history: Arc<DashMap<u32, StressHistorySnapshot>>,
+    pub working_hours: Arc<DashMap<u32, WorkingHoursSnapshot>>,
 
 }
 
@@ -33,6 +36,7 @@ impl SnapshotState {
         self.debug_display.clear();
         self.stress_level.clear();
         self.stress_history.clear();
+        self.working_hours.clear();
     }
 }
 
@@ -47,6 +51,7 @@ impl Default for SnapshotState {
             debug_display: Arc::new(DashMap::<u32, Vec<DebugDisplayEntrySnapshot>>::new()),
             stress_level: Arc::new(DashMap::<u32, StressSnapshot>::new()),
             stress_history: Arc::new(DashMap::<u32, StressHistorySnapshot>::new()),
+            working_hours: Arc::new(DashMap::<u32, WorkingHoursSnapshot>::new()),
         }
     }
 }
