@@ -9,4 +9,5 @@ pub mod systems;
 pub mod utils;
 pub mod needs;
 pub mod morale;
+pub mod thoughts;
 
