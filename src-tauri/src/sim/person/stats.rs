@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::str::FromStr;
 use strum_macros::EnumIter;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, EnumIter, Serialize, Deserialize, Encode, Decode)]
 pub enum StatType {
     Judgement,
     Creativity,

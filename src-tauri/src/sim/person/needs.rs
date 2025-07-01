@@ -4,6 +4,12 @@ use bincode::{Decode, Encode};
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Hash, Encode, Decode)]
+pub enum NeedType {
+    Energy,
+    Hunger,
+}
+
 /// A wrapper for needs.
 /// Useful for passing around needs values. Not an ECS component.
 pub struct Needs{
