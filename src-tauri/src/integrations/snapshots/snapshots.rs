@@ -7,6 +7,7 @@ use crate::integrations::snapshots::stress_history::StressHistorySnapshot;
 use crate::integrations::snapshots::team::TeamSnapshot;
 use crate::integrations::snapshots::tick::TickSnapshot;
 use crate::integrations::snapshots::working_hours::WorkingHoursSnapshot;
+use std::vec::Vec;
 use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotField;
 use crate::sim::calendar::availability::MonthlyAvailability;
 use dashmap::DashMap;
