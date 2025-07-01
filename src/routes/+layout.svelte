@@ -22,6 +22,11 @@
         type StressHistorySnapshot,
         stressHistorySnapshots
     } from "$lib/stores/stressHistory";
+    import {
+        workingHoursEventName,
+        type WorkingHoursSnapshot,
+        workingHours
+    } from "$lib/stores/workingHours";
 
 
     let { children } = $props();
@@ -56,6 +61,10 @@
             stressHistorySnapshots.set(event.payload);
         });
 
+        const working_hours_unlisten = listen<WorkingHoursSnapshot[]>(workingHoursEventName, (event)=>{
+            workingHours.set(event.payload);
+        });
+
         const unlistenDebugDisplays = listen<AllPersonDebugDisplays>(personDebugSnapshotEventName, (event) => {
             personDebugDisplays.set(event.payload);
         });
@@ -70,6 +79,7 @@
             teams_unlisten.then(fn=>fn());
             stress_unlisten.then(fn=>fn());
             stress_history_unlisten.then(fn=>fn());
+            working_hours_unlisten.then(fn=>fn());
             unlistenDebugDisplays.then(fn => fn());
 
             cleanupTauriNotificationListeners();

@@ -5,6 +5,7 @@ use crate::integrations::snapshots::skills::SkillSetSnapshot;
 use crate::integrations::snapshots::snapshots::SnapshotState;
 use crate::integrations::snapshots::stress::StressSnapshot;
 use crate::integrations::snapshots::stress_history::StressHistorySnapshot;
+use crate::integrations::snapshots::working_hours::WorkingHoursSnapshot;
 use crate::integrations::snapshots::team::TeamSnapshot;
 use crate::integrations::snapshots_emitter::snapshots_emitter::{
     SnapshotEmitRegistry, SnapshotEvent, SnapshotFieldEmitter,
@@ -34,7 +35,7 @@ use std::sync::Arc;
 use tracing::field::debug;
 use tracing::{debug, info, warn};
 use tracing_subscriber::registry;
-use crate::sim::calendar::availability::MonthlyAvailability;
+use crate::sim::calendar::availability::{MonthlyAvailability, YearMonth, AvailabilityBitSet};
 
 #[system]
 pub fn push_game_speed_snapshots(
@@ -385,4 +386,32 @@ pub fn push_stress_history_to_integration(
         }
     };
     emit_registry.mark_data_updated(SnapshotEvent::StressHistory, current_tick);
+}
+
+#[system(for_each)]
+pub fn push_working_hours_to_integration(
+    #[resource] tick_counter: &Arc<TickCounter>,
+    #[resource] app_state: &Arc<SnapshotState>,
+    #[resource] emit_registry: &Arc<SnapshotEmitRegistry>,
+    person: &Person,
+    availability: &MonthlyAvailability,
+) {
+    let current_month = YearMonth::from(&tick_counter.current_date());
+    if let Some(snapshot) = WorkingHoursSnapshot::from_month(person.person_id.0, availability, current_month) {
+        let current_tick = tick_counter.value();
+        let map = &app_state.working_hours;
+        let changed = match map.entry(person.person_id.0) {
+            Entry::Occupied(mut occ) => {
+                if *occ.get() != snapshot {
+                    *occ.get_mut() = snapshot;
+                    true
+                } else { false }
+            }
+            Entry::Vacant(v) => { v.insert(snapshot); true }
+        };
+
+        if changed {
+            emit_registry.mark_data_updated(SnapshotEvent::MonthlyAvailability, current_tick);
+        }
+    }
 }
