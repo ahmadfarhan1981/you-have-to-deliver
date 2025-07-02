@@ -475,3 +475,118 @@ pub fn create_new_save_slot(
 
     Ok((final_folder_name, metadata)) // Return the actually used folder name
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::tempdir;
+
+    #[test]
+    fn ensure_db_handle_open_errors() {
+        let dir = tempdir().unwrap();
+        let saves_dir = Arc::new(SavesDirectory(dir.path().to_path_buf()));
+
+        // empty slot should error
+        let mut slot = SaveSlot {
+            slot_id: "empty".into(),
+            path: dir.path().join("empty"),
+            metadata: None,
+            is_empty: true,
+            handle: None,
+        };
+        let err = slot.ensure_db_handle_is_open(&saves_dir).unwrap_err();
+        assert!(matches!(err, SavesManagementError::EmptySaveSlotError));
+
+        // missing directory should return Io error
+        let mut slot = SaveSlot {
+            slot_id: "missing".into(),
+            path: dir.path().join("missing"),
+            metadata: None,
+            is_empty: false,
+            handle: None,
+        };
+        let err = slot.ensure_db_handle_is_open(&saves_dir).unwrap_err();
+        match err {
+            SavesManagementError::Io(e) =>
+                assert_eq!(e.kind(), std::io::ErrorKind::NotFound),
+            _ => panic!("unexpected error: {err:?}"),
+        }
+    }
+
+    #[test]
+    fn ensure_db_handle_open_success() {
+        let dir = tempdir().unwrap();
+        let saves_dir = SavesDirectory(dir.path().to_path_buf());
+        let (slot_id, _meta) = create_new_save_slot(&saves_dir, "slot", "Company").unwrap();
+        let mut slot = SaveSlot {
+            slot_id: slot_id.clone(),
+            path: dir.path().join(&slot_id),
+            metadata: None,
+            is_empty: false,
+            handle: None,
+        };
+        slot.ensure_db_handle_is_open(&Arc::new(saves_dir)).unwrap();
+        assert!(slot.handle.is_some());
+    }
+
+    #[test]
+    fn load_slot_success() {
+        let dir = tempdir().unwrap();
+        let saves_dir = SavesDirectory(dir.path().to_path_buf());
+        let (slot_id, meta) = create_new_save_slot(&saves_dir, "slot", "Company").unwrap();
+        let slot = SaveSlot::load(slot_id.clone(), Arc::new(saves_dir)).unwrap();
+        assert_eq!(slot.slot_id, slot_id);
+        assert!(slot.handle.is_some());
+        assert_eq!(slot.metadata.unwrap().name, meta.name);
+        assert!(!slot.is_empty);
+    }
+
+    #[test]
+    fn load_slot_missing_dir() {
+        let dir = tempdir().unwrap();
+        let saves_dir = SavesDirectory(dir.path().to_path_buf());
+        let err = SaveSlot::load("missing".into(), Arc::new(saves_dir)).unwrap_err();
+        match err {
+            SavesManagementError::Io(e) =>
+                assert_eq!(e.kind(), std::io::ErrorKind::NotFound),
+            _ => panic!("unexpected error: {err:?}"),
+        }
+    }
+
+    #[test]
+    fn load_slot_corrupt_metadata() {
+        use std::fs;
+
+        let dir = tempdir().unwrap();
+        let saves_dir = SavesDirectory(dir.path().to_path_buf());
+        let slot_path = dir.path().join("slot1");
+        fs::create_dir_all(&slot_path).unwrap();
+        let db_path = slot_path.join(GAMESTATE_DB_FILENAME);
+        let db = sled::Config::default()
+            .path(&db_path)
+            .cache_capacity(1_000_000)
+            .flush_every_ms(None)
+            .open()
+            .unwrap();
+        db.insert(db_keys::METADATA, b"bad-data".to_vec()).unwrap();
+        db.flush().unwrap();
+        drop(db);
+
+        let err = SaveSlot::load("slot1".into(), Arc::new(saves_dir)).unwrap_err();
+        match err {
+            SavesManagementError::Bincode(BincodeError::Decode(_)) => {},
+            _ => panic!("unexpected error: {err:?}"),
+        }
+    }
+
+    #[test]
+    fn save_entry_roundtrip() {
+        let dir = tempdir().unwrap();
+        let saves_dir = SavesDirectory(dir.path().to_path_buf());
+        let (slot_id, _meta) = create_new_save_slot(&saves_dir, "slot", "Company").unwrap();
+        let mut slot = SaveSlot::load(slot_id, Arc::new(saves_dir)).unwrap();
+        slot.save_entry("value", &123u32).unwrap();
+        let loaded: u32 = slot.load_entry("value").unwrap();
+        assert_eq!(loaded, 123u32);
+    }
+}
