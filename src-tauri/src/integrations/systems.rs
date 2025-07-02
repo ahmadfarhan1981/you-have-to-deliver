@@ -129,7 +129,7 @@ pub fn push_needs_to_integration(
     hunger: &Hunger,
 ) {
     let registry = &app_state.persons;
-    match registry.entry(person.person_id.0) {
+    match registry.entry(person.person_id) {
         Entry::Occupied(mut existing) => {
             let existing_person = existing.get_mut();
 
@@ -154,7 +154,7 @@ pub fn push_intents_and_goals_to_integration(
     action: Option<&ActionIntent>,
 ) {
     let registry = &app_state.persons;
-    match registry.entry(person.person_id.0) {
+    match registry.entry(person.person_id) {
         Entry::Occupied(mut existing) => match action {
             None => {}
             Some(_) => {}
@@ -185,7 +185,7 @@ pub fn push_persons_to_integration(
     let registry = &app_state.persons;
 
     let skillset_snapshot = SkillSetSnapshot::from(skill_set);
-    match registry.entry(person.person_id.0) {
+    match registry.entry(person.person_id) {
         Entry::Occupied(mut existing) => {
             let existing_person = existing.get_mut();
             let mut changed = false;
@@ -240,7 +240,7 @@ pub fn push_teams_to_integration(
     let team_snapshots = &app_state.teams;
 
     info!("Team '{}' snapshot updated.", team.name);
-    match team_snapshots.entry(team.team_id.0) {
+    match team_snapshots.entry(team.team_id) {
         Entry::Occupied(mut existing) => {
             let mut existing_team = existing.get_mut();
             let mut changed = false;
@@ -279,7 +279,7 @@ pub fn push_debug_displays_to_integration(
     entries.sort_by(|a, b| a.label.cmp(&b.label));
     // info!("{:?}", entries);
 
-    match debug_display_registry.entry(person.person_id.0) {
+    match debug_display_registry.entry(person.person_id) {
         Entry::Occupied(mut existing) => {
             let existing_debug_displays = existing.get_mut();
             *existing_debug_displays = entries;
@@ -294,7 +294,7 @@ pub fn push_debug_displays_to_integration(
 
 
 
-pub fn print_all_debug_displays(registry: &DashMap<u32, Vec<DebugDisplayEntrySnapshot>>) {
+pub fn print_all_debug_displays(registry: &DashMap<PersonId, Vec<DebugDisplayEntrySnapshot>>) {
     if registry.is_empty() {
         info!("Debug display registry is empty.");
         return;
@@ -305,7 +305,7 @@ pub fn print_all_debug_displays(registry: &DashMap<u32, Vec<DebugDisplayEntrySna
         let person_id = entry.key();
         let display_entries = entry.value();
 
-        info!("Person ID: {}", person_id);
+        info!("Person ID: {}", person_id.0);
         if display_entries.is_empty() {
             info!("  No debug entries for this person.");
         } else {
@@ -325,7 +325,7 @@ pub fn push_stress_level_to_integration(
 ) {
     // TODO dirty check
     let current_tick = tick_counter.value();
-    let person_id = person.person_id.0;
+    let person_id = person.person_id;
 
     let stress_level_snapshots = &app_state.stress_level;
 
@@ -334,14 +334,14 @@ pub fn push_stress_level_to_integration(
             let mut existing_snapshot = existing.get_mut();
             if *existing_snapshot != stress_level {
                 *existing_snapshot = StressSnapshot {
-                    person_id,
+                    person_id: person_id.0,
                     ..StressSnapshot::from(stress_level)
                 };
             }
         }
         Entry::Vacant(vacant) => {
             let s = StressSnapshot {
-                person_id,
+                person_id: person_id.0,
                 ..StressSnapshot::from(stress_level)
             };
             vacant.insert(s);
@@ -363,7 +363,7 @@ pub fn push_stress_history_to_integration(
 
     // TODO dirty check
     let current_tick = tick_counter.value();
-    let person_id = person.person_id.0;
+    let person_id = person.person_id;
 
     let stress_history_snapshots = &app_state.stress_history;
 
@@ -372,14 +372,14 @@ pub fn push_stress_history_to_integration(
             let mut existing_snapshot = existing.get_mut();
             if *existing_snapshot != stress_level {
                 *existing_snapshot = StressHistorySnapshot {
-                    person_id,
+                    person_id: person_id.0,
                     ..StressHistorySnapshot::from(stress_level)
                 };
             }
         }
         Entry::Vacant(vacant) => {
             let s = StressHistorySnapshot {
-                person_id,
+                person_id: person_id.0,
                 ..StressHistorySnapshot::from(stress_level)
             };
             vacant.insert(s);
@@ -400,7 +400,7 @@ pub fn push_working_hours_to_integration(
     if let Some(snapshot) = WorkingHoursSnapshot::from_month(person.person_id.0, availability, current_month) {
         let current_tick = tick_counter.value();
         let map = &app_state.working_hours;
-        let changed = match map.entry(person.person_id.0) {
+        let changed = match map.entry(person.person_id) {
             Entry::Occupied(mut occ) => {
                 if *occ.get() != snapshot {
                     *occ.get_mut() = snapshot;
