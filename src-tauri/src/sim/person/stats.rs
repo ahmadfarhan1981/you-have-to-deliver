@@ -406,3 +406,112 @@ impl Stats {
             .unwrap_or(std::cmp::Ordering::Equal)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_config() -> StatsConfig {
+        StatsConfig {
+            judgement: 1,
+            creativity: 2,
+            systems: 3,
+            precision: 4,
+            focus: 5,
+            discipline: 6,
+            empathy: 7,
+            communication: 8,
+            resilience: 9,
+            adaptability: 10,
+        }
+    }
+
+    fn uniform_config(val: u16) -> StatsConfig {
+        StatsConfig {
+            judgement: val,
+            creativity: val,
+            systems: val,
+            precision: val,
+            focus: val,
+            discipline: val,
+            empathy: val,
+            communication: val,
+            resilience: val,
+            adaptability: val,
+        }
+    }
+
+    #[test]
+    fn total_counts_all_stats() {
+        let stats: Stats = sample_config().into();
+        assert_eq!(stats.total(), 55);
+    }
+
+    #[test]
+    fn set_stat_changes_value_and_total() {
+        let mut stats: Stats = sample_config().into();
+        stats.set_stat(StatType::Judgement, 5);
+        assert_eq!(stats.get_stat(StatType::Judgement), 5);
+        // original total was 55, we increased judgement by 4
+        assert_eq!(stats.total(), 59);
+    }
+
+    #[test]
+    fn adjust_many_modifies_multiple_fields() {
+        let mut stats: Stats = uniform_config(10).into();
+        stats.adjust_many(&[
+            (StatType::Judgement, 1.0),
+            (StatType::Creativity, -2.0),
+        ]);
+        assert_eq!(stats.get_stat(StatType::Judgement), 11);
+        assert_eq!(stats.get_stat(StatType::Creativity), 8);
+    }
+
+    #[test]
+    fn normalize_to_reaches_target_total() {
+        let mut stats: Stats = StatsConfig::default().into();
+        stats.normalize_to(10);
+        assert!(stats.total() >= 10);
+    }
+
+    #[test]
+    fn lowest_stat_returns_minimum() {
+        let stats: Stats = sample_config().into();
+        assert_eq!(stats.lowest_stat(), StatType::Judgement);
+    }
+
+    #[test]
+    fn stat_filter_respects_comparator() {
+        let stats: Stats = sample_config().into();
+        let result = stats.stat_filter(5, |v, t| v >= t);
+        assert_eq!(
+            result,
+            vec![
+                StatType::Focus,
+                StatType::Discipline,
+                StatType::Empathy,
+                StatType::Communication,
+                StatType::Resilience,
+                StatType::Adaptability,
+            ]
+        );
+    }
+
+    #[test]
+    fn highest_group_returns_expected_group() {
+        let config = StatsConfig {
+            judgement: 1,
+            creativity: 2,
+            systems: 10,
+            precision: 10,
+            focus: 6,
+            discipline: 7,
+            empathy: 2,
+            communication: 2,
+            resilience: 3,
+            adaptability: 3,
+        };
+        let stats: Stats = config.into();
+        assert_eq!(stats.highest_group(), StatGroup::Perception);
+    }
+}
