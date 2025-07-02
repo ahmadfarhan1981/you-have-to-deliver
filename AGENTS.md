@@ -1,8 +1,8 @@
 # AGENTS.md
 
 ## Instructions for ChatGPT / Codex agent
-- Always run `git lfs install` and `git lfs pull` from the repo root before starting any task.
-- Use the `GITHUB_TOKEN` environment variable for authentication:
+- Always run `git lfs install` and `git lfs pull` from the repo root before starting any task
+- Set the remote url and use the `GITHUB_TOKEN` environment variable for authentication:
   ```bash
   git remote set-url origin https://${GITHUB_TOKEN}@github.com/ahmadfarhan1981/you-have-to-deliver.git
   git lfs pull origin
