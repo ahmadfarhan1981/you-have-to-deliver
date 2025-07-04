@@ -4,7 +4,7 @@ use crate::action_queues::team_manager::{handle_team_assignment_queue_system, ha
 use crate::action_queues::thought_manager::handle_thought_command_queue_system;
 use crate::integrations::queues::{handle_dispatch_queue_system, handle_sim_manager_dispatch_queue_system};
 use crate::integrations::snapshots_emitter::snapshots_emitter::run_snapshot_emitters_system;
-use crate::integrations::systems::{push_company_to_integration_system, push_debug_displays_to_integration_system, push_game_speed_snapshots_system, push_needs_to_integration_system, push_persons_to_integration_system, push_stress_history_to_integration_system, push_stress_level_to_integration_system, push_teams_to_integration_system, tick_needs_system};
+use crate::integrations::systems::{push_company_to_integration_system, push_debug_displays_to_integration_system, push_game_speed_snapshots_system, push_needs_to_integration_system, push_persons_to_integration_system, push_stress_history_to_integration_system, push_stress_level_to_integration_system, push_teams_to_integration_system, push_thoughts_to_integration_system, tick_needs_system};
 use crate::sim::action::action::{decide_action_system, execute_action_system};
 use crate::sim::ai::consideration::goal_selection_system;
 use crate::sim::calendar::systems::sync_registry_from_calendar_event_system;
@@ -123,6 +123,7 @@ pub fn init_schedules() -> GameSchedules {
             .add_system(push_debug_displays_to_integration_system())
             .add_system(push_stress_level_to_integration_system())
             .add_system(push_stress_history_to_integration_system())
+            .add_system(push_thoughts_to_integration_system())
             .build();
     let post_integration = Schedule::builder()
         .add_system(run_snapshot_emitters_system())

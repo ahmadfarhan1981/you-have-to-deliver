@@ -7,6 +7,7 @@ use crate::integrations::snapshots::stress_history::StressHistorySnapshot;
 use crate::integrations::snapshots::team::TeamSnapshot;
 use crate::integrations::snapshots::tick::TickSnapshot;
 use crate::integrations::snapshots::working_hours::WorkingHoursSnapshot;
+use crate::integrations::snapshots::thoughts::ThoughtsSnapshot;
 use std::vec::Vec;
 use crate::integrations::snapshots_emitter::snapshots_emitter::SnapshotField;
 use crate::sim::calendar::availability::MonthlyAvailability;
@@ -28,6 +29,7 @@ pub struct SnapshotState {
     pub stress_level: Arc<DashMap<PersonId, StressSnapshot>>,
     pub stress_history: Arc<DashMap<PersonId, StressHistorySnapshot>>,
     pub working_hours: Arc<DashMap<PersonId, WorkingHoursSnapshot>>,
+    pub thoughts: Arc<DashMap<PersonId, ThoughtsSnapshot>>,
 
 }
 
@@ -39,6 +41,7 @@ impl SnapshotState {
         self.stress_level.clear();
         self.stress_history.clear();
         self.working_hours.clear();
+        self.thoughts.clear();
     }
 }
 
@@ -54,6 +57,7 @@ impl Default for SnapshotState {
             stress_level: Arc::new(DashMap::<PersonId, StressSnapshot>::new()),
             stress_history: Arc::new(DashMap::<PersonId, StressHistorySnapshot>::new()),
             working_hours: Arc::new(DashMap::<PersonId, WorkingHoursSnapshot>::new()),
+            thoughts: Arc::new(DashMap::<PersonId, ThoughtsSnapshot>::new()),
         }
     }
 }

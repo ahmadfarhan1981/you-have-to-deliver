@@ -116,6 +116,15 @@ pub fn initialize_emit_registries(
             last_sent_tick: Default::default(),
         },
     };
+
+    let thoughts_emitter = SnapshotCollectionEmitter {
+        map: Arc::clone(&main_snapshot_state.thoughts),
+        config: SnapshotEmitterConfig {
+            frequency: ExportFrequency::EveryTick,
+            event_name: SnapshotEvent::Thoughts,
+            last_sent_tick: Default::default(),
+        },
+    };
     snapshot_registry.register(company_snapshots_emitter);
     snapshot_registry.register(game_speed_snapshots_emitter);
     snapshot_registry.register(person_snapshots_emitter);
@@ -124,6 +133,7 @@ pub fn initialize_emit_registries(
     snapshot_registry.register(stress_snapshots_emitter);
     snapshot_registry.register(stress_history_snapshots_emitter);
     snapshot_registry.register(working_hours_emitter);
+    snapshot_registry.register(thoughts_emitter);
 
 
     snapshot_registry
