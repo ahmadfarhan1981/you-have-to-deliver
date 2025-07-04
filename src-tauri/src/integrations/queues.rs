@@ -2,6 +2,7 @@ use crate::action_queues::game_speed_manager::GameSpeedManagerCommand;
 use crate::action_queues::sim_manager::SimManager;
 use crate::action_queues::sim_manager::SimManagerCommand;
 use crate::action_queues::team_manager::{TeamAssignmentCommand, TeamManagerCommand};
+use crate::action_queues::thought_manager::ThoughtCommand;
 use crate::sim::game_speed::components::GameSpeed;
 use crossbeam::queue::SegQueue;
 use legion::system;
@@ -29,6 +30,7 @@ pub enum SimCommand {
     SimManager(SimManagerCommand),
     TeamManager(TeamManagerCommand),
     TeamAssignment(TeamAssignmentCommand),
+    Thought(ThoughtCommand),
 }
 
 impl fmt::Debug for SimCommand {
@@ -37,9 +39,8 @@ impl fmt::Debug for SimCommand {
             SimCommand::GameSpeed(_) => write!(f, "SimCommand::GameSpeed(...)"),
             SimCommand::SimManager(_) => write!(f, "SimCommand::SimManager(...)"),
             SimCommand::TeamManager(_) => write!(f, "SimCommand::TeamManager(...)"),
-            SimCommand::TeamAssignment(_) => {
-                write!(f, "SimCommand::TeamAssignment(...)")
-            }
+            SimCommand::TeamAssignment(_) => write!(f, "SimCommand::TeamAssignment(...)") ,
+            SimCommand::Thought(_) => write!(f, "SimCommand::Thought(...)") ,
         }
     }
 }
@@ -64,6 +65,7 @@ pub struct QueueManager {
     pub new_game_manager: SystemCommandQueue<SimManagerCommand>,
     pub team_manager: SystemCommandQueue<TeamManagerCommand>,
     pub team_assignment: SystemCommandQueue<TeamAssignmentCommand>,
+    pub thought_manager: SystemCommandQueue<ThoughtCommand>,
 }
 
 impl QueueManager {
@@ -73,6 +75,7 @@ impl QueueManager {
         while self.sim_manager.queue.pop().is_some() {}
         while self.game_speed_manager.queue.pop().is_some() {}
         while self.sim_manager.queue.pop().is_some() {}
+        while self.thought_manager.queue.pop().is_some() {}
     }
     pub fn print_summary(&self) {
         info!("{}", self.get_summary_string());
@@ -87,15 +90,17 @@ impl QueueManager {
             new_game_manager: SystemCommandQueue::<SimManagerCommand>::new(),
             team_manager: SystemCommandQueue::<TeamManagerCommand>::new(),
             team_assignment: SystemCommandQueue::<TeamAssignmentCommand>::new(),
+            thought_manager: SystemCommandQueue::<ThoughtCommand>::new(),
         }
     }
 
     pub fn get_summary_string(&self) -> String {
         format!(
-            "[Queue Summary] Dispatch: {}, Sim manager: {}, Game speed manager {}",
+            "[Queue Summary] Dispatch: {}, Sim manager: {}, Game speed manager {}, Thought manager {}",
             self.dispatch().queue.len(),
             self.sim_manager.queue.len(),
             self.game_speed_manager.queue.len(),
+            self.thought_manager.queue.len(),
         )
     }
 
@@ -118,6 +123,7 @@ impl QueueManager {
                     SimCommand::SimManager(cmd) => self.sim_manager.queue.push(cmd),
                     SimCommand::TeamManager(cmd) => self.team_manager.queue.push(cmd),
                     SimCommand::TeamAssignment(cmd) => self.team_assignment.queue.push(cmd),
+                    SimCommand::Thought(cmd) => self.thought_manager.queue.push(cmd),
                 }
             } else {
                 trace!("{} items dispatched", count);

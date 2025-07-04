@@ -1,6 +1,7 @@
 use crate::action_queues::game_speed_manager::handle_game_speed_manager_queue_system;
 use crate::action_queues::sim_manager::{handle_new_game_manager_queue_system, handle_sim_manager_queue_system, test_sim_manager_system};
 use crate::action_queues::team_manager::{handle_team_assignment_queue_system, handle_team_manager_queue_system};
+use crate::action_queues::thought_manager::handle_thought_command_queue_system;
 use crate::integrations::queues::{handle_dispatch_queue_system, handle_sim_manager_dispatch_queue_system};
 use crate::integrations::snapshots_emitter::snapshots_emitter::run_snapshot_emitters_system;
 use crate::integrations::systems::{push_company_to_integration_system, push_debug_displays_to_integration_system, push_game_speed_snapshots_system, push_needs_to_integration_system, push_persons_to_integration_system, push_stress_history_to_integration_system, push_stress_level_to_integration_system, push_teams_to_integration_system, tick_needs_system};
@@ -107,7 +108,9 @@ pub fn init_schedules() -> GameSchedules {
         .build();
     
     //integration, handles generating snapshots
-    let pre_integration = Schedule::builder().build();
+    let pre_integration = Schedule::builder()
+        .add_system(handle_thought_command_queue_system())
+        .build();
     let integration =
         Schedule::builder() //Integration loop, add systems that updates the gui app state in this loop. this loop might run slower than the main loop
             .add_system(push_persons_to_integration_system())
