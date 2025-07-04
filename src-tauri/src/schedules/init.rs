@@ -12,6 +12,7 @@ use crate::sim::persistence::persistence::{save_game_state_system, sync_registry
 use crate::sim::person::init::{emit_done_setup_event_system, generate_employees_system, init_company_system, unset_first_run_flag_system};
 use crate::sim::person::morale::{daily_stress_reset_system, update_stress_system};
 use crate::sim::systems::global::{increase_sim_tick_system, print_person_system};
+use crate::sim::systems::time_triggers::morning_thought_trigger_system;
 use crate::sim::utils::debugging::clear_debug_display_system;
 use crate::sim::utils::sim_reset::{delete_all_entity_system, reset_snapshot_system, reset_state_system};
 use legion::systems::{Builder, ParallelRunnable};
@@ -95,6 +96,7 @@ pub fn init_schedules() -> GameSchedules {
         .add_system(clear_debug_display_system())
         .add_system(increase_sim_tick_system())
         .add_system(print_person_system())
+        .add_system(morning_thought_trigger_system())
         .add_system(goal_selection_system())
         .add_system(update_stress_system())
         .add_system(daily_stress_reset_system())
