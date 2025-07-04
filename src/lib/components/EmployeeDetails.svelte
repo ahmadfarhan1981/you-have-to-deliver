@@ -20,6 +20,7 @@
     import TabComponent from "$lib/components/TabComponent.svelte";
     import StressPanel from "$lib/components/StressPanel.svelte";
     import StressHistoryPanel from "$lib/components/StressHistoryPanel.svelte";
+    import PersonThoughts from "$lib/components/PersonThoughts.svelte";
 
 
     export let personStore: Readable<PersonSnapshotWithTotal>;
@@ -32,6 +33,7 @@
         { id: 'schedule', label: 'Schedule' },
         {id:'stress', label: 'Stress'},
         { id: 'performance', label: 'Performance' },
+        { id: 'thoughts', label: 'Thoughts' },
     ];
     let currentActiveTabId = tabItems[0].id;
 </script>
@@ -107,6 +109,11 @@
             </div>
             <div>
                 <ProjectPanel/>
+            </div>
+        {/if}
+        {#if currentActiveTabId === "thoughts" }
+            <div class="col-span-3">
+                <PersonThoughts personStore={personStore}/>
             </div>
         {/if}
 
