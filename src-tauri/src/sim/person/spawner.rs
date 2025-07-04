@@ -32,6 +32,7 @@ use std::path::Path;
 use std::sync::Arc;
 use tracing::{debug, error, info, instrument, trace};
 use crate::sim::calendar::availability::{MonthlyAvailability, YearMonth};
+use crate::sim::person::thoughts::{ArchivedThoughts, Thoughts};
 use crate::sim::sim_date::sim_date::SimDate;
 
 pub fn bounded_normal(mean: f64, std_dev: f64, min: i16, max: i16) -> i16 {
@@ -349,6 +350,8 @@ pub fn spawn_person(
         StressLevel::default(),
         monthly_availability,
         PlayerControlled,
+        Thoughts::new(),
+        ArchivedThoughts::new()
     ));
     person_registry.insert(id, entity);
 

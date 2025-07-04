@@ -27,6 +27,8 @@
         type WorkingHoursSnapshot,
         workingHours
     } from "$lib/stores/workingHours";
+    import PersonThoughts from "$lib/components/PersonThoughts.svelte";
+    import {type ThoughtsSnapshot, thoughtsSnapshotEventName, thoughtsSnapshots} from "$lib/stores/thoughts";
 
 
     let { children } = $props();
@@ -69,6 +71,11 @@
             personDebugDisplays.set(event.payload);
         });
 
+        const unlistenThoughts = listen<ThoughtsSnapshot[]>(thoughtsSnapshotEventName, (event) => {
+            thoughtsSnapshots.set(event.payload)
+
+        });
+
         initializeTauriNotificationListeners();
 
         return () => {
@@ -81,6 +88,7 @@
             stress_history_unlisten.then(fn=>fn());
             working_hours_unlisten.then(fn=>fn());
             unlistenDebugDisplays.then(fn => fn());
+            unlistenThoughts.then((fn=>fn()))
 
             cleanupTauriNotificationListeners();
 
