@@ -3,7 +3,7 @@ use crate::integrations::queues::QueueManager;
 use crate::sim::person::thoughts::{ArchivedThoughts, Thought, Thoughts};
 use crate::sim::person::components::{PersonId};
 use crate::sim::registries::registry::Registry;
-use crate::sim::resources::global::Dirty;
+use crate::integrations::snapshots::thoughts::DirtyThought;
 use legion::{system, world::SubWorld, systems::CommandBuffer, Entity, IntoQuery, Query};
 use std::sync::Arc;
 use std::time::Duration;
@@ -31,7 +31,7 @@ pub fn handle_thought_command_queue(
             if let Some(entity) = person_registry.get_entity_from_id(&PersonId(person_id)) {
                 if let Ok((mut thoughts, mut archived)) = thought_query.get_mut(world, entity) {
                     thoughts.add(thought, &mut archived);
-                    commands.add_component(entity, Dirty);
+                    commands.add_component(entity, DirtyThought);
                 } else {
                     warn!("Cannot access thought components for person {}", person_id);
                 }

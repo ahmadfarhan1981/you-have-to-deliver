@@ -194,6 +194,7 @@ pub enum SnapshotEvent {
     Stress,
     StressHistory,
     MonthlyAvailability,
+    Thoughts,
     CalendarEvents
 }
 
@@ -208,6 +209,7 @@ impl SnapshotEvent {
             SnapshotEvent::Stress => "stress_snapshot",
             SnapshotEvent::StressHistory => "stress_history_snapshot",
             SnapshotEvent::MonthlyAvailability => "monthly_availability_snapshot",
+            SnapshotEvent::Thoughts => "thoughts_snapshot",
             SnapshotEvent::CalendarEvents => "calendar_events_snapshot"
         }
     }

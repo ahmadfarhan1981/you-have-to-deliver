@@ -13,3 +13,4 @@ pub mod debug_display;
 pub mod stress;
 pub mod stress_history;
 pub mod working_hours;
+pub mod thoughts;

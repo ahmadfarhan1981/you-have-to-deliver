@@ -6,6 +6,7 @@ use crate::integrations::snapshots::snapshots::SnapshotState;
 use crate::integrations::snapshots::stress::StressSnapshot;
 use crate::integrations::snapshots::stress_history::StressHistorySnapshot;
 use crate::integrations::snapshots::working_hours::WorkingHoursSnapshot;
+use crate::integrations::snapshots::thoughts::{ThoughtsSnapshot, DirtyThought};
 use crate::integrations::snapshots::team::TeamSnapshot;
 use crate::integrations::snapshots_emitter::snapshots_emitter::{
     SnapshotEmitRegistry, SnapshotEvent, SnapshotFieldEmitter,
@@ -18,6 +19,7 @@ use crate::sim::person::morale::StressLevel;
 use crate::sim::person::needs::{Energy, Hunger};
 use crate::sim::person::personality_matrix::PersonalityMatrix;
 use crate::sim::person::skills::{SkillId, SkillSet};
+use crate::sim::person::thoughts::Thoughts;
 use crate::sim::person::spawner::spawn_person;
 use crate::sim::person::stats::Stats;
 use crate::sim::resources::global::{Dirty, TickCounter};
@@ -414,4 +416,35 @@ pub fn push_working_hours_to_integration(
             emit_registry.mark_data_updated(SnapshotEvent::MonthlyAvailability, current_tick);
         }
     }
+}
+
+#[system(for_each)]
+pub fn push_thoughts_to_integration(
+    #[resource] tick_counter: &Arc<TickCounter>,
+    #[resource] app_state: &Arc<SnapshotState>,
+    #[resource] emit_registry: &Arc<SnapshotEmitRegistry>,
+    entity: &Entity,
+    person: &Person,
+    thoughts: &Thoughts,
+    _dirty: &DirtyThought,
+    cmd: &mut CommandBuffer,
+) {
+    let current_tick = tick_counter.value();
+    let map = &app_state.thoughts;
+    let snapshot = ThoughtsSnapshot {
+        person_id: person.person_id.0,
+        thoughts: thoughts.thoughts.iter().cloned().collect(),
+    };
+
+    match map.entry(person.person_id) {
+        Entry::Occupied(mut occ) => {
+            *occ.get_mut() = snapshot;
+        }
+        Entry::Vacant(v) => {
+            v.insert(snapshot);
+        }
+    }
+
+    emit_registry.mark_data_updated(SnapshotEvent::Thoughts, current_tick);
+    cmd.remove_component::<DirtyThought>(*entity);
 }
